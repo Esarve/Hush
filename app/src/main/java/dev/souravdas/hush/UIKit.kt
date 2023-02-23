@@ -2,6 +2,7 @@ package dev.souravdas.hush
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -34,7 +36,7 @@ import com.google.accompanist.drawablepainter.rememberDrawablePainter
  */
 class UIKit {
     @Composable
-    fun InstalledAppList(items: List<InstalledPackageInfo>, modifier: Modifier = Modifier) {
+    fun InstalledAppList(items: List<InstalledPackageInfo>, onItemClick: (InstalledPackageInfo) -> Unit = {}, modifier: Modifier = Modifier) {
         modifier
             .fillMaxSize()
             .padding(top = 16.dp)
@@ -43,15 +45,15 @@ class UIKit {
             modifier = modifier
         ) {
             items(items){item ->
-                ApplicationItem(app = item, modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp))
+                ApplicationItem(app = item, clickListener = { onItemClick(item) }, modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp))
             }
         }
     }
 
     @Composable
-    fun ApplicationItem(app: InstalledPackageInfo, modifier: Modifier = Modifier) {
+    fun ApplicationItem(app: InstalledPackageInfo, clickListener: () -> Unit = {}, modifier: Modifier = Modifier) {
         Box(
-            modifier = modifier
+            modifier = modifier.clickable(onClick = clickListener)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -76,12 +78,12 @@ class UIKit {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun MainActivityScreen(items: List<InstalledPackageInfo>) {
+    fun MainActivityScreen(items: List<InstalledPackageInfo>, onItemClick: (InstalledPackageInfo) -> Unit = {}) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = {
-                        Text(text = "My App Title")
+                        Text(text = stringResource(id = R.string.app_name))
                     }
                 )
             },
@@ -91,7 +93,7 @@ class UIKit {
                 }
             }
         ) {
-            InstalledAppList(items = items, modifier = Modifier.padding(it))
+            InstalledAppList(items = items, onItemClick = onItemClick, modifier = Modifier.padding(it))
         }
     }
 

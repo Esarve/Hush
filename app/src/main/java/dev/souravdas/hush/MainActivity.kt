@@ -14,6 +14,7 @@ import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -51,12 +52,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             HushTheme {
-                UIKit().MainActivityScreen(getPackageList())
+                UIKit().MainActivityScreen(getPackageList()){
+                    Toast.makeText(this, "clicked on ${it.appName}", Toast.LENGTH_SHORT).show()
+                }
             }
         }
-
         updateStatusBarColor()
-
     }
 
     private fun updateStatusBarColor() {
@@ -65,6 +66,7 @@ class MainActivity : ComponentActivity() {
         // make icons white
     }
 
+    @Suppress("Deprecation")
     private fun getPackageList(): List<InstalledPackageInfo> {
         val pm: PackageManager = this.packageManager
         val packages: MutableList<ApplicationInfo> = pm.getInstalledApplications(0)
