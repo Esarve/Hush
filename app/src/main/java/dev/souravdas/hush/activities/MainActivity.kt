@@ -31,14 +31,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ModalBottomSheetValue
-import androidx.compose.material.rememberModalBottomSheetState
+import androidx.compose.material.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -51,6 +50,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.ui.theme.HushTheme
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -59,9 +59,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val sheetState = rememberBottomSheetState(
+                initialValue = BottomSheetValue.Collapsed
+            )
+            val scope = rememberCoroutineScope()
             HushTheme {
-                UIKit().MainActivityScreen(getPackageList()){
+                UIKit().MainActivityScreen(getPackageList(), sheetState, scope){
                     Toast.makeText(this, "clicked on ${it.appName}", Toast.LENGTH_SHORT).show()
+                    scope.launch {
+                        sheetState.collapse()
+                    }
                 }
             }
         }

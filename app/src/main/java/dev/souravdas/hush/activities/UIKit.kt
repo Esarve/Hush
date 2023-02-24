@@ -3,6 +3,7 @@ package dev.souravdas.hush
 import android.os.Build
 import android.widget.CalendarView
 import androidx.annotation.RequiresApi
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,16 +34,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.time.LocalTime
 
@@ -59,7 +64,8 @@ class UIKit {
         modifier: Modifier = Modifier
     ) {
         Box(
-            modifier = modifier.fillMaxHeight(fraction = 0.7f)
+            modifier = modifier
+                .fillMaxHeight(fraction = 0.7f)
                 .padding(top = 48.dp)
         ){
             LazyColumn(
@@ -90,7 +96,9 @@ class UIKit {
                 modifier = modifier.fillMaxWidth()
             ) {
                 Image(
-                    painter = rememberDrawablePainter(drawable = app.icon),
+                    painter = rememberDrawablePainter(
+                        drawable = app.icon ?: ContextCompat.getDrawable(LocalContext.current, R.mipmap.ic_launcher_round)
+                    ),
                     contentDescription = "appIcon",
                     modifier = Modifier
                         .size(40.dp)
@@ -110,11 +118,12 @@ class UIKit {
     @Composable
     fun MainActivityScreen(
         items: List<InstalledPackageInfo>,
+        sheetState: BottomSheetState = rememberBottomSheetState(
+            initialValue = BottomSheetValue.Collapsed
+        ),
+        scope: CoroutineScope = rememberCoroutineScope(),
         onItemClick: (InstalledPackageInfo) -> Unit = {}
     ) {
-        val sheetState = rememberBottomSheetState(
-            initialValue = BottomSheetValue.Collapsed
-        )
         val scaffoldState = rememberBottomSheetScaffoldState(
             bottomSheetState = sheetState
         )
@@ -235,4 +244,15 @@ class UIKit {
             }
         }
     }
+
+    @OptIn(ExperimentalMaterialApi::class)
+    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
+    @Composable
+    fun MainActivityScreenPreview(){
+        MainActivityScreen(items = mutableListOf(
+            InstalledPackageInfo("Test 1", "com.test1"),
+            InstalledPackageInfo("Test2","com.test2")
+        ))
+    }
+
 }
