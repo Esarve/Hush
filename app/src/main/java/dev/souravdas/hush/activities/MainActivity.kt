@@ -34,10 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -59,16 +56,27 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val sheetState = rememberBottomSheetState(
-                initialValue = BottomSheetValue.Collapsed
-            )
+            //remember states or other shit BS
+            val sheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
             val scope = rememberCoroutineScope()
+            val showDialog = remember { mutableStateOf(false) }
+            val selectedApp = remember { mutableStateOf(InstalledPackageInfo()) }
+
             HushTheme {
-                UIKit().MainActivityScreen(getPackageList(), sheetState, scope){
+                UIKit().MainActivityScreen(
+                    getPackageList(),
+                    sheetState,
+                    scope,
+                    showDialog,
+                    selectedApp
+                )
+                {
                     Toast.makeText(this, "clicked on ${it.appName}", Toast.LENGTH_SHORT).show()
                     scope.launch {
                         sheetState.collapse()
                     }
+                    showDialog.value = true
+                    selectedApp.value = it
                 }
             }
         }
@@ -77,7 +85,7 @@ class MainActivity : ComponentActivity() {
 
     private fun updateStatusBarColor() {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-        window.statusBarColor = ContextCompat.getColor(this,R.color.whiteBG)
+        window.statusBarColor = ContextCompat.getColor(this, R.color.whiteBG)
         // make icons white
     }
 
