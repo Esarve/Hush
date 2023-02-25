@@ -1,14 +1,7 @@
 package dev.souravdas.hush
 
-import android.os.Build
-import android.widget.CalendarView
 import android.widget.Toast
-import androidx.compose.material3.Checkbox
-import androidx.annotation.RequiresApi
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,29 +9,21 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.FabPosition
-import androidx.compose.material.MaterialTheme.colors
-import androidx.compose.material.SnackbarDefaults.backgroundColor
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -52,7 +37,9 @@ import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import java.time.LocalTime
+import org.threeten.bp.LocalTime
+import timber.log.Timber
+import java.util.*
 
 /**
  * Created by Sourav
@@ -190,7 +177,7 @@ class UIKit {
     ) {
         val contextForToast = LocalContext.current.applicationContext
 
-        var checked by remember {
+        var checked = remember {
             mutableStateOf(false)
         }
         if (openDialog.value) {
@@ -218,12 +205,12 @@ class UIKit {
                                 Text(
                                     text = "Always mute this app",
                                     modifier = Modifier.clickable(true) {
-                                        !checked //does not work lol
+                                        !checked.value //does not work lol
                                     })
                                 Checkbox(
-                                    checked = checked,
+                                    checked = checked.value,
                                     onCheckedChange = { checked_ ->
-                                        checked = checked_
+                                        checked.value = checked_
                                         Toast.makeText(
                                             contextForToast,
                                             "checked_ = $checked_",
@@ -233,14 +220,51 @@ class UIKit {
                                 )
                             }
 
-                            if (!checked) {
-                                Row(modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
-                                    TwoLineButton(txt1 = "Start Time", txt2 = "-- : --")
-                                    Spacer(modifier = Modifier.weight(0.05f))
-                                    TwoLineButton(txt1 = "End Time", txt2 = "-- : --")
+                            val selectedTimeStart = remember { mutableStateOf<LocalTime?>(null) }
+                            val selectedTimeEnd = remember { mutableStateOf<LocalTime?>(null) }
+
+                            if (!checked.value) {
+                                Column() {
+
+                                    Row(modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
+                                        TwoLineButton(
+                                            txt1 = "Start Time",
+                                            txt2 = "-- : --",
+                                            selectedTimeStart
+                                        )
+                                        Spacer(modifier = Modifier.weight(0.05f))
+                                        TwoLineButton(
+                                            txt1 = "End Time",
+                                            txt2 = "-- : --",
+                                            selectedTimeEnd
+                                        )
+                                    }
+                                    ShowTimeRangeText(
+                                        selectedTimeStart,
+                                        selectedTimeEnd,
+                                        selectedApp
+                                    ) //Doesn't work
                                 }
                             }
 
+                            Row(
+                                horizontalArrangement = Arrangement.End,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 8.dp, end = 8.dp)
+                            ) {
+//
+                                Text(
+                                    text = "Add",
+                                    fontSize = 16.sp,
+                                    modifier = Modifier.clickable {
+                                        Toast.makeText(
+                                            HushApp.context,
+                                            "CLICKED",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }.padding(8.dp))
+                            }
                         }
                     }
                 }
@@ -249,14 +273,34 @@ class UIKit {
     }
 
     @Composable
-    fun TwoLineButton(txt1: String, txt2: String) {
+    private fun ShowTimeRangeText(
+        selectedTimeStart: MutableState<LocalTime?>,
+        selectedTimeEnd: MutableState<LocalTime?>,
+        selectedApp: MutableState<InstalledPackageInfo>,
+    ) {
+        if (selectedTimeStart.value != null && selectedTimeEnd.value != null) {
+            Timber.d("Text Can be shown")
+            Text(
+                text = "${selectedApp.value.appName} will be silent from Today $selectedTimeStart to " +
+                        "${if (selectedTimeStart.value!!.isBefore(selectedTimeEnd.value)) "Today" else "Tomorrow"} ${selectedTimeEnd.value}"
+            )
+        }
+
+    }
+
+    @Composable
+    fun TwoLineButton(
+        txt1: String, txt2: String, selectedTime: MutableState<LocalTime?> = remember {
+            mutableStateOf(null)
+        }
+    ) {
 
         val sheetState = rememberSheetState()
         val title = remember {
             mutableStateOf(txt1)
         }
 
-        OpenClock(sheetState, title)
+        OpenClock(sheetState, title, selectedTime)
 
         Button(onClick = {
             sheetState.show()
@@ -268,7 +312,7 @@ class UIKit {
                     modifier = Modifier.width(80.dp)
                 )
                 Text(
-                    text = txt2,
+                    text = if (selectedTime.value == null) txt2 else selectedTime.value.toString(),
                     textAlign = TextAlign.Center,
                     modifier = Modifier.width(80.dp)
                 )
@@ -280,19 +324,18 @@ class UIKit {
     @Composable
     fun OpenClock(
         sheetState: com.maxkeppeker.sheets.core.models.base.SheetState,
-        title: MutableState<String>
+        title: MutableState<String>,
+        selectedTime: MutableState<LocalTime?>
     ) {
-        val selectedTime = remember { mutableStateOf<LocalTime?>(null) }
         ClockDialog(
             header = Header.Default(title.value),
             state = sheetState,
-            selection = ClockSelection.HoursMinutesSeconds { hours, minutes, seconds ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    selectedTime.value = LocalTime.of(hours, minutes, seconds)
-                }
+            selection = ClockSelection.HoursMinutes { hours, minutes ->
+                Timber.d("Time Selected")
+                selectedTime.value = LocalTime.of(hours, minutes)
             },
             config = ClockConfig(
-                is24HourFormat = false
+                is24HourFormat = false,
             ),
         )
     }

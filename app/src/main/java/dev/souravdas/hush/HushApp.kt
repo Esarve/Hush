@@ -1,6 +1,10 @@
 package dev.souravdas.hush
 
 import android.app.Application
+import com.jakewharton.threetenabp.AndroidThreeTen
+import timber.log.Timber
+import timber.log.Timber.Forest.plant
+
 
 /**
  * Created by Sourav
@@ -17,5 +21,9 @@ class HushApp: Application() {
     override fun onCreate() {
         super.onCreate()
         context = this
+        if (BuildConfig.DEBUG) {
+            plant(Timber.DebugTree())
+        }
+        AndroidThreeTen.init(this)
     }
 }
