@@ -1,6 +1,7 @@
 package dev.souravdas.hush
 
 import android.widget.Toast
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.maxkeppeker.sheets.core.models.base.Header
@@ -35,6 +37,7 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
+import dev.souravdas.hush.arch.MainActivityVM
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
@@ -110,7 +113,6 @@ class UIKit {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
     @Composable
     fun MainActivityScreen(
-        items: List<InstalledPackageInfo>,
         sheetState: BottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed),
         scope: CoroutineScope = rememberCoroutineScope(),
         openDialog: MutableState<Boolean> = remember { mutableStateOf(false) },
@@ -119,11 +121,14 @@ class UIKit {
                 InstalledPackageInfo()
             )
         },
+        viewModel:MainActivityVM = viewModel(),
         onItemClick: (InstalledPackageInfo) -> Unit = {}
     ) {
         val scaffoldState = rememberBottomSheetScaffoldState(
             bottomSheetState = sheetState
         )
+
+        val appList = viewModel.appListSF.collectAsState()
 
         BottomSheetScaffold(
             topBar = {
@@ -155,7 +160,7 @@ class UIKit {
             scaffoldState = scaffoldState,
             sheetContent = {
                 InstalledAppList(
-                    items = items,
+                    items = appList.value,
                     onItemClick = onItemClick,
                 )
             },
@@ -182,6 +187,9 @@ class UIKit {
         }
         if (openDialog.value) {
             AlertDialog(
+                modifier = Modifier
+                    .wrapContentHeight()
+                    .wrapContentWidth(),
                 onDismissRequest = {
                     openDialog.value = false
                 }
@@ -192,9 +200,18 @@ class UIKit {
                         .wrapContentHeight(),
                     shape = MaterialTheme.shapes.large
                 ) {
-                    Box(modifier = Modifier.padding(16.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .wrapContentWidth()
+                            .wrapContentHeight()
+                            .padding(16.dp)
+                    ) {
 
-                        Column() {
+                        Column(
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .wrapContentHeight()
+                        ) {
                             ApplicationItem(app = selectedApp.value)
 
                             Row(
@@ -224,7 +241,11 @@ class UIKit {
                             val selectedTimeEnd = remember { mutableStateOf<LocalTime?>(null) }
 
                             if (!checked.value) {
-                                Column() {
+                                Column(
+                                    modifier = Modifier
+                                        .wrapContentWidth()
+                                        .wrapContentHeight(unbounded = true)
+                                ) {
 
                                     Row(modifier = Modifier.padding(start = 8.dp, end = 8.dp)) {
                                         TwoLineButton(
@@ -239,31 +260,24 @@ class UIKit {
                                             selectedTimeEnd
                                         )
                                     }
+
                                     ShowTimeRangeText(
                                         selectedTimeStart,
                                         selectedTimeEnd,
-                                        selectedApp
                                     ) //Doesn't work
                                 }
                             }
 
-                            Row(
-                                horizontalArrangement = Arrangement.End,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(start = 8.dp, end = 8.dp)
+                            Button(
+                                onClick = { /*TODO*/ }, modifier =
+                                Modifier
+                                    .padding(top = 16.dp, end = 8.dp)
+                                    .align(Alignment.End)
                             ) {
-//
                                 Text(
                                     text = "Add",
                                     fontSize = 16.sp,
-                                    modifier = Modifier.clickable {
-                                        Toast.makeText(
-                                            HushApp.context,
-                                            "CLICKED",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }.padding(8.dp))
+                                )
                             }
                         }
                     }
@@ -276,13 +290,20 @@ class UIKit {
     private fun ShowTimeRangeText(
         selectedTimeStart: MutableState<LocalTime?>,
         selectedTimeEnd: MutableState<LocalTime?>,
-        selectedApp: MutableState<InstalledPackageInfo>,
     ) {
         if (selectedTimeStart.value != null && selectedTimeEnd.value != null) {
             Timber.d("Text Can be shown")
             Text(
-                text = "${selectedApp.value.appName} will be silent from Today $selectedTimeStart to " +
-                        "${if (selectedTimeStart.value!!.isBefore(selectedTimeEnd.value)) "Today" else "Tomorrow"} ${selectedTimeEnd.value}"
+                modifier = Modifier.padding(8.dp),
+                fontSize = 12.sp,
+                text = "App will be silent from Today ${selectedTimeStart.value} to " +
+                        "${if (selectedTimeStart.value!!.isBefore(selectedTimeEnd.value)) "Today" else "Tomorrow"} ${selectedTimeEnd.value}",
+            )
+        } else {
+            Text(
+                modifier = Modifier.padding(8.dp),
+                fontSize = 12.sp,
+                text = "App will be silent from --:-- to --:--",
             )
         }
 
@@ -340,17 +361,17 @@ class UIKit {
         )
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
-//    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
-    @Composable
-    fun MainActivityScreenPreview() {
-        MainActivityScreen(
-            items = mutableListOf(
-                InstalledPackageInfo("Test 1", "com.test1"),
-                InstalledPackageInfo("Test2", "com.test2")
-            )
-        )
-    }
+//    @OptIn(ExperimentalMaterialApi::class)
+////    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
+//    @Composable
+//    fun MainActivityScreenPreview() {
+//        MainActivityScreen(
+//            items = mutableListOf(
+//                InstalledPackageInfo("Test 1", "com.test1"),
+//                InstalledPackageInfo("Test2", "com.test2")
+//            )
+//        )
+//    }
 
     @Preview
     @Composable

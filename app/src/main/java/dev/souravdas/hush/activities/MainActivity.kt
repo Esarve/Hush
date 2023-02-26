@@ -17,6 +17,7 @@ import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,11 +46,14 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.ViewModelStore
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dagger.hilt.android.AndroidEntryPoint
+import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.ui.theme.HushTheme
 import kotlinx.coroutines.launch
 
-
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.O)
     @OptIn(ExperimentalMaterialApi::class)
@@ -64,11 +68,10 @@ class MainActivity : ComponentActivity() {
 
             HushTheme {
                 UIKit().MainActivityScreen(
-                    getPackageList(),
                     sheetState,
                     scope,
                     showDialog,
-                    selectedApp
+                    selectedApp,
                 )
                 {
                     Toast.makeText(this, "clicked on ${it.appName}", Toast.LENGTH_SHORT).show()

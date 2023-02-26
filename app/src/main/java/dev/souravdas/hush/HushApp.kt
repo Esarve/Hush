@@ -2,6 +2,7 @@ package dev.souravdas.hush
 
 import android.app.Application
 import com.jakewharton.threetenabp.AndroidThreeTen
+import dagger.hilt.android.HiltAndroidApp
 import timber.log.Timber
 import timber.log.Timber.Forest.plant
 
@@ -11,6 +12,8 @@ import timber.log.Timber.Forest.plant
  * On 2/24/2023 7:57 PM
  * For Hush!
  */
+
+@HiltAndroidApp
 class HushApp: Application() {
 
     companion object {
