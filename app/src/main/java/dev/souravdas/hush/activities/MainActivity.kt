@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
             }
         }
         updateStatusBarColor()
+        viewModel.getSelectedApp()
     }
 
     private fun updateStatusBarColor() {

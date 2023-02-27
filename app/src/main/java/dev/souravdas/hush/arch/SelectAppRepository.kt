@@ -6,4 +6,6 @@ class SelectAppRepository @Inject constructor(val selectedAppDao: SelectedAppDao
     suspend fun addSelectedApp(selectedApp: SelectedApp){
         selectedAppDao.insert(selectedApp)
     }
+
+    suspend fun getSelectedApps(): List<SelectedApp> = selectedAppDao.getAllSelectedApps()
 }

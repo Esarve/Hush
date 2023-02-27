@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.FabPosition
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -39,6 +40,7 @@ import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectedApp
+import dev.souravdas.hush.arch.SelectedAppForList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
@@ -65,13 +67,16 @@ class UIKit {
             LazyColumn(
                 modifier = modifier
             ) {
-                items(items) { item ->
-                    ApplicationItem(
-                        app = item,
-                        clickListener = { onItemClick(item) },
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-                    )
-                }
+                items(
+                    count = items.size,
+                    itemContent = {
+                        ApplicationItem(
+                            app = items[it],
+                            clickListener = { onItemClick(items[it]) },
+                            modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+                        )
+                    }
+                )
             }
         }
     }
@@ -174,6 +179,52 @@ class UIKit {
             sheetGesturesEnabled = false
         ) {
             OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected)
+
+//            ShowSelectedApps()
+        }
+    }
+
+    private @Composable
+    fun ShowSelectedApps(items: List<SelectedAppForList>) {
+        Box(modifier = Modifier.padding(8.dp)){
+            LazyColumn() {
+                items(
+                    count = items.size,
+                    itemContent = {
+                        SelectedAppList(items[it])
+                    }
+                )
+            }
+        }
+    }
+
+    private @Composable
+    fun SelectedAppList(selectedApp: SelectedAppForList) {
+        Box(modifier = Modifier.padding(8.dp)){
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Image(
+                    painter = rememberDrawablePainter(
+                        drawable = selectedApp.icon
+                    ),
+                    contentDescription = "appIcon",
+                    modifier = Modifier
+                        .size(40.dp)
+                )
+
+                Column() {
+                    Row() {
+                        Text(
+                            text = selectedApp.selectedApp.appName,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                    }
+                }
+            }
         }
     }
 
@@ -272,6 +323,7 @@ class UIKit {
                                 onClick = {
                                     onItemSelected.invoke(
                                         SelectedApp(
+                                            appName = selectedApp.value.appName,
                                             packageName = selectedApp.value.packageName,
                                             startTime = selectedTimeStart.value!!,
                                             endTime = selectedTimeEnd.value!!,
@@ -370,17 +422,14 @@ class UIKit {
         )
     }
 
-//    @OptIn(ExperimentalMaterialApi::class)
-////    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
-//    @Composable
-//    fun MainActivityScreenPreview() {
-//        MainActivityScreen(
-//            items = mutableListOf(
-//                InstalledPackageInfo("Test 1", "com.test1"),
-//                InstalledPackageInfo("Test2", "com.test2")
-//            )
-//        )
-//    }
+    @OptIn(ExperimentalMaterialApi::class)
+    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
+    @Composable
+    fun MainActivityScreenPreview() {
+        MainActivityScreen(
+
+        )
+    }
 
     @Preview
     @Composable

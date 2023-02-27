@@ -4,48 +4,51 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.InstalledPackageInfo
 import dev.souravdas.hush.activities.BaseViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
-class MainActivityVM @Inject constructor ( val selectAppRepository: SelectAppRepository): BaseViewModel() {
-//    val appListMLD: MutableLiveData<List<InstalledPackageInfo>> by lazy {
-//        MutableLiveData()
-//    }
+class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository) : BaseViewModel() {
 
     val appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
 
-    companion object{
+    companion object {
         const val APP_LIST = "APP_LIST"
+        const val SELECTED_APP = "SELECTED_APP"
     }
 
-    fun addSelectedApp(installedPackageInfo: InstalledPackageInfo, selectTime: LocalTime, endTime: LocalTime, isAlways: Boolean){
-
-        executedSuspendedCodeBlock {
-            selectAppRepository.addSelectedApp(
-                SelectedApp(
-                    packageName = installedPackageInfo.packageName,
-                    startTime = selectTime,
-                    endTime = endTime,
-                    isAlways = if (isAlways) 1 else 0
-                )
-            )
-        }
-    }
-
-    fun addSelectedApp(selectedApp: SelectedApp){
+    fun addSelectedApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
             selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
+    fun getSelectedApp() {
+        viewModelScope.launch {
+            coroutineScope {
+                val selectedApps = async { selectAppRepository.getSelectedApps() }.await()
 
-    fun getInstalledApps(){
+                val installedApps = async { getPackageList().associateBy ({it.packageName},{it.icon}) }.await()
+
+                val selectedAppsForList = mutableListOf<SelectedAppForList>()
+
+                selectedApps.forEach {
+                    selectedAppsForList.add(SelectedAppForList(it, installedApps[it.packageName]!!))
+                }
+            }
+        }
+    }
+
+    fun getInstalledApps() {
 
         executedSuspendedCodeBlock(APP_LIST) {
             return@executedSuspendedCodeBlock getPackageList()
@@ -71,8 +74,9 @@ class MainActivityVM @Inject constructor ( val selectAppRepository: SelectAppRep
 
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun onSuspendResponse(operationTag: String, resultResponse: Any) {
-        when (operationTag){
+        when (operationTag) {
             APP_LIST -> appListSF.value = resultResponse as List<InstalledPackageInfo>
         }
     }
