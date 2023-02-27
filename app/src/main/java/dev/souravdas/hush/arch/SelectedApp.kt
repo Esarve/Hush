@@ -6,7 +6,7 @@ import org.threeten.bp.LocalTime
 
 @Entity("selected_app")
 data class SelectedApp (
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
     val packageName: String,
     val startTime: LocalTime,

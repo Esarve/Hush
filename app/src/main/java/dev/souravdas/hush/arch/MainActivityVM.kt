@@ -4,13 +4,16 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.lifecycle.MediatorLiveData
 import androidx.lifecycle.MutableLiveData
+import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.InstalledPackageInfo
 import dev.souravdas.hush.activities.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.threeten.bp.LocalTime
+import javax.inject.Inject
 
-class MainActivityVM (private val selectAppRepository: SelectAppRepository): BaseViewModel() {
+@HiltViewModel
+class MainActivityVM @Inject constructor ( val selectAppRepository: SelectAppRepository): BaseViewModel() {
 //    val appListMLD: MutableLiveData<List<InstalledPackageInfo>> by lazy {
 //        MutableLiveData()
 //    }
@@ -35,9 +38,16 @@ class MainActivityVM (private val selectAppRepository: SelectAppRepository): Bas
         }
     }
 
+    fun addSelectedApp(selectedApp: SelectedApp){
+        executedSuspendedCodeBlock {
+            selectAppRepository.addSelectedApp(selectedApp)
+        }
+    }
+
+
     fun getInstalledApps(){
 
-        executedSuspendedCodeBlock {
+        executedSuspendedCodeBlock(APP_LIST) {
             return@executedSuspendedCodeBlock getPackageList()
         }
     }

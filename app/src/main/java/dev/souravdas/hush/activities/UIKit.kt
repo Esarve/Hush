@@ -38,6 +38,7 @@ import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.arch.SelectedApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
@@ -121,14 +122,16 @@ class UIKit {
                 InstalledPackageInfo()
             )
         },
-        viewModel:MainActivityVM = viewModel(),
-        onItemClick: (InstalledPackageInfo) -> Unit = {}
+        viewModel: MainActivityVM = viewModel(),
+        onItemClick: (InstalledPackageInfo) -> Unit = {},
+        onItemSelected: (SelectedApp) -> Unit = {}
     ) {
         val scaffoldState = rememberBottomSheetScaffoldState(
             bottomSheetState = sheetState
         )
 
         val appList = viewModel.appListSF.collectAsState()
+        viewModel.getInstalledApps()
 
         BottomSheetScaffold(
             topBar = {
@@ -170,7 +173,7 @@ class UIKit {
             sheetContentColor = colorResource(id = R.color.whiteBG),
             sheetGesturesEnabled = false
         ) {
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp)
+            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected)
         }
     }
 
@@ -178,11 +181,12 @@ class UIKit {
     @Composable
     fun OpenAppSelectedDialog(
         openDialog: MutableState<Boolean>,
-        selectedApp: MutableState<InstalledPackageInfo>
+        selectedApp: MutableState<InstalledPackageInfo>,
+        onItemSelected: (SelectedApp) -> Unit = {}
     ) {
         val contextForToast = LocalContext.current.applicationContext
 
-        var checked = remember {
+        val checked = remember {
             mutableStateOf(false)
         }
         if (openDialog.value) {
@@ -228,11 +232,6 @@ class UIKit {
                                     checked = checked.value,
                                     onCheckedChange = { checked_ ->
                                         checked.value = checked_
-                                        Toast.makeText(
-                                            contextForToast,
-                                            "checked_ = $checked_",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
                                     },
                                 )
                             }
@@ -269,8 +268,18 @@ class UIKit {
                             }
 
                             Button(
-                                onClick = { /*TODO*/ }, modifier =
-                                Modifier
+                                enabled = (selectedTimeStart.value != null && selectedTimeEnd.value != null),
+                                onClick = {
+                                    onItemSelected.invoke(
+                                        SelectedApp(
+                                            packageName = selectedApp.value.packageName,
+                                            startTime = selectedTimeStart.value!!,
+                                            endTime = selectedTimeEnd.value!!,
+                                            isAlways = 0
+                                        )
+                                    )
+
+                                }, modifier = Modifier
                                     .padding(top = 16.dp, end = 8.dp)
                                     .align(Alignment.End)
                             ) {

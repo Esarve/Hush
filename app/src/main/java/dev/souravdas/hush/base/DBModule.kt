@@ -9,11 +9,13 @@ import dagger.hilt.components.SingletonComponent
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectedAppDao
 import dev.souravdas.hush.arch.SelectAppRepository
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DBModule {
     @Provides
+    @Singleton
     fun provideHushDB(@ApplicationContext context: Context): HushDB {
         return androidx.room.Room.databaseBuilder(
             context,
