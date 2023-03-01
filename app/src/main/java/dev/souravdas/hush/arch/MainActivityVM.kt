@@ -2,8 +2,6 @@ package dev.souravdas.hush.arch
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import androidx.lifecycle.MediatorLiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.souravdas.hush.HushApp
@@ -13,7 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalTime
+import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
@@ -24,6 +22,22 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
     companion object {
         const val APP_LIST = "APP_LIST"
         const val SELECTED_APP = "SELECTED_APP"
+    }
+
+    fun getDaysFromSelected(days: List<Int>):String{
+        Timber.d("Found Day list $days")
+        val daysOfWeek = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN") // days of week abbreviations
+        val selectedDays = StringBuilder()
+
+        for (i in days.indices) {
+            if (days[i] == 1) {
+                if (selectedDays.isNotEmpty()) {
+                    selectedDays.append(",")
+                }
+                selectedDays.append(daysOfWeek[i])
+            }
+        }
+        return selectedDays.toString()
     }
 
     fun addSelectedApp(selectedApp: SelectedApp) {

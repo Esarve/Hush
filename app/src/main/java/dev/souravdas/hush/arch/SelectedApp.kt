@@ -1,8 +1,6 @@
 package dev.souravdas.hush.arch
 
-import android.graphics.drawable.Drawable
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import org.threeten.bp.LocalTime
 
@@ -12,8 +10,10 @@ data class SelectedApp (
     val id: Int = 0,
     val appName: String,
     val packageName: String,
-    val startTime: LocalTime,
-    val endTime: LocalTime,
-    val isAlways: Int,
+    val hushType: HushType,
+    val durationInMinutes: Long?,
+    val muteDays: String?,
+    val startTime: LocalTime?,
+    val endTime: LocalTime?,
     val timeCreated: Long = System.currentTimeMillis(),
 )
