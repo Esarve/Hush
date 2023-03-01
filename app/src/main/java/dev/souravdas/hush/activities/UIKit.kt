@@ -2,28 +2,22 @@ package dev.souravdas.hush
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.keyframes
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.material3.TextButton
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Text
-
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -39,12 +33,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.maxkeppeker.sheets.core.models.base.Header
 import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
+import dev.souravdas.hush.arch.HushType
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectedApp
 import dev.souravdas.hush.arch.SelectedAppForList
@@ -134,11 +130,12 @@ class UIKit {
         val appList = viewModel.appListSF.collectAsState()
         viewModel.getInstalledApps()
 
-        BottomSheetScaffold(topBar = {
-            TopAppBar(title = {
-                Text(text = stringResource(id = R.string.app_name))
-            })
-        },
+        BottomSheetScaffold(
+            topBar = {
+                TopAppBar(title = {
+                    Text(text = stringResource(id = R.string.app_name))
+                })
+            },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
                 ExtendedFloatingActionButton(
@@ -171,9 +168,9 @@ class UIKit {
             sheetContentColor = colorResource(id = R.color.whiteBG),
             sheetGesturesEnabled = false
         ) {
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected)
-
-//            ShowSelectedApps()
+            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected) {
+                viewModel.getDaysFromSelected(it)
+            }
         }
     }
 
@@ -219,7 +216,8 @@ class UIKit {
     fun OpenAppSelectedDialog(
         openDialog: MutableState<Boolean>,
         selectedApp: MutableState<InstalledPackageInfo>,
-        onItemSelected: (SelectedApp) -> Unit = {}
+        onItemSelected: (SelectedApp) -> Unit = {},
+        chooseSelectedDays: (List<Int>) -> String = { "" }
     ) {
 
         if (openDialog.value) {
@@ -249,28 +247,36 @@ class UIKit {
                                 .wrapContentWidth()
                                 .wrapContentHeight()
                         ) {
-                            ApplicationItem(app = selectedApp.value)
-                            val selectedChipIndex = remember { mutableStateOf(0) }
-
-                            ShowChipRow(selectedChipIndex);
 
                             val selectedTimeStart = remember { mutableStateOf<LocalTime?>(null) }
                             val selectedTimeEnd = remember { mutableStateOf<LocalTime?>(null) }
-                            val selectedDays = remember { mutableStateOf(List(7) { false }) }
-                            val selectedDaysList = selectedDays.value
-                                .mapIndexed { index, isSelected -> if (isSelected) index else null }
-                                .filterNotNull()
+                            var selectedDayList: List<Int> = emptyList()
+                            var selectedDuration: Long = 0
+                            var husType: HushType by remember {
+                                mutableStateOf(HushType.ALWAYS)
+                            }
 
-                            when(selectedChipIndex.value){
-                                0 ->{}
-                                1 -> Column(
+                            ApplicationItem(app = selectedApp.value)
+
+                            ShowChipRow{
+                                husType = it
+                            };
+
+                            when (husType) {
+                                HushType.ALWAYS -> {}
+
+                                HushType.DAYS -> Column(
                                     modifier = Modifier
                                         .wrapContentWidth()
                                         .wrapContentHeight(unbounded = true)
                                         .padding(top = 8.dp, bottom = 8.dp)
                                 ) {
-                                    ShowDays(selectedDays)
-                                    Row(modifier = Modifier.padding(top=8.dp, bottom = 8.dp)) {
+                                    ShowDays{
+                                        selectedDayList = it
+                                            .mapIndexed { index, isSelected -> if (isSelected) index else null }
+                                            .filterNotNull()
+                                    }
+                                    Row(modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)) {
                                         TwoLineButton(
                                             txt1 = "Start Time", txt2 = "-- : --", selectedTimeStart
                                         )
@@ -281,7 +287,9 @@ class UIKit {
                                     }
                                 }
 
-                                2 -> DurationSelector()
+                                HushType.DURATION -> DurationSelector {
+                                    selectedDuration = it
+                                }
                             }
 
                             TextButton(modifier = Modifier
@@ -291,9 +299,11 @@ class UIKit {
                                         SelectedApp(
                                             appName = selectedApp.value.appName,
                                             packageName = selectedApp.value.packageName,
-                                            startTime = selectedTimeStart.value!!,
-                                            endTime = selectedTimeEnd.value!!,
-                                            isAlways = 0
+                                            hushType = husType,
+                                            muteDays = chooseSelectedDays.invoke(selectedDayList),
+                                            durationInMinutes = selectedDuration,
+                                            startTime = selectedTimeStart.value,
+                                            endTime = selectedTimeEnd.value
                                         )
                                     )
                                 }) {
@@ -308,7 +318,7 @@ class UIKit {
     }
 
     @Composable
-    fun DurationSelector() {
+    fun DurationSelector(getDuration: (Long) -> Unit = {}) {
         var duration by remember { mutableStateOf(0) }
         Row(
             modifier = Modifier
@@ -326,12 +336,16 @@ class UIKit {
                             duration -= 20
                         }
                     }
+                    getDuration.invoke(duration.toLong())
                 },
                 modifier = Modifier
                     .padding(end = 16.dp)
                     .align(Alignment.CenterVertically)
             ) {
-                Icon(painterResource(id = R.drawable.twotone_remove_circle_24), contentDescription = "Decrease duration by 10 minutes")
+                Icon(
+                    painterResource(id = R.drawable.twotone_remove_circle_24),
+                    contentDescription = "Decrease duration by 10 minutes"
+                )
             }
 
             val hours = duration / 60
@@ -352,67 +366,95 @@ class UIKit {
                     if (duration >= 60) {
                         duration += 30
                     }
+                    getDuration.invoke(duration.toLong())
                 },
                 modifier = Modifier
                     .padding(start = 16.dp)
                     .align(Alignment.CenterVertically)
             ) {
-                Icon(painterResource(id = R.drawable.twotone_add_circle_24), contentDescription = "Increase duration by 10 minutes")
+                Icon(
+                    painterResource(id = R.drawable.twotone_add_circle_24),
+                    contentDescription = "Increase duration by 10 minutes"
+                )
             }
         }
     }
 
 
     @Composable
-    fun ShowDays(selectedDays: MutableState<List<Boolean>>) {
+    fun ShowDays(onSelectedDays:(List<Boolean>) -> Unit = {}) {
+
+        var selectedDays by remember { mutableStateOf(List(7) { false }) }
+
         Row {
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[0],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(0, it) } }
+                checked = selectedDays[0],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(0, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[0], "SAT")
+                ShowDaysText(selectedDays[0], "SAT")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[1],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(1, it) } }
+                checked = selectedDays[1],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(1, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[1], "SUN")
+                ShowDaysText(selectedDays[1], "SUN")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[2],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(2, it) } }
+                checked = selectedDays[2],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(2, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[2], "MON")
+                ShowDaysText(selectedDays[2], "MON")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[3],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(3, it) } }
+                checked = selectedDays[3],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(3, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[3], "TUE")
+                ShowDaysText(selectedDays[3], "TUE")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[4],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(4, it) } }
+                checked = selectedDays[4],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(4, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[4], "WED")
+                ShowDaysText(selectedDays[4], "WED")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[5],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(5, it) } }
+                checked = selectedDays[5],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(5, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[5], "THU")
+                ShowDaysText(selectedDays[5], "THU")
             }
             FilledTonalIconToggleButton(
-                checked = selectedDays.value[6],
-                onCheckedChange = { selectedDays.value = selectedDays.value.toMutableList().apply { set(6, it) } }
+                checked = selectedDays[6],
+                onCheckedChange = {
+                    selectedDays = selectedDays.toMutableList().apply { set(6, it) }
+                    onSelectedDays.invoke(selectedDays)
+                }
             ) {
-                ShowDaysText(selectedDays.value[6], "FRI")
+                ShowDaysText(selectedDays[6], "FRI")
             }
         }
     }
 
     @Composable
-    fun ShowDaysText(selected:Boolean, title: String) {
+    fun ShowDaysText(selected: Boolean, title: String) {
         if (selected) {
             Text(text = title, fontWeight = FontWeight.Bold)
         } else {
@@ -422,12 +464,18 @@ class UIKit {
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun ShowChipRow(selectedChipIndex: MutableState<Int>) {
+    fun ShowChipRow(onHushTypeSelected: (HushType) -> Unit = {}) {
+
+        var selectedChipIndex by remember { mutableStateOf(HushType.ALWAYS) }
+
         Row(modifier = Modifier.fillMaxWidth()) {
             val chipModifier = Modifier.padding(start = 4.dp)
 
-            FilterChip(selected = selectedChipIndex.value == 0,
-                onClick = { selectedChipIndex.value = 0 },
+            FilterChip(selected = selectedChipIndex == HushType.ALWAYS,
+                onClick = {
+                    selectedChipIndex = HushType.ALWAYS
+                    onHushTypeSelected.invoke(HushType.ALWAYS)
+                },
                 label = { Text("Mute Always") },
                 modifier = chipModifier,
                 leadingIcon = {
@@ -436,7 +484,7 @@ class UIKit {
                             durationMillis = 100
                         })
                     ) {
-                        if (selectedChipIndex.value == 0) {
+                        if (selectedChipIndex == HushType.ALWAYS) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = null,
@@ -447,8 +495,11 @@ class UIKit {
 
                 })
 
-            FilterChip(selected = selectedChipIndex.value == 1,
-                onClick = { selectedChipIndex.value = 1 },
+            FilterChip(selected = selectedChipIndex == HushType.DURATION,
+                onClick = {
+                    selectedChipIndex = HushType.DURATION
+                    onHushTypeSelected.invoke(HushType.DURATION)
+                },
                 label = { Text("Duration") },
                 modifier = chipModifier,
                 leadingIcon = {
@@ -457,7 +508,7 @@ class UIKit {
                             durationMillis = 100
                         })
                     ) {
-                        if (selectedChipIndex.value == 1) {
+                        if (selectedChipIndex == HushType.DURATION) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = null,
@@ -468,8 +519,11 @@ class UIKit {
 
                 })
 
-            FilterChip(selected = selectedChipIndex.value == 2,
-                onClick = { selectedChipIndex.value = 2 },
+            FilterChip(selected = selectedChipIndex == HushType.DAYS,
+                onClick = {
+                    selectedChipIndex = HushType.DAYS
+                    onHushTypeSelected.invoke(HushType.DAYS)
+                },
                 label = { Text("Days") },
                 modifier = chipModifier,
                 leadingIcon = {
@@ -478,7 +532,7 @@ class UIKit {
                             durationMillis = 100
                         })
                     ) {
-                        if (selectedChipIndex.value == 2) {
+                        if (selectedChipIndex == HushType.DAYS) {
                             Icon(
                                 imageVector = Icons.Default.Done,
                                 contentDescription = null,
