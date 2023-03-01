@@ -170,23 +170,24 @@ class UIKit {
             sheetContentColor = colorResource(id = R.color.whiteBG),
             sheetGesturesEnabled = false
         ) {
-            viewModel.getSelectedApp()
-            val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
+            val selectedAppForList = viewModel.getSelectedApp().collectAsState()
 
             OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected) {
                 viewModel.getDaysFromSelected(it)
             }
 
-            ShowSelectedApps(items = selectedAppForList.value)
+            ShowSelectedApps {
+                selectedAppForList.value
+            }
         }
     }
 
     private @Composable
-    fun ShowSelectedApps(items: List<SelectedAppForList>) {
+    fun ShowSelectedApps(itemProvider:() -> (List<SelectedAppForList>)  = { emptyList<SelectedAppForList>() }) {
         Box(modifier = Modifier.padding(8.dp)) {
             LazyColumn() {
-                items(count = items.size, itemContent = {
-                    SelectedAppItem(items[it])
+                items(count = itemProvider.invoke().size, itemContent = {
+                    SelectedAppItem(itemProvider.invoke()[it])
                 })
             }
         }

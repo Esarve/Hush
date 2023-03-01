@@ -7,8 +7,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.InstalledPackageInfo
 import dev.souravdas.hush.activities.BaseViewModel
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -47,22 +45,20 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
         }
     }
 
-    fun getSelectedApp() {
+    fun getSelectedApp(): MutableStateFlow<List<SelectedAppForList>> {
         viewModelScope.launch {
-            coroutineScope {
-                val selectedApps = async { selectAppRepository.getSelectedApps() }.await()
+            val selectedApps = selectAppRepository.getSelectedApps()
+            val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
+            val selectedAppsForList = mutableListOf<SelectedAppForList>()
 
-                val installedApps = async { getPackageList().associateBy ({it.packageName},{it.icon}) }.await()
-
-                val selectedAppsForList = mutableListOf<SelectedAppForList>()
-
-                selectedApps.forEach {
-                    selectedAppsForList.add(SelectedAppForList(it, installedApps[it.packageName]!!))
-                }
-
-                selectedAppsSF.value = selectedAppsForList
+            selectedApps.forEach {
+                selectedAppsForList.add(SelectedAppForList(it, installedApps[it.packageName]!!))
             }
+
+            selectedAppsSF.value = selectedAppsForList
+            Timber.i("Get App list called")
         }
+        return selectedAppsSF
     }
 
     fun getInstalledApps() {
@@ -93,7 +89,10 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
     @Suppress("UNCHECKED_CAST")
     override fun onSuspendResponse(operationTag: String, resultResponse: Any) {
         when (operationTag) {
-            APP_LIST -> appListSF.value = resultResponse as List<InstalledPackageInfo>
+            APP_LIST -> {
+                appListSF.value = resultResponse as List<InstalledPackageInfo>
+                Timber.d("App list collected")
+            }
         }
     }
 
