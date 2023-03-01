@@ -19,7 +19,6 @@ import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.ui.theme.HushTheme
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -29,23 +28,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             //remember states or other shit BS
-            val sheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
-            val scope = rememberCoroutineScope()
             val showDialog = remember { mutableStateOf(false) }
             val selectedApp = remember { mutableStateOf(InstalledPackageInfo()) }
 
             HushTheme {
                 UIKit().MainActivityScreen(
-                    sheetState,
-                    scope,
                     showDialog,
                     selectedApp,
                     onItemClick = {
-                        scope.launch {
-                            sheetState.collapse()
-                            showDialog.value = true
-                            selectedApp.value = it
-                        }
+                        showDialog.value = true
+                        selectedApp.value = it
                     },
                     onItemSelected = {
                         viewModel.addSelectedApp(it)

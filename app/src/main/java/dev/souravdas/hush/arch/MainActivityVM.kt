@@ -15,8 +15,8 @@ import javax.inject.Inject
 @HiltViewModel
 class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository) : BaseViewModel() {
 
-    val appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
-    val selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
+    private val appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
+    private val selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -61,10 +61,11 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
         return selectedAppsSF
     }
 
-    fun getInstalledApps() {
+    fun getInstalledApps() : MutableStateFlow<List<InstalledPackageInfo>>{
         executedSuspendedCodeBlock(APP_LIST) {
             return@executedSuspendedCodeBlock getPackageList()
         }
+        return appListSF
     }
 
     private fun getPackageList(): List<InstalledPackageInfo> {

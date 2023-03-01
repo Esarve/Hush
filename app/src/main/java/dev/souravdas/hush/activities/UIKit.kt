@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -45,7 +46,6 @@ import dev.souravdas.hush.arch.HushType
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectedApp
 import dev.souravdas.hush.arch.SelectedAppForList
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
@@ -62,8 +62,8 @@ class UIKit {
     fun InstalledAppList(
         items: List<InstalledPackageInfo>,
         onItemClick: (InstalledPackageInfo) -> Unit = {},
-        modifier: Modifier = Modifier
     ) {
+        val modifier = Modifier.padding(4.dp)
         Box(
             modifier = modifier
                 .fillMaxHeight(fraction = 0.7f)
@@ -72,13 +72,31 @@ class UIKit {
             LazyColumn(
                 modifier = modifier
             ) {
-                items(count = items.size, itemContent = {
-                    ApplicationItem(
-                        app = items[it],
-                        clickListener = { onItemClick(items[it]) },
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
-                    )
-                })
+                itemsIndexed(items = items) { index, item ->
+                    Box(
+                        modifier = modifier.clickable(onClick = {
+                            onItemClick.invoke(item)
+                        })
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()
+                        ) {
+                            Image(
+                                painter = rememberDrawablePainter(
+                                    drawable = item.icon ?: ContextCompat.getDrawable(
+                                        LocalContext.current, R.mipmap.ic_launcher_round
+                                    )
+                                ), contentDescription = "appIcon", modifier = Modifier.size(40.dp)
+                            )
+
+                            Text(
+                                text = item.appName,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.padding(start = 4.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -113,8 +131,6 @@ class UIKit {
     @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
     @Composable
     fun MainActivityScreen(
-        sheetState: BottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed),
-        scope: CoroutineScope = rememberCoroutineScope(),
         openDialog: MutableState<Boolean> = remember { mutableStateOf(false) },
         selectedApp: MutableState<InstalledPackageInfo> = remember {
             mutableStateOf(
@@ -125,12 +141,10 @@ class UIKit {
         onItemClick: (InstalledPackageInfo) -> Unit = {},
         onItemSelected: (SelectedApp) -> Unit = {}
     ) {
-        val scaffoldState = rememberBottomSheetScaffoldState(
-            bottomSheetState = sheetState
-        )
-
-        val appList = viewModel.appListSF.collectAsState()
-        viewModel.getInstalledApps()
+        val sheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
+        val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
+        val scope = rememberCoroutineScope()
+        val appList = viewModel.getInstalledApps().collectAsState()
 
         BottomSheetScaffold(
             topBar = {
@@ -161,7 +175,12 @@ class UIKit {
             sheetContent = {
                 InstalledAppList(
                     items = appList.value,
-                    onItemClick = onItemClick,
+                    onItemClick = {
+                        scope.launch {
+                            sheetState.collapse()
+                        }
+                        return@InstalledAppList onItemClick.invoke(it)
+                    }
                 )
             },
             sheetPeekHeight = 0.dp,
@@ -172,7 +191,12 @@ class UIKit {
         ) {
             val selectedAppForList = viewModel.getSelectedApp().collectAsState()
 
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected) {
+            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
+                scope.launch {
+                    sheetState.collapse()
+                }
+                onItemSelected.invoke(it)
+            }) {
                 viewModel.getDaysFromSelected(it)
             }
 
@@ -182,8 +206,8 @@ class UIKit {
         }
     }
 
-    private @Composable
-    fun ShowSelectedApps(itemProvider:() -> (List<SelectedAppForList>)  = { emptyList<SelectedAppForList>() }) {
+    @Composable
+    fun ShowSelectedApps(itemProvider: () -> (List<SelectedAppForList>) = { emptyList<SelectedAppForList>() }) {
         Box(modifier = Modifier.padding(8.dp)) {
             LazyColumn() {
                 items(count = itemProvider.invoke().size, itemContent = {
@@ -249,7 +273,7 @@ class UIKit {
                 }
                 val buttonModifier = Modifier.padding(end = 4.dp)
 
-                AnimatedVisibility (showExtended){
+                AnimatedVisibility(showExtended) {
                     Row(
                         modifier = Modifier
                             .background(
