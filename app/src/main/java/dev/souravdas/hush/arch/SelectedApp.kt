@@ -3,6 +3,7 @@ package dev.souravdas.hush.arch
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import org.threeten.bp.LocalTime
+import java.io.Serializable
 
 @Entity("selected_app")
 data class SelectedApp (
@@ -16,4 +17,4 @@ data class SelectedApp (
     val startTime: LocalTime?,
     val endTime: LocalTime?,
     val timeCreated: Long = System.currentTimeMillis(),
-)
+): Serializable

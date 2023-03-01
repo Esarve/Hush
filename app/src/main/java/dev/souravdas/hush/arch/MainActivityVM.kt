@@ -18,6 +18,7 @@ import javax.inject.Inject
 class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository) : BaseViewModel() {
 
     val appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
+    val selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -58,12 +59,13 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
                 selectedApps.forEach {
                     selectedAppsForList.add(SelectedAppForList(it, installedApps[it.packageName]!!))
                 }
+
+                selectedAppsSF.value = selectedAppsForList
             }
         }
     }
 
     fun getInstalledApps() {
-
         executedSuspendedCodeBlock(APP_LIST) {
             return@executedSuspendedCodeBlock getPackageList()
         }

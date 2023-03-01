@@ -1,14 +1,14 @@
 package dev.souravdas.hush
 
 import android.graphics.drawable.Drawable
-import androidx.core.content.ContextCompat
+import java.io.Serializable
 
 /**
  * Created by Sourav
  * On 2/22/2023 8:47 PM
  * For Hush
  */
-class InstalledPackageInfo {
+class InstalledPackageInfo: Serializable {
     var appName: String = ""
     var packageName: String = ""
     var icon: Drawable? = null
