@@ -1,5 +1,6 @@
 package dev.souravdas.hush
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Image
@@ -49,6 +50,7 @@ import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
 import java.util.*
+import androidx.compose.material3.ExtendedFloatingActionButton as ExtendedFloatingActionButton1
 
 /**
  * Created by Sourav
@@ -138,7 +140,7 @@ class UIKit {
             },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
-                ExtendedFloatingActionButton(
+                ExtendedFloatingActionButton1(
                     onClick = {
                         scope.launch {
                             if (sheetState.isCollapsed) {
@@ -176,7 +178,6 @@ class UIKit {
             }
 
             ShowSelectedApps(items = selectedAppForList.value)
-
         }
     }
 
@@ -198,9 +199,6 @@ class UIKit {
         }
         Box(
             modifier = Modifier
-                .animateContentSize(keyframes {
-                    durationMillis = 300
-                })
                 .clickable {
                     showExtended = !showExtended
                 }
@@ -250,7 +248,7 @@ class UIKit {
                 }
                 val buttonModifier = Modifier.padding(end = 4.dp)
 
-                if (showExtended)
+                AnimatedVisibility (showExtended){
                     Row(
                         modifier = Modifier
                             .background(
@@ -277,6 +275,7 @@ class UIKit {
                             Text("Remove")
                         }
                     }
+                }
             }
 
         }

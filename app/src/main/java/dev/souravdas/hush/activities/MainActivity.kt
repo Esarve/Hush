@@ -49,14 +49,13 @@ class MainActivity : ComponentActivity() {
                     },
                     onItemSelected = {
                         viewModel.addSelectedApp(it)
+                        viewModel.getSelectedApp()
                         Toast.makeText(applicationContext, "APP ADDED", Toast.LENGTH_SHORT).show()
                         showDialog.value = false
                     }
                 )
             }
         }
-        updateStatusBarColor()
-        viewModel.getSelectedApp()
     }
 
     private fun updateStatusBarColor() {
