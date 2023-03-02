@@ -22,13 +22,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -79,7 +79,8 @@ class UIKit {
                         })
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = modifier.fillMaxWidth()
                         ) {
                             Image(
                                 painter = rememberDrawablePainter(
@@ -128,87 +129,106 @@ class UIKit {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+    @OptIn(
+        ExperimentalMaterial3Api::class,
+        ExperimentalLayoutApi::class
+    )
     @Composable
     fun MainActivityScreen(
-        openDialog: MutableState<Boolean> = remember { mutableStateOf(false) },
-        selectedApp: MutableState<InstalledPackageInfo> = remember {
+        viewModel: MainActivityVM = viewModel(),
+        onItemSelected: (SelectedApp) -> Unit = {}
+    ) {
+        val selectedApp: MutableState<InstalledPackageInfo> = remember {
             mutableStateOf(
                 InstalledPackageInfo()
             )
-        },
-        viewModel: MainActivityVM = viewModel(),
-        onItemClick: (InstalledPackageInfo) -> Unit = {},
-        onItemSelected: (SelectedApp) -> Unit = {}
-    ) {
-        val sheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed)
-        val scaffoldState = rememberBottomSheetScaffoldState(bottomSheetState = sheetState)
-        val scope = rememberCoroutineScope()
-        val appList = viewModel.getInstalledApps().collectAsState()
+        }
+        val openDialog: MutableState<Boolean> = remember { mutableStateOf(false) }
+        val openBottomSheet = rememberSaveable { mutableStateOf(false) }
+        val bottomSheetState = rememberSheetState(skipHalfExpanded = false)
 
-        BottomSheetScaffold(
+
+        Scaffold(
             topBar = {
-                TopAppBar(title = {
-                    Text(text = stringResource(id = R.string.app_name))
-                })
+                TopAppBar(
+                    title = { Text("Simple Scaffold Screen") }
+                )
             },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
                 ExtendedFloatingActionButton1(
                     onClick = {
-                        scope.launch {
-                            if (sheetState.isCollapsed) {
-                                sheetState.expand()
-                            } else {
-                                sheetState.collapse()
-                            }
-                        }
+                        openBottomSheet.value = !openBottomSheet.value
+                        viewModel.getInstalledApps()
                     },
                     containerColor = colorResource(id = R.color.color_coral),
                     contentColor = Color.White,
-                    modifier = Modifier.padding(bottom = 96.dp)
                 ) {
                     Text(text = "Select an APP")
                 }
             },
-            scaffoldState = scaffoldState,
-            sheetContent = {
-                InstalledAppList(
-                    items = appList.value,
-                    onItemClick = {
-                        scope.launch {
-                            sheetState.collapse()
-                        }
-                        return@InstalledAppList onItemClick.invoke(it)
-                    }
-                )
-            },
-            sheetPeekHeight = 0.dp,
-            sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            sheetBackgroundColor = colorResource(id = R.color.whiteBG),
-            sheetContentColor = colorResource(id = R.color.whiteBG),
-            sheetGesturesEnabled = false
-        ) {
-            val selectedAppForList = viewModel.getSelectedApp().collectAsState()
-
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
-                scope.launch {
-                    sheetState.collapse()
+            content = { innerPadding ->
+                val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
+                val modifier = Modifier.consumeWindowInsets(innerPadding)
+                OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
+                    openBottomSheet.value = false
+                    onItemSelected.invoke(it)
+                    openDialog.value = false
+                }) {
+                    viewModel.getDaysFromSelected(it)
                 }
-                onItemSelected.invoke(it)
-            }) {
-                viewModel.getDaysFromSelected(it)
+
+                ShowSelectedApps(modifier) {
+                    selectedAppForList.value
+                }
+
+                SelectAppBottomSheet(viewModel = viewModel, openBottomSheet, bottomSheetState){
+                    openDialog.value = true
+                    selectedApp.value = it
+                }
+            }
+        )
+
+//        =
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun SelectAppBottomSheet(
+        viewModel: MainActivityVM,
+        openBottomSheet: MutableState<Boolean>,
+        bottomSheetState: SheetState,
+        onItemClick: (InstalledPackageInfo) -> Unit
+    ) {
+
+        val scope = rememberCoroutineScope()
+        val list = viewModel.appListSF.collectAsState()
+        if (openBottomSheet.value) {
+            ModalBottomSheet(
+                onDismissRequest = { openBottomSheet.value = false },
+                sheetState = bottomSheetState,
+            ) {
+                InstalledAppList(items = list.value){ item ->
+                    scope.launch{
+                        bottomSheetState.hide()
+
+                    }.invokeOnCompletion {
+                        openBottomSheet.value = false
+                        onItemClick.invoke(item)
+                    }
+                }
             }
 
-            ShowSelectedApps {
-                selectedAppForList.value
-            }
         }
+
     }
 
     @Composable
-    fun ShowSelectedApps(itemProvider: () -> (List<SelectedAppForList>) = { emptyList<SelectedAppForList>() }) {
-        Box(modifier = Modifier.padding(8.dp)) {
+    fun ShowSelectedApps(
+        modifier: Modifier = Modifier,
+        itemProvider: () -> (List<SelectedAppForList>) = { emptyList() }
+    ) {
+        Box(modifier = modifier.padding(8.dp)) {
             LazyColumn() {
                 items(count = itemProvider.invoke().size, itemContent = {
                     SelectedAppItem(itemProvider.invoke()[it])

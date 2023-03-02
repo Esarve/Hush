@@ -23,27 +23,17 @@ import dev.souravdas.hush.ui.theme.HushTheme
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     val viewModel: MainActivityVM by viewModels()
-    @OptIn(ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            //remember states or other shit BS
-            val showDialog = remember { mutableStateOf(false) }
-            val selectedApp = remember { mutableStateOf(InstalledPackageInfo()) }
+            viewModel.getSelectedApp()
 
             HushTheme {
                 UIKit().MainActivityScreen(
-                    showDialog,
-                    selectedApp,
-                    onItemClick = {
-                        showDialog.value = true
-                        selectedApp.value = it
-                    },
                     onItemSelected = {
                         viewModel.addSelectedApp(it)
                         viewModel.getSelectedApp()
                         Toast.makeText(applicationContext, "APP ADDED", Toast.LENGTH_SHORT).show()
-                        showDialog.value = false
                     }
                 )
             }

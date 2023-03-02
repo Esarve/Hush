@@ -8,6 +8,7 @@ import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.InstalledPackageInfo
 import dev.souravdas.hush.activities.BaseViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
@@ -15,8 +16,11 @@ import javax.inject.Inject
 @HiltViewModel
 class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository) : BaseViewModel() {
 
-    private val appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
-    private val selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
+    private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
+    val appListSF = _appListSF.asStateFlow()
+
+    private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
+    val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -45,27 +49,25 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
         }
     }
 
-    fun getSelectedApp(): MutableStateFlow<List<SelectedAppForList>> {
+    fun getSelectedApp() {
         viewModelScope.launch {
             val selectedApps = selectAppRepository.getSelectedApps()
             val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
             val selectedAppsForList = mutableListOf<SelectedAppForList>()
 
-            selectedApps.forEach {
-                selectedAppsForList.add(SelectedAppForList(it, installedApps[it.packageName]!!))
+            for (app:SelectedApp in selectedApps){
+                selectedAppsForList.add(SelectedAppForList(app,installedApps[app.packageName]))
             }
 
-            selectedAppsSF.value = selectedAppsForList
+            _selectedAppsSF.value = selectedAppsForList
             Timber.i("Get App list called")
         }
-        return selectedAppsSF
     }
 
-    fun getInstalledApps() : MutableStateFlow<List<InstalledPackageInfo>>{
+    fun getInstalledApps() {
         executedSuspendedCodeBlock(APP_LIST) {
-            return@executedSuspendedCodeBlock getPackageList()
+            getPackageList()
         }
-        return appListSF
     }
 
     private fun getPackageList(): List<InstalledPackageInfo> {
@@ -91,7 +93,7 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
     override fun onSuspendResponse(operationTag: String, resultResponse: Any) {
         when (operationTag) {
             APP_LIST -> {
-                appListSF.value = resultResponse as List<InstalledPackageInfo>
+                _appListSF.value = resultResponse as List<InstalledPackageInfo>
                 Timber.d("App list collected")
             }
         }
