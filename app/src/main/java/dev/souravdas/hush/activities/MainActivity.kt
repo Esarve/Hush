@@ -17,6 +17,7 @@ import androidx.compose.runtime.*
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.ui.theme.HushTheme
 

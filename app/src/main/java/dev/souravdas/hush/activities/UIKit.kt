@@ -1,4 +1,4 @@
-package dev.souravdas.hush
+package dev.souravdas.hush.activities
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -22,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -42,6 +41,8 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
+import dev.souravdas.hush.InstalledPackageInfo
+import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.HushType
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectedApp
@@ -50,7 +51,6 @@ import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
 import java.util.*
-import androidx.compose.material3.ExtendedFloatingActionButton as ExtendedFloatingActionButton1
 
 /**
  * Created by Sourav
@@ -58,47 +58,91 @@ import androidx.compose.material3.ExtendedFloatingActionButton as ExtendedFloati
  * For Hush!
  */
 class UIKit {
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun InstalledAppList(
         items: List<InstalledPackageInfo>,
         onItemClick: (InstalledPackageInfo) -> Unit = {},
     ) {
+        val scope = rememberCoroutineScope()
         val modifier = Modifier.padding(4.dp)
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxHeight(fraction = 0.7f)
-                .padding(top = 48.dp)
         ) {
-            LazyColumn(
-                modifier = modifier
-            ) {
-                itemsIndexed(items = items) { index, item ->
-                    Box(
-                        modifier = modifier.clickable(onClick = {
-                            onItemClick.invoke(item)
-                        })
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = modifier.fillMaxWidth()
-                        ) {
-                            Image(
-                                painter = rememberDrawablePainter(
-                                    drawable = item.icon ?: ContextCompat.getDrawable(
-                                        LocalContext.current, R.mipmap.ic_launcher_round
-                                    )
-                                ), contentDescription = "appIcon", modifier = Modifier.size(40.dp)
-                            )
+            Column() {
+                Box(
+                    modifier = Modifier
+                        .height(56.dp)
+                        .fillMaxWidth()
+                        .background(color = colorResource(id = R.color.color_pale_green))
+                ) {
+                    Text(
+                        text = "Swipe up to Expand the sheet",
+                        modifier = Modifier.align(alignment = Alignment.Center),
+                        color = Color.White
+                    )
+                }
 
-                            Text(
-                                text = item.appName,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(start = 4.dp)
-                            )
-                        }
+                LazyColumn {
+                    itemsIndexed(items = items) { index, item ->
+
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                onItemClick.invoke(item)
+                                scope.launch {
+                                    //hide shit
+                                }
+                            },
+                            icon = {
+                                Image(
+                                    painter = rememberDrawablePainter(
+                                        drawable = item.icon ?: ContextCompat.getDrawable(
+                                            LocalContext.current, R.mipmap.ic_launcher_round
+                                        )
+                                    ),
+                                    contentDescription = "appIcon",
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = item.appName,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
+                        )
+//                        Box(
+//                            modifier = modifier.clickable(onClick = {
+//                                onItemClick.invoke(item)
+//                            })
+//                        ) {
+//                            Row(
+//                                verticalAlignment = Alignment.CenterVertically,
+//                                modifier = modifier.fillMaxWidth()
+//                            ) {
+//                                Image(
+//                                    painter = rememberDrawablePainter(
+//                                        drawable = item.icon ?: ContextCompat.getDrawable(
+//                                            LocalContext.current, R.mipmap.ic_launcher_round
+//                                        )
+//                                    ),
+//                                    contentDescription = "appIcon",
+//                                    modifier = Modifier.size(40.dp)
+//                                )
+//
+//                                Text(
+//                                    text = item.appName,
+//                                    textAlign = TextAlign.Center,
+//                                    modifier = Modifier.padding(start = 4.dp)
+//                                )
+//                            }
+//                        }
                     }
                 }
             }
+
         }
     }
 
@@ -131,7 +175,7 @@ class UIKit {
 
     @OptIn(
         ExperimentalMaterial3Api::class,
-        ExperimentalLayoutApi::class
+        ExperimentalLayoutApi::class, ExperimentalMaterialApi::class
     )
     @Composable
     fun MainActivityScreen(
@@ -144,83 +188,103 @@ class UIKit {
             )
         }
         val openDialog: MutableState<Boolean> = remember { mutableStateOf(false) }
-        val openBottomSheet = rememberSaveable { mutableStateOf(false) }
-        val bottomSheetState = rememberSheetState(skipHalfExpanded = false)
+        val scope = rememberCoroutineScope()
+        val scaffoldState = rememberBottomSheetScaffoldState()
+        val list = viewModel.appListSF.collectAsState()
 
-
-        Scaffold(
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = 56.dp,
             topBar = {
                 TopAppBar(
                     title = { Text("Simple Scaffold Screen") }
                 )
             },
-            floatingActionButtonPosition = FabPosition.End,
-            floatingActionButton = {
-                ExtendedFloatingActionButton1(
-                    onClick = {
-                        openBottomSheet.value = !openBottomSheet.value
-                        viewModel.getInstalledApps()
-                    },
-                    containerColor = colorResource(id = R.color.color_coral),
-                    contentColor = Color.White,
-                ) {
-                    Text(text = "Select an APP")
+            sheetContent = {
+                InstalledAppList(items = list.value) { item ->
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }.invokeOnCompletion {
+                        selectedApp.value = item
+                        openDialog.value = true
+                    }
                 }
             },
-            content = { innerPadding ->
-                val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
-                val modifier = Modifier.consumeWindowInsets(innerPadding)
-                OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
-                    openBottomSheet.value = false
-                    onItemSelected.invoke(it)
-                    openDialog.value = false
-                }) {
-                    viewModel.getDaysFromSelected(it)
+            floatingActionButtonPosition = FabPosition.End,
+            floatingActionButton = {
+                androidx.compose.material.FloatingActionButton(
+                    onClick = {
+                        scope.launch {
+                            if (scaffoldState.bottomSheetState.isExpanded) {
+                                scaffoldState.bottomSheetState.collapse()
+                            } else {
+                                scaffoldState.bottomSheetState.expand()
+                            }
+                        }
+                        viewModel.getInstalledApps()
+                    },
+                    contentColor = Color.White,
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.twotone_add_circle_24),
+                        contentDescription = "Add Icon"
+                    )
                 }
-
-                ShowSelectedApps(modifier) {
-                    selectedAppForList.value
-                }
-
-                SelectAppBottomSheet(viewModel = viewModel, openBottomSheet, bottomSheetState){
-                    openDialog.value = true
-                    selectedApp.value = it
-                }
+            },
+        ) {
+            val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
+            val modifier = Modifier.consumeWindowInsets(it)
+            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
+                onItemSelected.invoke(it)
+                openDialog.value = false
+            }) {
+                viewModel.getDaysFromSelected(it)
             }
-        )
 
-//        =
+            ShowSelectedApps(modifier) {
+                selectedAppForList.value
+            }
+        }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
+    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
     @Composable
     fun SelectAppBottomSheet(
         viewModel: MainActivityVM,
-        openBottomSheet: MutableState<Boolean>,
-        bottomSheetState: SheetState,
+        bottomSheetState: ModalBottomSheetState,
         onItemClick: (InstalledPackageInfo) -> Unit
     ) {
 
         val scope = rememberCoroutineScope()
         val list = viewModel.appListSF.collectAsState()
-        if (openBottomSheet.value) {
-            ModalBottomSheet(
-                onDismissRequest = { openBottomSheet.value = false },
-                sheetState = bottomSheetState,
-            ) {
-                InstalledAppList(items = list.value){ item ->
-                    scope.launch{
+        ModalBottomSheetLayout(
+            sheetState = bottomSheetState,
+            sheetContent = {
+                Text(
+                    text = "Select an APP",
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(8.dp)
+                )
+                InstalledAppList(items = list.value) { item ->
+                    scope.launch {
                         bottomSheetState.hide()
-
                     }.invokeOnCompletion {
-                        openBottomSheet.value = false
                         onItemClick.invoke(item)
                     }
                 }
-            }
+            },
+            sheetShape = RoundedCornerShape(16.dp),
+            scrimColor = Color.Black.copy(alpha = 0.5f),
+            sheetBackgroundColor = Color.White,
+        ) {
 
         }
+    }
 
+    @Composable
+    fun BottomSheetContent() {
+        // content of the bottom sheet
     }
 
     @Composable
@@ -237,7 +301,7 @@ class UIKit {
         }
     }
 
-    private @Composable
+    @Composable
     fun SelectedAppItem(selectedApp: SelectedAppForList) {
         var showExtended by remember {
             mutableStateOf(false)
