@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager
@@ -17,9 +18,11 @@ import androidx.compose.runtime.*
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
+import dev.souravdas.hush.activities.KeepAliveService
 import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.ui.theme.HushTheme
+import kotlinx.coroutines.flow.map
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -37,6 +40,20 @@ class MainActivity : ComponentActivity() {
                         Toast.makeText(applicationContext, "APP ADDED", Toast.LENGTH_SHORT).show()
                     }
                 )
+            }
+        }
+        checkService();
+        openNotificationAccessSettingsIfNeeded(this)
+    }
+
+    private fun checkService() {
+        viewModel.getHushStatusAsFlow().map { value ->
+            if (value){
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(Intent(this, KeepAliveService::class.java))
+                }else{
+                    startService(Intent(this, KeepAliveService::class.java))
+                }
             }
         }
     }

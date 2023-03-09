@@ -4,9 +4,12 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.InstalledPackageInfo
 import dev.souravdas.hush.activities.BaseViewModel
+import dev.souravdas.hush.activities.Constents
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +17,7 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository) : BaseViewModel() {
+class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository, val dataStoreManager: DataStoreManager) : BaseViewModel() {
 
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
@@ -86,7 +89,20 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
                 )
         }
         return packageNames
+    }
 
+    fun getHushStatusAsFlow(): Flow<Boolean> {
+        return dataStoreManager.getBooleanValueAsFlow(Constents.DS_HUSH_STATUS)
+    }
+
+    suspend fun getHusStatus():Boolean{
+        return dataStoreManager.getBooleanValue(Constents.DS_HUSH_STATUS)
+    }
+
+    fun setHushStatus(value: Boolean){
+        viewModelScope.launch {
+            dataStoreManager.writeBooleanData(Constents.DS_HUSH_STATUS,value)
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

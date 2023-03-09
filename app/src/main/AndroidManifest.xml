@@ -39,6 +39,11 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <service android:name=".activities.KeepAliveService"
+            android:foregroundServiceType="dataSync|location|mediaPlayback">
+        </service>
+
     </application>
 
 </manifest>

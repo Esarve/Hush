@@ -12,4 +12,5 @@
     <color name="color_pale_green">#FF94c9a9</color>
     <color name="color_light_yellow">#FFc6ecae</color>
     <color name="whiteBG">#ECECEC</color>
+    <color name="grayBG">#7C7C7C</color>
 </resources>

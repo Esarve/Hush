@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -83,8 +85,8 @@ class UIKit {
                         color = Color.White
                     )
                 }
-
-                LazyColumn {
+                val lazyListState = rememberLazyListState()
+                LazyColumn(state = lazyListState) {
                     itemsIndexed(items = items) { index, item ->
 
                         ListItem(
@@ -113,32 +115,6 @@ class UIKit {
                                 )
                             }
                         )
-//                        Box(
-//                            modifier = modifier.clickable(onClick = {
-//                                onItemClick.invoke(item)
-//                            })
-//                        ) {
-//                            Row(
-//                                verticalAlignment = Alignment.CenterVertically,
-//                                modifier = modifier.fillMaxWidth()
-//                            ) {
-//                                Image(
-//                                    painter = rememberDrawablePainter(
-//                                        drawable = item.icon ?: ContextCompat.getDrawable(
-//                                            LocalContext.current, R.mipmap.ic_launcher_round
-//                                        )
-//                                    ),
-//                                    contentDescription = "appIcon",
-//                                    modifier = Modifier.size(40.dp)
-//                                )
-//
-//                                Text(
-//                                    text = item.appName,
-//                                    textAlign = TextAlign.Center,
-//                                    modifier = Modifier.padding(start = 4.dp)
-//                                )
-//                            }
-//                        }
                     }
                 }
             }
@@ -191,13 +167,14 @@ class UIKit {
         val scope = rememberCoroutineScope()
         val scaffoldState = rememberBottomSheetScaffoldState()
         val list = viewModel.appListSF.collectAsState()
+        viewModel.getInstalledApps()
 
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             sheetPeekHeight = 56.dp,
             topBar = {
                 TopAppBar(
-                    title = { Text("Simple Scaffold Screen") }
+                    title = { Text(stringResource(id = R.string.app_name)) }
                 )
             },
             sheetContent = {
@@ -221,19 +198,20 @@ class UIKit {
                                 scaffoldState.bottomSheetState.expand()
                             }
                         }
-                        viewModel.getInstalledApps()
                     },
                     contentColor = Color.White,
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.twotone_add_circle_24),
+                        painter = painterResource(id = R.drawable.twotone_add_24),
                         contentDescription = "Add Icon"
                     )
                 }
             },
-        ) {
+        ) { it ->
             val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
             val modifier = Modifier.consumeWindowInsets(it)
+            val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
+
             OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
                 onItemSelected.invoke(it)
                 openDialog.value = false
@@ -241,50 +219,45 @@ class UIKit {
                 viewModel.getDaysFromSelected(it)
             }
 
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .background(
+                        color = if (hushStatus.value) colorResource(id = R.color.color_pale_green) else colorResource(
+                            R.color.grayBG
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .clickable {
+                        viewModel.setHushStatus(!hushStatus.value)
+                    }
+            )
+            {
+                Text(
+                    text = "Start Hush Service",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .align(alignment = Alignment.CenterVertically)
+                )
+
+                Switch(
+                    checked = hushStatus.value,
+                    onCheckedChange = { status ->
+                        viewModel.setHushStatus(status)
+                    },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+
             ShowSelectedApps(modifier) {
                 selectedAppForList.value
             }
         }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
-    @Composable
-    fun SelectAppBottomSheet(
-        viewModel: MainActivityVM,
-        bottomSheetState: ModalBottomSheetState,
-        onItemClick: (InstalledPackageInfo) -> Unit
-    ) {
-
-        val scope = rememberCoroutineScope()
-        val list = viewModel.appListSF.collectAsState()
-        ModalBottomSheetLayout(
-            sheetState = bottomSheetState,
-            sheetContent = {
-                Text(
-                    text = "Select an APP",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(8.dp)
-                )
-                InstalledAppList(items = list.value) { item ->
-                    scope.launch {
-                        bottomSheetState.hide()
-                    }.invokeOnCompletion {
-                        onItemClick.invoke(item)
-                    }
-                }
-            },
-            sheetShape = RoundedCornerShape(16.dp),
-            scrimColor = Color.Black.copy(alpha = 0.5f),
-            sheetBackgroundColor = Color.White,
-        ) {
-
-        }
-    }
-
-    @Composable
-    fun BottomSheetContent() {
-        // content of the bottom sheet
     }
 
     @Composable
@@ -687,30 +660,6 @@ class UIKit {
 
             })
         }
-    }
-
-    @Composable
-    private fun ShowTimeRangeText(
-        selectedTimeStart: MutableState<LocalTime?>,
-        selectedTimeEnd: MutableState<LocalTime?>,
-    ) {
-        if (selectedTimeStart.value != null && selectedTimeEnd.value != null) {
-            Timber.d("Text Can be shown")
-            Text(
-                modifier = Modifier.padding(8.dp),
-                fontSize = 12.sp,
-                text = "App will be silent from Today ${selectedTimeStart.value} to " + "${
-                    if (selectedTimeStart.value!!.isBefore(selectedTimeEnd.value)) "Today" else "Tomorrow"
-                } ${selectedTimeEnd.value}",
-            )
-        } else {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                fontSize = 12.sp,
-                text = "App will be silent from --:-- to --:--",
-            )
-        }
-
     }
 
     @Composable
