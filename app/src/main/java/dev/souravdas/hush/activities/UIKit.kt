@@ -1,5 +1,7 @@
 package dev.souravdas.hush.activities
 
+import android.widget.Toast
+import androidx.compose.foundation.lazy.items
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.keyframes
@@ -44,12 +46,13 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
-import dev.souravdas.hush.InstalledPackageInfo
+import dev.souravdas.hush.HushApp
+import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.R
-import dev.souravdas.hush.arch.HushType
+import dev.souravdas.hush.others.HushType
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.arch.SelectedApp
-import dev.souravdas.hush.arch.SelectedAppForList
+import dev.souravdas.hush.models.SelectedApp
+import dev.souravdas.hush.models.SelectedAppForList
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
@@ -209,7 +212,6 @@ class UIKit {
                 }
             },
         ) { it ->
-            val selectedAppForList = viewModel.selectedAppsSF.collectAsState()
             val modifier = Modifier.consumeWindowInsets(it)
             val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
 
@@ -256,28 +258,38 @@ class UIKit {
                 )
             }
 
-            ShowSelectedApps(modifier) {
-                selectedAppForList.value
-            }
+            ShowSelectedApps(
+                modifier, 
+                viewModel,
+                onRemoveClick = {
+                    viewModel.removeApp(it)
+                    Toast.makeText(HushApp.context, "Item Removed", Toast.LENGTH_SHORT).show()
+            })
         }
     }
 
     @Composable
     fun ShowSelectedApps(
         modifier: Modifier = Modifier,
-        itemProvider: () -> (List<SelectedAppForList>) = { emptyList() }
+        viewModel: MainActivityVM,
+        onRemoveClick: (SelectedApp) -> Unit
     ) {
+        viewModel.getSelectedApp()
+        val itemList = viewModel.selectedAppsSF.collectAsState(initial = emptyList())
         Box(modifier = modifier.padding(8.dp)) {
-            LazyColumn() {
-                items(count = itemProvider.invoke().size, itemContent = {
-                    SelectedAppItem(itemProvider.invoke()[it])
-                })
+            LazyColumn {
+                items(itemList.value) { app ->
+                    SelectedAppItem(selectedApp = app, onRemoveClick = onRemoveClick)
+                }
             }
         }
     }
 
     @Composable
-    fun SelectedAppItem(selectedApp: SelectedAppForList) {
+    fun SelectedAppItem(
+        selectedApp: SelectedAppForList,
+        onRemoveClick: (SelectedApp) -> Unit = {}
+    ) {
         var showExtended by remember {
             mutableStateOf(false)
         }
@@ -355,7 +367,7 @@ class UIKit {
 
                         TextButton(
                             modifier = buttonModifier,
-                            onClick = { /* Do something! */ }) {
+                            onClick = { onRemoveClick.invoke(selectedApp.selectedApp) }) {
                             Text("Remove")
                         }
                     }

@@ -6,18 +6,18 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
-import dev.souravdas.hush.InstalledPackageInfo
-import dev.souravdas.hush.activities.BaseViewModel
-import dev.souravdas.hush.activities.Constents
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import dev.souravdas.hush.models.InstalledPackageInfo
+import dev.souravdas.hush.base.BaseViewModel
+import dev.souravdas.hush.others.Constants
+import dev.souravdas.hush.models.SelectedApp
+import dev.souravdas.hush.models.SelectedAppForList
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepository, val dataStoreManager: DataStoreManager) : BaseViewModel() {
+class MainActivityVM @Inject constructor(private val selectAppRepository: SelectAppRepository, private val dataStoreManager: DataStoreManager) : BaseViewModel() {
 
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
@@ -54,16 +54,14 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
 
     fun getSelectedApp() {
         viewModelScope.launch {
-            val selectedApps = selectAppRepository.getSelectedApps()
-            val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
-            val selectedAppsForList = mutableListOf<SelectedAppForList>()
-
-            for (app:SelectedApp in selectedApps){
-                selectedAppsForList.add(SelectedAppForList(app,installedApps[app.packageName]))
+            selectAppRepository.getSelectedAppsWithFlow().map {
+                val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
+                it.map {selectedApp ->
+                    SelectedAppForList(selectedApp,installedApps[selectedApp.packageName])
+                }
+            }.collect{
+                _selectedAppsSF.value = it
             }
-
-            _selectedAppsSF.value = selectedAppsForList
-            Timber.i("Get App list called")
         }
     }
 
@@ -92,16 +90,16 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
     }
 
     fun getHushStatusAsFlow(): Flow<Boolean> {
-        return dataStoreManager.getBooleanValueAsFlow(Constents.DS_HUSH_STATUS)
+        return dataStoreManager.getBooleanValueAsFlow(Constants.DS_HUSH_STATUS)
     }
 
     suspend fun getHusStatus():Boolean{
-        return dataStoreManager.getBooleanValue(Constents.DS_HUSH_STATUS)
+        return dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
     }
 
     fun setHushStatus(value: Boolean){
         viewModelScope.launch {
-            dataStoreManager.writeBooleanData(Constents.DS_HUSH_STATUS,value)
+            dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS,value)
         }
     }
 
@@ -112,6 +110,12 @@ class MainActivityVM @Inject constructor(val selectAppRepository: SelectAppRepos
                 _appListSF.value = resultResponse as List<InstalledPackageInfo>
                 Timber.d("App list collected")
             }
+        }
+    }
+
+    fun removeApp(selectedApp: SelectedApp) {
+        executedSuspendedCodeBlock {
+            selectAppRepository.removedSelectedApp(selectedApp)
         }
     }
 

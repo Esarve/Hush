@@ -1,7 +1,8 @@
-package dev.souravdas.hush.arch
+package dev.souravdas.hush.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import dev.souravdas.hush.others.HushType
 import org.threeten.bp.LocalTime
 import java.io.Serializable
 

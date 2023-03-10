@@ -1,4 +1,4 @@
-package dev.souravdas.hush
+package dev.souravdas.hush.models
 
 import android.graphics.drawable.Drawable
 import java.io.Serializable

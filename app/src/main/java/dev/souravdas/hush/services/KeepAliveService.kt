@@ -1,4 +1,4 @@
-package dev.souravdas.hush.activities
+package dev.souravdas.hush.services
 
 import android.app.Notification
 import android.app.NotificationChannel

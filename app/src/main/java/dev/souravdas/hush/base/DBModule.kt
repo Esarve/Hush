@@ -6,6 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectAppRepository
 import dev.souravdas.hush.arch.SelectedAppDao
 import javax.inject.Singleton

@@ -1,4 +1,4 @@
-package dev.souravdas.hush.arch
+package dev.souravdas.hush.others
 
 import androidx.room.TypeConverter
 import org.threeten.bp.LocalTime

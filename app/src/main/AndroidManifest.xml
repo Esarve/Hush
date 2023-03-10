@@ -33,7 +33,7 @@
         </activity>
 
         <service
-            android:name=".HushService"
+            android:name=".services.HushService"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
             android:exported="true">
             <intent-filter>
@@ -41,7 +41,7 @@
             </intent-filter>
         </service>
 
-        <service android:name=".activities.KeepAliveService"
+        <service android:name=".services.KeepAliveService"
             android:foregroundServiceType="dataSync|location|mediaPlayback">
         </service>
 

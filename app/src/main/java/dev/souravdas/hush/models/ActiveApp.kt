@@ -1,7 +1,6 @@
-package dev.souravdas.hush.activities
+package dev.souravdas.hush.models
 
 import android.graphics.drawable.Drawable
-import dev.souravdas.hush.InstalledPackageInfo
 import java.time.LocalTime
 
 /**
