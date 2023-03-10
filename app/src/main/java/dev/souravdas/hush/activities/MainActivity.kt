@@ -20,10 +20,10 @@ import androidx.compose.runtime.*
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
+import dev.sourav.emptycompose.ui.theme.HushTheme
 import dev.souravdas.hush.activities.KeepAliveService
 import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.ui.theme.HushTheme
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
