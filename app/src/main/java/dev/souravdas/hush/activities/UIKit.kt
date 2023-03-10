@@ -156,7 +156,7 @@ class UIKit {
     @Composable
     fun MainActivityScreen(
         viewModel: MainActivityVM = viewModel(),
-        onItemSelected: (SelectedApp) -> Unit = {}
+        onItemSelected: (SelectedApp) -> Unit = {},
     ) {
         val selectedApp: MutableState<InstalledPackageInfo> = remember {
             mutableStateOf(
@@ -219,6 +219,7 @@ class UIKit {
                 viewModel.getDaysFromSelected(it)
             }
 
+//            <--- Hush Service Toggle ---->
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = modifier
@@ -712,16 +713,6 @@ class UIKit {
         )
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
-//    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
-    @Composable
-    fun MainActivityScreenPreview() {
-        MainActivityScreen(
-
-        )
-    }
-
-    //    @Preview
     @Composable
     fun OpenAppSelectedDialog() {
         val openState = remember {
