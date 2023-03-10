@@ -77,7 +77,7 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         val packageNames = mutableListOf<InstalledPackageInfo>()
 
         for (packageInfo in packages) {
-            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null)
+            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null )
                 packageNames.add(
                     InstalledPackageInfo(
                         packageInfo.loadLabel(pm).toString(),

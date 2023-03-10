@@ -467,7 +467,8 @@ class UIKit {
                                         muteDays = chooseSelectedDays.invoke(selectedDayList),
                                         durationInMinutes = selectedDuration,
                                         startTime = selectedTimeStart.value,
-                                        endTime = selectedTimeEnd.value
+                                        endTime = selectedTimeEnd.value,
+                                        timeUpdated = System.currentTimeMillis()
                                     )
                                 )
                             }) {
@@ -755,7 +756,8 @@ class UIKit {
                     "FRI,SAT",
                     null,
                     null,
-                    13212312313
+                    13212312313,
+                    3123123123
                 ), null
 
             )

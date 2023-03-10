@@ -18,4 +18,5 @@ data class SelectedApp (
     val startTime: LocalTime?,
     val endTime: LocalTime?,
     val timeCreated: Long = System.currentTimeMillis(),
+    val timeUpdated: Long
 ): Serializable
