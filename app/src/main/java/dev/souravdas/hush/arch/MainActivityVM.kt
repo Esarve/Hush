@@ -47,8 +47,12 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         return selectedDays.toString()
     }
 
-    fun addSelectedApp(selectedApp: SelectedApp) {
+    fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(selectedApp.packageName)
+            if (selectedAppFromDB != null) {
+                selectAppRepository.delete(selectedAppFromDB)
+            }
             selectAppRepository.addSelectedApp(selectedApp)
         }
     }

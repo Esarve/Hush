@@ -6,14 +6,14 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.arch.SelectAppRepository
 import dev.souravdas.hush.arch.SelectedAppDao
+import dev.souravdas.hush.others.Utils
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object DBModule {
+object Modules {
     @Provides
     @Singleton
     fun provideHushDB(@ApplicationContext context: Context): HushDB {
@@ -35,4 +35,8 @@ object DBModule {
         return SelectAppRepository(selectedAppDao)
     }
 
+    @Provides
+    fun provideUtils(): Utils{
+        return Utils()
+    }
 }

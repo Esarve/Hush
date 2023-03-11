@@ -55,17 +55,19 @@ import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
 import dev.souravdas.hush.others.Constants
+import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
 import java.util.*
+import javax.inject.Inject
 
 /**
  * Created by Sourav
  * On 2/22/2023 11:45 PM
  * For Hush!
  */
-class UIKit {
+class UIKit() {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun InstalledAppList(
@@ -328,21 +330,14 @@ class UIKit {
                             fontWeight = FontWeight.Bold
                         )
 
-                        Box(
-                            modifier = Modifier
-                                .padding(top = 4.dp, bottom = 4.dp)
-                                .background(
-                                    colorResource(id = R.color.color_lavender),
-                                    RoundedCornerShape(12.dp)
-                                )
+                        if (selectedApp.selectedApp.hushType == HushType.DURATION
+                            && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
                         ) {
-                            Text(
-                                text = selectedApp.selectedApp.hushType.toString(),
-                                modifier = Modifier.padding(
-                                    top = 2.dp, bottom = 2.dp, start = 6.dp, end = 6.dp
-                                ),
-                                color = Color.White,
-                                fontSize = 10.sp
+                            CustomChip(title = "Expired", color = Color.Red)
+                        } else {
+                            CustomChip(
+                                title = selectedApp.selectedApp.hushType.toString(),
+                                color = colorResource(id = R.color.color_lavender)
                             )
                         }
                     }
@@ -360,13 +355,13 @@ class UIKit {
                     ) {
                         TextButton(
                             modifier = buttonModifier,
-                            onClick = { /* Do something! */ }) {
+                            onClick = { Constants.showNIY() }) {
                             Text("Notification History")
                         }
 
                         TextButton(
                             modifier = buttonModifier,
-                            onClick = { /* Do something! */ }) {
+                            onClick = { Constants.showNIY() }) {
                             Text("Edit")
                         }
 
@@ -442,7 +437,10 @@ class UIKit {
                                     }
                                 )
 
-                                Text(text = "Log Notifications", Modifier.align(Alignment.CenterVertically))
+                                Text(
+                                    text = "Log Notifications",
+                                    Modifier.align(Alignment.CenterVertically)
+                                )
                             }
 
                             ShowChipRow {
@@ -616,6 +614,28 @@ class UIKit {
                 ShowDaysText(selectedDays[6], "FRI")
             }
         }
+    }
+
+    @Composable
+    fun CustomChip(title: String, color: Color, fontColor: Color = Color.White) {
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp, bottom = 4.dp)
+                .background(
+                    color = color,
+                    RoundedCornerShape(12.dp)
+                )
+        ) {
+            Text(
+                text = title,
+                modifier = Modifier.padding(
+                    top = 2.dp, bottom = 2.dp, start = 6.dp, end = 6.dp
+                ),
+                color = fontColor,
+                fontSize = 10.sp,
+            )
+        }
+
     }
 
     @Composable

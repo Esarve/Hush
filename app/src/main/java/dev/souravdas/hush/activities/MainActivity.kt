@@ -38,7 +38,7 @@ class MainActivity : ComponentActivity() {
             HushTheme {
                 UIKit().MainActivityScreen(
                     onItemSelected = {
-                        viewModel.addSelectedApp(it)
+                        viewModel.addOrUpdateSelectedApp(it)
                         viewModel.getSelectedApp()
                         Toast.makeText(applicationContext, "APP ADDED", Toast.LENGTH_SHORT).show()
                     }

@@ -8,9 +8,13 @@ import kotlinx.coroutines.flow.Flow
 interface SelectedAppDao {
     @Query("SELECT * FROM selected_app")
     suspend fun getAllSelectedApps(): List<SelectedApp>
-
+    @Query("SELECT * FROM selected_app WHERE packageName= :packageName ORDER BY id DESC LIMIT 1")
+    suspend fun getSelectedApp(packageName: String): SelectedApp?
     @Query("SELECT * FROM selected_app")
     fun getAllSelectedAppsRaw(): List<SelectedApp>
+
+    @Update(entity = SelectedApp::class)
+    suspend fun update(selectedApp: SelectedApp)
 
     @Query("SELECT * FROM selected_app")
     fun getAllSelectedAppsWithFlow(): Flow<List<SelectedApp>>
