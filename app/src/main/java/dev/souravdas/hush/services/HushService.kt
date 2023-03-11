@@ -48,14 +48,14 @@ class HushService : NotificationListenerService() {
         }
     }
 
-    override fun onNotificationPosted(sbn: StatusBarNotification) {
+    override fun onNotificationPosted(notification: StatusBarNotification) {
         scope.launch {
             isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
         }
         Timber.tag(TAG).i("Hush Service is running: $isServiceRunning")
         if (isServiceRunning) {
             Timber.tag(TAG).d("onNotificationPosted fired")
-            Timber.tag(TAG).d("Received notification from package: ${sbn.packageName}")
+            Timber.tag(TAG).d("Received notification from package: ${notification.packageName}")
 
             if (selectedApps.isEmpty()) {
                 Timber.tag(TAG).i("Selected app list empty")
@@ -66,23 +66,25 @@ class HushService : NotificationListenerService() {
                 var app: SelectedApp? = null
                 if (selectedApps.any {
                         app = it
-                        it.packageName == sbn.packageName
+                        it.packageName == notification.packageName
                     }) {
 
                     Timber.tag(TAG).i("App found on List. Cancelling notification")
 
                     when(app!!.hushType){
                         HushType.ALWAYS -> {
-                            cancelNotification(sbn.key)
+                            cancelNotification(notification.key)
                         }
                         HushType.DURATION -> {
                             if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!!* 60000){
-                                cancelNotification(sbn.key)
+                                cancelNotification(notification.key)
+                            }else{
+                                Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
                             }
                         }
                         HushType.DAYS -> {
                             Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
-                            cancelNotification(sbn.key)
+                            cancelNotification(notification.key)
                         }
                     }
 

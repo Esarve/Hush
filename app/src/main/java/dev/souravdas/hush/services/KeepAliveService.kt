@@ -50,13 +50,13 @@ class KeepAliveService : Service() {
             Notification.Builder(this, CHANNEL_ID)
                 .setContentTitle(getString(R.string.hush_service))
                 .setContentText(getString(R.string.hush_service_running))
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.app_icon_svg)
                 .build()
         } else {
             Notification.Builder(this)
                 .setContentTitle(getString(R.string.hush_service))
                 .setContentText(getString(R.string.hush_service_running))
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.app_icon_svg)
                 .build()
         }
 

@@ -18,6 +18,7 @@ import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.*
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +54,7 @@ import dev.souravdas.hush.others.HushType
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.others.Constants
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
@@ -215,10 +217,13 @@ class UIKit {
             val modifier = Modifier.consumeWindowInsets(it)
             val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
 
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected = {
-                onItemSelected.invoke(it)
-                openDialog.value = false
-            }) {
+            OpenAppSelectedDialog(
+                openDialog = openDialog,
+                selectedApp,
+                onItemSelected = {
+                    onItemSelected.invoke(it)
+                    openDialog.value = false
+                }) {
                 viewModel.getDaysFromSelected(it)
             }
 
@@ -259,12 +264,12 @@ class UIKit {
             }
 
             ShowSelectedApps(
-                modifier, 
+                modifier,
                 viewModel,
                 onRemoveClick = {
                     viewModel.removeApp(it)
                     Toast.makeText(HushApp.context, "Item Removed", Toast.LENGTH_SHORT).show()
-            })
+                })
         }
     }
 
@@ -416,6 +421,9 @@ class UIKit {
 
                             val selectedTimeStart = remember { mutableStateOf<LocalTime?>(null) }
                             val selectedTimeEnd = remember { mutableStateOf<LocalTime?>(null) }
+                            var logNotificationCb by remember {
+                                mutableStateOf(false) //This will be true in the fututre
+                            }
                             var selectedDayList: List<Int> = emptyList()
                             var selectedDuration: Long = 0
                             var husType: HushType by remember {
@@ -423,6 +431,19 @@ class UIKit {
                             }
 
                             ApplicationItem(app = selectedApp.value)
+
+                            Row(modifier = Modifier.padding(start = 4.dp)) {
+                                Checkbox(
+                                    checked = logNotificationCb,
+                                    onCheckedChange = {
+                                        logNotificationCb = !logNotificationCb
+
+                                        if (it) Constants.showNIY()
+                                    }
+                                )
+
+                                Text(text = "Log Notifications", Modifier.align(Alignment.CenterVertically))
+                            }
 
                             ShowChipRow {
                                 husType = it
@@ -658,6 +679,7 @@ class UIKit {
             FilterChip(selected = selectedChipIndex == HushType.DAYS, onClick = {
                 selectedChipIndex = HushType.DAYS
                 onHushTypeSelected.invoke(HushType.DAYS)
+                Constants.showNIY()
             }, label = { Text("Days") }, modifier = chipModifier, leadingIcon = {
                 Box(
                     Modifier.animateContentSize(keyframes {

@@ -5,6 +5,7 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
+import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.base.BaseViewModel
@@ -77,7 +78,7 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         val packageNames = mutableListOf<InstalledPackageInfo>()
 
         for (packageInfo in packages) {
-            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null )
+            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName!= HushApp.context.packageName )
                 packageNames.add(
                     InstalledPackageInfo(
                         packageInfo.loadLabel(pm).toString(),
