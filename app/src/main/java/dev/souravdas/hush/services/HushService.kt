@@ -1,9 +1,16 @@
 package dev.souravdas.hush.services
 
+import android.app.NotificationManager
+import android.content.Context
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
+import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.base.datastore.DataStoreManager
+import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.arch.SelectAppCache
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.Constants
@@ -24,6 +31,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class HushService : NotificationListenerService() {
 
+    private var isMute = false
     companion object {
         const val TAG = "HushService"
     }
@@ -34,6 +42,7 @@ class HushService : NotificationListenerService() {
 
     @Inject
     lateinit var selectAppCache: SelectAppCache
+
     @Inject
     lateinit var dataStoreManager: DataStoreManager
     private var selectedApps: List<SelectedApp> = emptyList()
@@ -48,6 +57,7 @@ class HushService : NotificationListenerService() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.M)
     override fun onNotificationPosted(notification: StatusBarNotification) {
         scope.launch {
             isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
@@ -68,17 +78,17 @@ class HushService : NotificationListenerService() {
                         app = it
                         it.packageName == notification.packageName
                     }) {
-
+                    enableDndModeFor4Seconds()
                     Timber.tag(TAG).i("App found on List. Cancelling notification")
 
-                    when(app!!.hushType){
+                    when (app!!.hushType) {
                         HushType.ALWAYS -> {
                             cancelNotification(notification.key)
                         }
                         HushType.DURATION -> {
-                            if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!!* 60000){
+                            if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!! * 60000) {
                                 cancelNotification(notification.key)
-                            }else{
+                            } else {
                                 Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
                             }
                         }
@@ -93,6 +103,21 @@ class HushService : NotificationListenerService() {
                 }
             }
 
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.M)
+    fun enableDndModeFor4Seconds() {
+        val notificationManager =
+            HushApp.context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (notificationManager.isNotificationPolicyAccessGranted && !isMute) {
+            val oldInterruptionFilter = notificationManager.currentInterruptionFilter
+            notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
+            isMute = true
+            Handler(Looper.getMainLooper()).postDelayed({
+                notificationManager.setInterruptionFilter(oldInterruptionFilter)
+                isMute = false
+            }, 4000) // 4 seconds
         }
     }
 }
