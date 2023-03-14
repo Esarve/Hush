@@ -12,11 +12,12 @@ data class SelectedApp (
     val id: Int = 0,
     val appName: String,
     val packageName: String,
-    val hushType: HushType,
-    val durationInMinutes: Long?,
-    val muteDays: String?,
-    val startTime: LocalTime?,
-    val endTime: LocalTime?,
+    val hushType: HushType? = null,
+    val durationInMinutes: Long? = null,
+    val muteDays: String? = null,
+    val startTime: LocalTime? = null,
+    val endTime: LocalTime? = null,
     val timeCreated: Long = System.currentTimeMillis(),
-    val timeUpdated: Long
+    val timeUpdated: Long,
+    val isComplete: Boolean
 ): Serializable

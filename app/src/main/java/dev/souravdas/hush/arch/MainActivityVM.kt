@@ -5,13 +5,12 @@ import android.content.pm.PackageManager
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
-import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.HushApp
-import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.base.BaseViewModel
-import dev.souravdas.hush.others.Constants
+import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.others.Constants
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -49,7 +48,7 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
 
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
-            val selectedAppFromDB = selectAppRepository.getSelectedApp(selectedApp.packageName)
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(selectedApp.packageName?:"")
             if (selectedAppFromDB != null) {
                 selectAppRepository.delete(selectedAppFromDB)
             }
@@ -63,7 +62,10 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
                 val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
                 it.map {selectedApp ->
                     SelectedAppForList(selectedApp,installedApps[selectedApp.packageName])
-                }
+                }.sortedWith(
+                    compareByDescending<SelectedAppForList> { it.selectedApp.isComplete }
+                        .thenByDescending { it.selectedApp.timeCreated }
+                )
             }.collect{
                 _selectedAppsSF.value = it
             }

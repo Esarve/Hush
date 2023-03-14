@@ -15,6 +15,7 @@ import dev.souravdas.hush.arch.SelectAppCache
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
+import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,6 +31,9 @@ import javax.inject.Inject
  */
 @AndroidEntryPoint
 class HushService : NotificationListenerService() {
+
+    @Inject
+    lateinit var utils: Utils
 
     private var isMute = false
     companion object {
@@ -94,8 +98,11 @@ class HushService : NotificationListenerService() {
                         }
                         HushType.DAYS -> {
                             Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
-                            cancelNotification(notification.key)
+                            if (app!!.muteDays == utils.getCurrentDayOfWeek()){
+                                cancelNotification(notification.key)
+                            }
                         }
+                        else -> {}
                     }
 
                 } else {
