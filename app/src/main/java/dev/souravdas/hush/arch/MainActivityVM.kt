@@ -37,23 +37,6 @@ class MainActivityVM @Inject constructor(
         const val SELECTED_APP = "SELECTED_APP"
     }
 
-    fun getDaysFromSelected(days: List<Int>): String {
-        Timber.d("Found Day list $days")
-        val daysOfWeek =
-            listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN") // days of week abbreviations
-        val selectedDays = StringBuilder()
-
-        for (i in days.indices) {
-            if (days[i] == 1) {
-                if (selectedDays.isNotEmpty()) {
-                    selectedDays.append(",")
-                }
-                selectedDays.append(daysOfWeek[i])
-            }
-        }
-        return selectedDays.toString()
-    }
-
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
             val selectedAppFromDB =
@@ -72,7 +55,7 @@ class MainActivityVM @Inject constructor(
                 it.map { selectedApp ->
                     SelectedAppForList(selectedApp, installedApps[selectedApp.packageName])
                 }.sortedWith(
-                    compareByDescending<SelectedAppForList> { it.selectedApp.isComplete }
+                    compareBy<SelectedAppForList> { it.selectedApp.isComplete }
                         .thenByDescending { it.selectedApp.timeCreated }
                 )
             }.collect {

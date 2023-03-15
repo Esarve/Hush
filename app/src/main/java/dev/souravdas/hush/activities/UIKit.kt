@@ -138,34 +138,6 @@ class UIKit()  {
         }
     }
 
-    @Composable
-    fun ApplicationItem(
-        app: SelectedAppForList, clickListener: () -> Unit = {}, modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier.clickable(onClick = clickListener)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()
-            ) {
-                Image(
-                    painter = rememberDrawablePainter(
-                        drawable = app.icon ?: ContextCompat.getDrawable(
-                            LocalContext.current, R.mipmap.ic_launcher_round
-                        )
-                    ), contentDescription = "appIcon", modifier = Modifier.size(56.dp)
-                )
-
-                Text(
-                    text = app.selectedApp.appName,
-                    textAlign = TextAlign.Center,
-                    fontSize = 24.sp,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
-            }
-        }
-    }
-
     @OptIn(
         ExperimentalMaterial3Api::class,
         ExperimentalLayoutApi::class, ExperimentalMaterialApi::class
@@ -175,11 +147,6 @@ class UIKit()  {
         viewModel: MainActivityVM = viewModel(),
         onItemSelected: (SelectedApp) -> Unit = {},
     ) {
-        val selectedApp: MutableState<InstalledPackageInfo> = remember {
-            mutableStateOf(
-                InstalledPackageInfo()
-            )
-        }
         val scope = rememberCoroutineScope()
         val scaffoldState = rememberBottomSheetScaffoldState()
         val list = viewModel.appListSF.collectAsState()
@@ -351,25 +318,26 @@ class UIKit()  {
                             .clip(CircleShape)
                     )
                     Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp)
+                        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp)
                     ) {
                         Text(
                             text = selectedApp.selectedApp.appName,
                             fontSize = 24.sp,
                         )
 
-                        Spacer(Modifier.weight(1f))
-
-                        if (selectedApp.selectedApp.hushType == HushType.DURATION
-                            && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
-                        ) {
-                            CustomChip(title = "Expired", color = Color.Red)
-                        } else {
-                            CustomChip(
-                                title = selectedApp.selectedApp.hushType.toString(),
-                                color = colorResource(id = R.color.color_lavender)
-                            )
+                        if(selectedApp.selectedApp.hushType != null){
+                            if (selectedApp.selectedApp.hushType == HushType.DURATION
+                                && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
+                            ) {
+                                CustomChip(title = "Expired", color = Color.Red)
+                            } else {
+                                CustomChip(
+                                    title = selectedApp.selectedApp.hushType.toString(),
+                                    color = colorResource(id = R.color.color_lavender)
+                                )
+                            }
                         }
                     }
 
@@ -785,7 +753,7 @@ class UIKit()  {
                     top = 2.dp, bottom = 2.dp, start = 6.dp, end = 6.dp
                 ),
                 color = fontColor,
-                fontSize = 10.sp,
+                fontSize = 12.sp,
             )
         }
 
@@ -852,7 +820,6 @@ class UIKit()  {
             FilterChip(selected = selectedChipIndex == HushType.DAYS, onClick = {
                 selectedChipIndex = HushType.DAYS
                 onHushTypeSelected.invoke(HushType.DAYS)
-                Constants.showNIY()
             }, label = { Text("Days") }, modifier = chipModifier, leadingIcon = {
                 Box(
                     Modifier.animateContentSize(keyframes {

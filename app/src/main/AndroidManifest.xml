@@ -41,6 +41,16 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name=".broadcastreceivers.BootReceiver"
+            android:enabled="true"
+            android:exported="false"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
         <service android:name=".services.KeepAliveService"
             android:foregroundServiceType="dataSync|location|mediaPlayback">
         </service>

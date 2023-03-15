@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import org.threeten.bp.LocalTime
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -98,9 +99,13 @@ class HushService : NotificationListenerService() {
                         }
                         HushType.DAYS -> {
                             Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
-                            if (app!!.muteDays == utils.getCurrentDayOfWeek()){
-                                cancelNotification(notification.key)
+                            val now = LocalTime.now()
+                            app?.let {
+                                if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(now) && it.endTime!!.isAfter(now))){
+                                    cancelNotification(notification.key)
+                                }
                             }
+
                         }
                         else -> {}
                     }
