@@ -151,4 +151,10 @@ class MainActivityVM @Inject constructor(
         }
     }
 
+    fun removeIncompleteApp() {
+        executedSuspendedCodeBlock {
+            selectAppRepository.removedIncompleteApps()
+        }
+    }
+
 }

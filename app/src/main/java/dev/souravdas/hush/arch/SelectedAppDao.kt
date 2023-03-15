@@ -24,4 +24,7 @@ interface SelectedAppDao {
 
     @Delete
     suspend fun delete(selectedApp: SelectedApp)
+
+    @Query("DELETE FROM selected_app WHERE isComplete= :isComplete")
+    suspend fun removeIncompleteApps(isComplete: Boolean)
 }

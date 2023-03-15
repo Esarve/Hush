@@ -36,13 +36,7 @@ class MainActivity : ComponentActivity() {
             viewModel.getSelectedApp()
 
             HushTheme {
-                UIKit().MainActivityScreen(
-                    onItemSelected = {
-                        viewModel.addOrUpdateSelectedApp(it)
-                        viewModel.getSelectedApp()
-                        Toast.makeText(applicationContext, "APP ADDED", Toast.LENGTH_SHORT).show()
-                    }
-                )
+                UIKit().MainActivityScreen()
             }
         }
 
@@ -85,6 +79,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onBackPressed() {
         if (doubleBackToExitPressedOnce) {
+            viewModel.removeIncompleteApp()
             finishAffinity()
             return
         }
@@ -93,6 +88,10 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
 
         Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 }
 

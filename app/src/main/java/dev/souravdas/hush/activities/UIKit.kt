@@ -91,7 +91,7 @@ class UIKit() {
                         .background(color = colorResource(id = R.color.color_pale_green))
                 ) {
                     Text(
-                        text = "Swipe up to Expand the sheet",
+                        text = "Swipe up to select an app",
                         modifier = Modifier.align(alignment = Alignment.Center),
                         color = Color.White
                     )
@@ -147,7 +147,6 @@ class UIKit() {
     @Composable
     fun MainActivityScreen(
         viewModel: MainActivityVM = viewModel(),
-        onItemSelected: (SelectedApp) -> Unit = {},
     ) {
         val scope = rememberCoroutineScope()
         val scaffoldState = rememberBottomSheetScaffoldState()

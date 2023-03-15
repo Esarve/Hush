@@ -18,6 +18,10 @@ class SelectAppRepository @Inject constructor(val selectedAppDao: SelectedAppDao
     suspend fun delete(selectedApp: SelectedApp) = selectedAppDao.delete(selectedApp)
     suspend fun removedSelectedApp(selectedApp: SelectedApp) = selectedAppDao.delete(selectedApp);
 
+    suspend fun removedIncompleteApps(){
+        selectedAppDao.removeIncompleteApps(false)
+    }
+
     fun getSelectedAppsWithFlow(): Flow<List<SelectedApp>> = selectedAppDao.getAllSelectedAppsWithFlow()
     fun getDBUpdatesWithFlow(): Flow<Unit> = selectedAppDao.getAllSelectedAppsWithFlow().map { }
 }
