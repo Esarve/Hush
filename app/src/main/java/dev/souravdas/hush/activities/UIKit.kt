@@ -380,7 +380,8 @@ class UIKit()  {
             val startEndTimePair by remember {
                 mutableStateOf(StartEndTime("00:00", "23:59"))
             }
-            var selectedDayList = emptyList<String?>()
+            var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
+
             var selectedDuration: Long = 0
             var husType: HushType by remember {
                 mutableStateOf(HushType.ALWAYS)
@@ -401,9 +402,49 @@ class UIKit()  {
                         .wrapContentHeight(unbounded = true)
                         .padding(top = 8.dp, bottom = 8.dp)
                 ) {
-                    ShowDays {
-                        selectedDayList = it
+
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp)
+                    ) {
+                        FilledTonalIconToggleButton(checked = !selectedDays[0].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(0, "SAT") }
+                        }) {
+                            ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[1].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(1, "SUN") }
+                        }) {
+                            ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[2].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(2, "MON") }
+                        }) {
+                            ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[3].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(3, "TUE") }
+                        }) {
+                            ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[4].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(4, "WED") }
+                        }) {
+                            ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[5].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(5, "THU") }
+                        }) {
+                            ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
+                        }
+                        FilledTonalIconToggleButton(checked = !selectedDays[6].isNullOrEmpty(), onCheckedChange = {
+                            selectedDays = selectedDays.toMutableList().apply { set(6, "FRI") }
+                        }) {
+                            ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
+                        }
                     }
+
                     Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
                         Text(
                             modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
@@ -509,7 +550,7 @@ class UIKit()  {
             }
 
             AddCancelButtonBar(onAddClick = {onConfigDone.invoke(
-                husType,startEndTimePair,selectedDuration,selectedDayList,logNotificationCb
+                husType,startEndTimePair,selectedDuration,selectedDays,logNotificationCb
             )}, onCancelClick = {
                 onCancelClick.invoke()
             })
@@ -676,61 +717,6 @@ class UIKit()  {
         }
     }
 
-
-    @Composable
-    fun ShowDays(onSelectedDays: (List<String?>) -> Unit = {}) {
-
-        var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
-
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, bottom = 8.dp)
-        ) {
-            FilledTonalIconToggleButton(checked = !selectedDays[0].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(0, "SAT") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[1].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(1, "SUN") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[2].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(2, "MON") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[3].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(3, "TUE") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[4].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(4, "WED") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[5].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(5, "THU") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
-            }
-            FilledTonalIconToggleButton(checked = !selectedDays[6].isNullOrEmpty(), onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(6, "FRI") }
-                onSelectedDays.invoke(selectedDays)
-            }) {
-                ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
-            }
-        }
-    }
 
     @Composable
     fun CustomChip(title: String, color: Color, fontColor: Color = Color.White) {
