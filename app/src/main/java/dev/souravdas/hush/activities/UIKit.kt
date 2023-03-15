@@ -70,7 +70,7 @@ import java.util.*
  * On 2/22/2023 11:45 PM
  * For Hush!
  */
-class UIKit()  {
+class UIKit() {
     @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun InstalledAppList(
@@ -250,7 +250,11 @@ class UIKit()  {
     ) {
         viewModel.getSelectedApp()
         val itemList = viewModel.selectedAppsSF.collectAsState(initial = emptyList())
-        LazyColumn(modifier = modifier.padding(8.dp).fillMaxSize()) {
+        LazyColumn(
+            modifier = modifier
+                .padding(8.dp)
+                .fillMaxSize()
+        ) {
             item {
                 Box(Modifier.padding(10.dp)) {
                     Text(text = "Ongoing Hush!", fontSize = 16.sp)
@@ -263,7 +267,14 @@ class UIKit()  {
                     selectedApp = app,
                     onRemoveClick = onRemoveClick,
                     onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
-                        viewModel.addConfigInSelectedApp(app.selectedApp,type,startEndTime,duration,daysList,logNotification)
+                        viewModel.addConfigInSelectedApp(
+                            app.selectedApp,
+                            type,
+                            startEndTime,
+                            duration,
+                            daysList,
+                            logNotification
+                        )
                     },
                     onCancelClick = {
                         viewModel.removeApp(app.selectedApp)
@@ -328,7 +339,7 @@ class UIKit()  {
                         fontSize = 24.sp,
                     )
 
-                    if(selectedApp.selectedApp.hushType != null){
+                    if (selectedApp.selectedApp.hushType != null) {
                         if (selectedApp.selectedApp.hushType == HushType.DURATION
                             && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
                         ) {
@@ -408,39 +419,83 @@ class UIKit()  {
                             .fillMaxWidth()
                             .padding(top = 8.dp, bottom = 8.dp)
                     ) {
-                        FilledTonalIconToggleButton(checked = !selectedDays[0].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(0, "SAT") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[0].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(1, if (it) "SAT" else null) }
+                            }) {
                             ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[1].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(1, "SUN") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[1].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(1, if (it) "SUN" else null) }
+                            }) {
                             ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[2].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(2, "MON") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[2].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(2, if (it) "MON" else null) }
+                            }) {
                             ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[3].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(3, "TUE") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[3].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(3, if (it) "TUE" else null) }
+                            }) {
                             ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[4].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(4, "WED") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[4].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(4, if (it) "WED" else null) }
+                            }) {
                             ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[5].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(5, "THU") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[5].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(5, if (it) "THU" else null) }
+                            }
+                        ) {
                             ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
                         }
-                        FilledTonalIconToggleButton(checked = !selectedDays[6].isNullOrEmpty(), onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList().apply { set(6, "FRI") }
-                        }) {
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[6].isNullOrEmpty(),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(6, if (it) "FRI" else null) }
+                            },
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            )
+                        ) {
                             ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
                         }
                     }
@@ -526,7 +581,10 @@ class UIKit()  {
 
             if (showTimePickerStart) {
                 ShowTimePicker(
-                    Pair(startEndTimePair.startTime.split(":")[0].toInt(), startEndTimePair.startTime.split(":")[1].toInt()),
+                    Pair(
+                        startEndTimePair.startTime.split(":")[0].toInt(),
+                        startEndTimePair.startTime.split(":")[1].toInt()
+                    ),
                     "Pick a start time",
                     {
                         Timber.d(it)
@@ -538,7 +596,10 @@ class UIKit()  {
             }
             if (showTimePickerEnd) {
                 ShowTimePicker(
-                    Pair(startEndTimePair.endTime.split(":")[0].toInt(), startEndTimePair.endTime.split(":")[1].toInt()),
+                    Pair(
+                        startEndTimePair.endTime.split(":")[0].toInt(),
+                        startEndTimePair.endTime.split(":")[1].toInt()
+                    ),
                     "Pick an end time",
                     {
                         Timber.d(it)
@@ -549,9 +610,11 @@ class UIKit()  {
                     })
             }
 
-            AddCancelButtonBar(onAddClick = {onConfigDone.invoke(
-                husType,startEndTimePair,selectedDuration,selectedDays,logNotificationCb
-            )}, onCancelClick = {
+            AddCancelButtonBar(onAddClick = {
+                onConfigDone.invoke(
+                    husType, startEndTimePair, selectedDuration, selectedDays, logNotificationCb
+                )
+            }, onCancelClick = {
                 onCancelClick.invoke()
             })
         }
@@ -584,7 +647,7 @@ class UIKit()  {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ShowTimePicker(
-        time: Pair<Int,Int>,
+        time: Pair<Int, Int>,
         title: String,
         onTimeSelected: (String) -> Unit,
         onDialogDismiss: () -> Unit
@@ -606,8 +669,15 @@ class UIKit()  {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Row(horizontalArrangement = Arrangement.Start, modifier = Modifier.fillMaxWidth()) {
-                        Text(text = title, fontSize = 24.sp, modifier = Modifier.padding(bottom = 16.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 24.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
                     }
                     TimeInput(state = state)
                     AddCancelButtonBar(onAddClick = {
@@ -745,7 +815,7 @@ class UIKit()  {
         if (selected) {
             Text(text = title, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         } else {
-            Text(text = title, fontSize = 12.sp)
+            Text(text = title, color = colorResource(id = R.color.switch_text_unselected), fontSize = 12.sp)
         }
     }
 
@@ -871,7 +941,8 @@ class UIKit()  {
             ),
         )
     }
-    fun get12HrsFrom24Hrs (inputTime: String):String{
+
+    fun get12HrsFrom24Hrs(inputTime: String): String {
         val timeFormat = SimpleDateFormat("hh:mm", Locale.getDefault())
         val time = timeFormat.parse(inputTime)
         val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())

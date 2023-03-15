@@ -13,4 +13,6 @@
     <color name="color_light_yellow">#FFc6ecae</color>
     <color name="whiteBG">#ECECEC</color>
     <color name="grayBG">#7C7C7C</color>
+    <color name="switch_container_gray">#FAFAFA</color>
+    <color name="switch_text_unselected">#212121</color>
 </resources>
