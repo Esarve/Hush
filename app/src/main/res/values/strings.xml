@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Hush!</string>
+
+    <string name="hush_service">Hush Service</string>
+    <string name="hush_service_running">Hush Service is running…</string>
+    <string name="keep_alive_service">Keep Alive Service</string>
+
 </resources>

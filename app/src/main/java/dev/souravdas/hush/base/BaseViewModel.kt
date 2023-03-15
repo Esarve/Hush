@@ -1,4 +1,4 @@
-package dev.souravdas.hush.activities
+package dev.souravdas.hush.base
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

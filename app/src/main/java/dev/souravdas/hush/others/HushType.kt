@@ -1,4 +1,4 @@
-package dev.souravdas.hush.arch
+package dev.souravdas.hush.others
 
 /**
  * Created by Sourav

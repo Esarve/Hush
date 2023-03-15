@@ -1,5 +1,8 @@
-package dev.souravdas.hush
+package dev.souravdas.hush.activities
 
+import android.annotation.SuppressLint
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Image
@@ -7,21 +10,28 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.FabPosition
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -29,9 +39,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
@@ -40,14 +51,18 @@ import com.maxkeppeker.sheets.core.models.base.rememberSheetState
 import com.maxkeppeler.sheets.clock.ClockDialog
 import com.maxkeppeler.sheets.clock.models.ClockConfig
 import com.maxkeppeler.sheets.clock.models.ClockSelection
-import dev.souravdas.hush.arch.HushType
+import dev.souravdas.hush.HushApp
+import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.arch.SelectedApp
-import dev.souravdas.hush.arch.SelectedAppForList
-import kotlinx.coroutines.CoroutineScope
+import dev.souravdas.hush.models.InstalledPackageInfo
+import dev.souravdas.hush.models.SelectedApp
+import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.others.Constants
+import dev.souravdas.hush.others.HushType
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
 import timber.log.Timber
+import java.text.SimpleDateFormat
 import java.util.*
 
 /**
@@ -55,264 +70,655 @@ import java.util.*
  * On 2/22/2023 11:45 PM
  * For Hush!
  */
-class UIKit {
+class UIKit() {
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun InstalledAppList(
         items: List<InstalledPackageInfo>,
-        onItemClick: (InstalledPackageInfo) -> Unit = {},
-        modifier: Modifier = Modifier
+        onItemClick: (SelectedApp) -> Unit = {},
     ) {
+        val scope = rememberCoroutineScope()
+        val modifier = Modifier.padding(4.dp)
         Box(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxHeight(fraction = 0.7f)
-                .padding(top = 48.dp)
         ) {
-            LazyColumn(
-                modifier = modifier
-            ) {
-                items(count = items.size, itemContent = {
-                    ApplicationItem(
-                        app = items[it],
-                        clickListener = { onItemClick(items[it]) },
-                        modifier = Modifier.padding(start = 8.dp, end = 8.dp, bottom = 8.dp)
+            Column() {
+                Box(
+                    modifier = Modifier
+                        .height(56.dp)
+                        .fillMaxWidth()
+                        .background(color = colorResource(id = R.color.color_pale_green))
+                ) {
+                    Text(
+                        text = "Swipe up to select an app",
+                        modifier = Modifier.align(alignment = Alignment.Center),
+                        color = Color.White
                     )
-                })
-            }
-        }
-    }
+                }
+                val lazyListState = rememberLazyListState()
+                LazyColumn(state = lazyListState) {
+                    itemsIndexed(items = items) { index, item ->
 
-    @Composable
-    fun ApplicationItem(
-        app: InstalledPackageInfo, clickListener: () -> Unit = {}, modifier: Modifier = Modifier
-    ) {
-        Box(
-            modifier = modifier.clickable(onClick = clickListener)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = modifier.fillMaxWidth()
-            ) {
-                Image(
-                    painter = rememberDrawablePainter(
-                        drawable = app.icon ?: ContextCompat.getDrawable(
-                            LocalContext.current, R.mipmap.ic_launcher_round
+                        ListItem(
+                            modifier = Modifier.clickable {
+                                scope.launch {
+                                    onItemClick.invoke(
+                                        SelectedApp(
+                                            appName = item.appName,
+                                            packageName = item.packageName,
+                                            timeUpdated = System.currentTimeMillis(),
+                                            isComplete = false
+                                        )
+                                    )
+                                }
+                            },
+                            icon = {
+                                Image(
+                                    painter = rememberDrawablePainter(
+                                        drawable = item.icon ?: ContextCompat.getDrawable(
+                                            LocalContext.current, R.mipmap.ic_launcher_round
+                                        )
+                                    ),
+                                    contentDescription = "appIcon",
+                                    modifier = Modifier.size(40.dp)
+                                )
+                            },
+                            text = {
+                                Text(
+                                    text = item.appName,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(start = 4.dp)
+                                )
+                            }
                         )
-                    ), contentDescription = "appIcon", modifier = Modifier.size(40.dp)
-                )
-
-                Text(
-                    text = app.appName,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(start = 4.dp)
-                )
+                    }
+                }
             }
+
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+    @OptIn(
+        ExperimentalMaterial3Api::class,
+        ExperimentalLayoutApi::class,
+        ExperimentalMaterialApi::class
+    )
     @Composable
     fun MainActivityScreen(
-        sheetState: BottomSheetState = rememberBottomSheetState(initialValue = BottomSheetValue.Collapsed),
-        scope: CoroutineScope = rememberCoroutineScope(),
-        openDialog: MutableState<Boolean> = remember { mutableStateOf(false) },
-        selectedApp: MutableState<InstalledPackageInfo> = remember {
-            mutableStateOf(
-                InstalledPackageInfo()
-            )
-        },
         viewModel: MainActivityVM = viewModel(),
-        onItemClick: (InstalledPackageInfo) -> Unit = {},
-        onItemSelected: (SelectedApp) -> Unit = {}
     ) {
-        val scaffoldState = rememberBottomSheetScaffoldState(
-            bottomSheetState = sheetState
-        )
-
-        val appList = viewModel.appListSF.collectAsState()
+        val scope = rememberCoroutineScope()
+        val scaffoldState = rememberBottomSheetScaffoldState()
+        val list = viewModel.appListSF.collectAsState()
         viewModel.getInstalledApps()
 
         BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            sheetPeekHeight = 56.dp,
             topBar = {
-                TopAppBar(title = {
-                    Text(text = stringResource(id = R.string.app_name))
-                })
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.app_name)) }
+                )
+            },
+            sheetContent = {
+                InstalledAppList(items = list.value) { item ->
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }.invokeOnCompletion {
+                        // TODO: insert here
+                        viewModel.addOrUpdateSelectedApp(item)
+                    }
+                }
             },
             floatingActionButtonPosition = FabPosition.End,
             floatingActionButton = {
-                ExtendedFloatingActionButton(
+                androidx.compose.material.FloatingActionButton(
                     onClick = {
                         scope.launch {
-                            if (sheetState.isCollapsed) {
-                                sheetState.expand()
+                            if (scaffoldState.bottomSheetState.isExpanded) {
+                                scaffoldState.bottomSheetState.collapse()
                             } else {
-                                sheetState.collapse()
+                                scaffoldState.bottomSheetState.expand()
                             }
                         }
                     },
-                    containerColor = colorResource(id = R.color.color_coral),
                     contentColor = Color.White,
-                    modifier = Modifier.padding(bottom = 96.dp)
                 ) {
-                    Text(text = "Select an APP")
+                    Icon(
+                        painter = painterResource(id = R.drawable.twotone_add_24),
+                        contentDescription = "Add Icon"
+                    )
                 }
             },
-            scaffoldState = scaffoldState,
-            sheetContent = {
-                InstalledAppList(
-                    items = appList.value,
-                    onItemClick = onItemClick,
-                )
-            },
-            sheetPeekHeight = 0.dp,
-            sheetShape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            sheetBackgroundColor = colorResource(id = R.color.whiteBG),
-            sheetContentColor = colorResource(id = R.color.whiteBG),
-            sheetGesturesEnabled = false
-        ) {
-            OpenAppSelectedDialog(openDialog = openDialog, selectedApp, onItemSelected) {
-                viewModel.getDaysFromSelected(it)
-            }
-        }
-    }
+        ) { it ->
+            val modifier = Modifier.consumeWindowInsets(it)
+            val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
 
-    private @Composable
-    fun ShowSelectedApps(items: List<SelectedAppForList>) {
-        Box(modifier = Modifier.padding(8.dp)) {
-            LazyColumn() {
-                items(count = items.size, itemContent = {
-                    SelectedAppList(items[it])
-                })
-            }
-        }
-    }
-
-    private @Composable
-    fun SelectedAppList(selectedApp: SelectedAppForList) {
-        Box(modifier = Modifier.padding(8.dp)) {
+//            <--- Hush Service Toggle ---->
             Row(
-                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+                    .background(
+                        color = if (hushStatus.value) colorResource(id = R.color.color_pale_green) else colorResource(
+                            R.color.grayBG
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    .clickable {
+                        viewModel.setHushStatus(!hushStatus.value)
+                    }
+            )
+            {
+                Text(
+                    text = "Start Hush Service",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .align(alignment = Alignment.CenterVertically)
+                )
+
+                Switch(
+                    checked = hushStatus.value,
+                    onCheckedChange = { status ->
+                        viewModel.setHushStatus(status)
+                    },
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+            }
+
+            ShowSelectedApps(
+                modifier,
+                viewModel,
+                onRemoveClick = {
+                    viewModel.removeApp(it)
+                    Toast.makeText(HushApp.context, "Item Removed", Toast.LENGTH_SHORT).show()
+                })
+        }
+    }
+
+    @Composable
+    fun ShowSelectedApps(
+        modifier: Modifier = Modifier,
+        viewModel: MainActivityVM,
+        onRemoveClick: (SelectedApp) -> Unit
+    ) {
+        viewModel.getSelectedApp()
+        val itemList = viewModel.selectedAppsSF.collectAsState(initial = emptyList())
+        LazyColumn(
+            modifier = modifier
+                .padding(8.dp)
+                .fillMaxSize()
+        ) {
+            item {
+                Box(Modifier.padding(10.dp)) {
+                    Text(text = "Ongoing Hush!", fontSize = 16.sp)
+                }
+            }
+            items(itemList.value, key = {
+                it.selectedApp.id
+            }) { app ->
+                SelectedAppItem(
+                    selectedApp = app,
+                    onRemoveClick = onRemoveClick,
+                    onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
+                        viewModel.addConfigInSelectedApp(
+                            app.selectedApp,
+                            type,
+                            startEndTime,
+                            duration,
+                            daysList,
+                            logNotification
+                        )
+                    },
+                    onCancelClick = {
+                        viewModel.removeApp(app.selectedApp)
+                    }
+                )
+            }
+        }
+    }
+
+    @Composable
+    fun SelectedAppItem(
+        selectedApp: SelectedAppForList,
+        onRemoveClick: (SelectedApp) -> Unit = {},
+        onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
+        onCancelClick: () -> Unit
+    ) {
+        var showOptions by remember {
+            mutableStateOf(false)
+        }
+        var showInitConfig by remember {
+            mutableStateOf(false)
+        }
+
+        showInitConfig = !selectedApp.selectedApp.isComplete
+
+        Column(modifier = Modifier
+            .fillMaxHeight()
+            .clickable {
+                if (!showInitConfig) {
+                    showOptions = !showOptions
+                }
+            }
+            .padding(bottom = 10.dp)
+            .background(
+                colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp)
+            )
+            .padding(top = 8.dp, bottom = 8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             ) {
                 Image(
                     painter = rememberDrawablePainter(
                         drawable = selectedApp.icon
-                    ), contentDescription = "appIcon", modifier = Modifier.size(40.dp)
+                    ),
+                    contentDescription = "appIcon",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
                 )
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 8.dp, end = 8.dp)
+                ) {
+                    Text(
+                        text = selectedApp.selectedApp.appName,
+                        fontSize = 24.sp,
+                    )
 
-                Column() {
-                    Row() {
-                        Text(
-                            text = selectedApp.selectedApp.appName,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-
+                    if (selectedApp.selectedApp.hushType != null) {
+                        if (selectedApp.selectedApp.hushType == HushType.DURATION
+                            && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
+                        ) {
+                            CustomChip(title = "Expired", color = Color.Red)
+                        } else {
+                            CustomChip(
+                                title = selectedApp.selectedApp.hushType.toString(),
+                                color = colorResource(id = R.color.color_lavender)
+                            )
+                        }
                     }
                 }
+
+            }
+            val buttonModifier = Modifier.padding(end = 4.dp)
+
+            AnimatedVisibility(showInitConfig) {
+                ShowInitConfig(onConfigDone, onCancelClick)
+            }
+
+            AnimatedVisibility(showOptions) {
+                ShowOptions(buttonModifier, onRemoveClick, selectedApp)
             }
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun OpenAppSelectedDialog(
-        openDialog: MutableState<Boolean>,
-        selectedApp: MutableState<InstalledPackageInfo>,
-        onItemSelected: (SelectedApp) -> Unit = {},
-        chooseSelectedDays: (List<Int>) -> String = { "" }
+    fun ShowInitConfig(
+        onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
+        onCancelClick: () -> Unit
     ) {
+        Column(
+            modifier = Modifier
+                .padding(start = 8.dp, end = 8.dp)
+                .wrapContentWidth()
+        ) {
+            var showTimePickerStart by remember {
+                mutableStateOf(false)
+            }
 
-        if (openDialog.value) {
-            AlertDialog(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .wrapContentWidth(),
-                onDismissRequest = {
-                    openDialog.value = false
-                },
-            ) {
-                Surface(
+            var showTimePickerEnd by remember {
+                mutableStateOf(false)
+            }
+
+            var logNotificationCb by remember {
+                mutableStateOf(false) //This will be true in the fututre
+            }
+            val startEndTimePair by remember {
+                mutableStateOf(StartEndTime("00:00", "23:59"))
+            }
+            var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
+
+            var selectedDuration: Long = 0
+            var husType: HushType by remember {
+                mutableStateOf(HushType.ALWAYS)
+            }
+
+            ShowChipRow {
+                husType = it
+            };
+
+            AnimatedVisibility(visible = husType == HushType.ALWAYS) {
+                // default
+            }
+
+            AnimatedVisibility(visible = husType == HushType.DAYS) {
+                Column(
                     modifier = Modifier
                         .wrapContentWidth()
-                        .wrapContentHeight(),
-                    shape = MaterialTheme.shapes.large
+                        .wrapContentHeight(unbounded = true)
+                        .padding(top = 8.dp, bottom = 8.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .wrapContentHeight()
-                            .padding(16.dp)
+
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp, bottom = 8.dp)
                     ) {
-
-                        Column(
-                            modifier = Modifier
-                                .wrapContentWidth()
-                                .wrapContentHeight()
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[0].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(1, if (it) "SAT" else null) }
+                            }) {
+                            ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[1].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(1, if (it) "SUN" else null) }
+                            }) {
+                            ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[2].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(2, if (it) "MON" else null) }
+                            }) {
+                            ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[3].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(3, if (it) "TUE" else null) }
+                            }) {
+                            ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[4].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(4, if (it) "WED" else null) }
+                            }) {
+                            ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[5].isNullOrEmpty(),
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            ),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(5, if (it) "THU" else null) }
+                            }
                         ) {
+                            ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
+                        }
+                        FilledTonalIconToggleButton(
+                            checked = !selectedDays[6].isNullOrEmpty(),
+                            onCheckedChange = {
+                                selectedDays = selectedDays.toMutableList().apply { set(6, if (it) "FRI" else null) }
+                            },
+                            colors = IconButtonDefaults.filledIconToggleButtonColors(
+                                containerColor = colorResource(id = R.color.switch_container_gray),
+                                checkedContainerColor = colorResource(id = R.color.color_lavender)
+                            )
+                        ) {
+                            ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
+                        }
+                    }
 
-                            val selectedTimeStart = remember { mutableStateOf<LocalTime?>(null) }
-                            val selectedTimeEnd = remember { mutableStateOf<LocalTime?>(null) }
-                            var selectedDayList: List<Int> = emptyList()
-                            var selectedDuration: Long = 0
-                            var husType: HushType by remember {
-                                mutableStateOf(HushType.ALWAYS)
-                            }
-
-                            ApplicationItem(app = selectedApp.value)
-
-                            ShowChipRow{
-                                husType = it
-                            };
-
-                            when (husType) {
-                                HushType.ALWAYS -> {}
-
-                                HushType.DAYS -> Column(
-                                    modifier = Modifier
-                                        .wrapContentWidth()
-                                        .wrapContentHeight(unbounded = true)
-                                        .padding(top = 8.dp, bottom = 8.dp)
-                                ) {
-                                    ShowDays{
-                                        selectedDayList = it
-                                            .mapIndexed { index, isSelected -> if (isSelected) index else null }
-                                            .filterNotNull()
-                                    }
-                                    Row(modifier = Modifier.padding(top = 8.dp, bottom = 8.dp)) {
-                                        TwoLineButton(
-                                            txt1 = "Start Time", txt2 = "-- : --", selectedTimeStart
-                                        )
-                                        Spacer(modifier = Modifier.weight(0.05f))
-                                        TwoLineButton(
-                                            txt1 = "End Time", txt2 = "-- : --", selectedTimeEnd
-                                        )
-                                    }
+                    Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
+                        Text(
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                            text = "Start Time"
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showTimePickerStart = true
                                 }
-
-                                HushType.DURATION -> DurationSelector {
-                                    selectedDuration = it
+                        ) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit",
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                            Text(
+                                text = get12HrsFrom24Hrs(startEndTimePair.startTime),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 24.dp)
+                            )
+                        }
+                        Text(
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                            text = "End Time"
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showTimePickerEnd = true
                                 }
-                            }
-
-                            TextButton(modifier = Modifier
-                                .align(Alignment.End),
-                                onClick = {
-                                    onItemSelected.invoke(
-                                        SelectedApp(
-                                            appName = selectedApp.value.appName,
-                                            packageName = selectedApp.value.packageName,
-                                            hushType = husType,
-                                            muteDays = chooseSelectedDays.invoke(selectedDayList),
-                                            durationInMinutes = selectedDuration,
-                                            startTime = selectedTimeStart.value,
-                                            endTime = selectedTimeEnd.value
-                                        )
-                                    )
-                                }) {
-                                Text(text = "Add")
-                            }
-
+                        ) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = get12HrsFrom24Hrs(startEndTimePair.endTime),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 24.dp)
+                            )
                         }
                     }
                 }
+            }
+
+            AnimatedVisibility(visible = husType == HushType.DURATION) {
+                DurationSelector {
+                    selectedDuration = it
+                }
+            }
+
+            Row(modifier = Modifier.padding(8.dp)) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                    Checkbox(
+                        checked = logNotificationCb,
+                        onCheckedChange = {
+                            logNotificationCb = !logNotificationCb
+
+                            if (it) Constants.showNIY()
+                        }
+                    )
+                }
+                Text(
+                    text = "Log Notifications",
+                    Modifier
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 8.dp)
+                )
+            }
+
+            if (showTimePickerStart) {
+                ShowTimePicker(
+                    Pair(
+                        startEndTimePair.startTime.split(":")[0].toInt(),
+                        startEndTimePair.startTime.split(":")[1].toInt()
+                    ),
+                    "Pick a start time",
+                    {
+                        Timber.d(it)
+                        startEndTimePair.startTime = it
+                        showTimePickerStart = false
+                    }, {
+                        showTimePickerStart = false
+                    })
+            }
+            if (showTimePickerEnd) {
+                ShowTimePicker(
+                    Pair(
+                        startEndTimePair.endTime.split(":")[0].toInt(),
+                        startEndTimePair.endTime.split(":")[1].toInt()
+                    ),
+                    "Pick an end time",
+                    {
+                        Timber.d(it)
+                        startEndTimePair.endTime = it
+                        showTimePickerEnd = false
+                    }, {
+                        showTimePickerEnd = false
+                    })
+            }
+
+            AddCancelButtonBar(onAddClick = {
+                onConfigDone.invoke(
+                    husType, startEndTimePair, selectedDuration, selectedDays, logNotificationCb
+                )
+            }, onCancelClick = {
+                onCancelClick.invoke()
+            })
+        }
+
+    }
+
+    @Composable
+    fun AddCancelButtonBar(
+        onAddClick: () -> Unit,
+        onCancelClick: () -> Unit = {}
+    ) {
+        Row() {
+            val modifier =
+                Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+            Spacer(modifier = Modifier.weight(1f))
+
+            Text(text = "Cancel", modifier = modifier
+                .clickable {
+                    onCancelClick.invoke()
+                })
+
+            Text(text = "Add", fontWeight = FontWeight.Medium,
+                modifier = modifier
+                    .clickable {
+                        onAddClick.invoke()
+                    })
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun ShowTimePicker(
+        time: Pair<Int, Int>,
+        title: String,
+        onTimeSelected: (String) -> Unit,
+        onDialogDismiss: () -> Unit
+    ) {
+        val state = rememberTimePickerState(time.first, time.second)
+
+        Dialog(
+            onDismissRequest = { onDialogDismiss.invoke() }, properties = DialogProperties(
+                dismissOnBackPress = false,
+                dismissOnClickOutside = false
+            )
+        ) {
+            Surface(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colors.background)
+                    .padding(16.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Start,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = title,
+                            fontSize = 24.sp,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
+                    TimeInput(state = state)
+                    AddCancelButtonBar(onAddClick = {
+                        onTimeSelected.invoke(state.hour.toString() + ":" + state.minute)
+                    }, onCancelClick = {
+                        onDialogDismiss.invoke()
+                    })
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ShowOptions(
+        @SuppressLint("ModifierParameter") buttonModifier: Modifier,
+        onRemoveClick: (SelectedApp) -> Unit = {},
+        selectedApp: SelectedAppForList
+    ) {
+        Row(
+            modifier = Modifier
+                .background(
+                    colorResource(R.color.color_light_yellow),
+                    RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                )
+                .fillMaxWidth()
+        ) {
+            TextButton(
+                modifier = buttonModifier,
+                onClick = { Constants.showNIY() }) {
+                Text("Notification History")
+            }
+
+            TextButton(
+                modifier = buttonModifier,
+                onClick = { Constants.showNIY() }) {
+                Text("Edit")
+            }
+
+            TextButton(
+                modifier = buttonModifier,
+                onClick = { onRemoveClick.invoke(selectedApp.selectedApp) }) {
+                Text("Remove")
             }
         }
     }
@@ -322,7 +728,9 @@ class UIKit {
         var duration by remember { mutableStateOf(0) }
         Row(
             modifier = Modifier
-                .background(colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp))
+                .background(
+                    colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp)
+                )
                 .height(48.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -337,8 +745,7 @@ class UIKit {
                         }
                     }
                     getDuration.invoke(duration.toLong())
-                },
-                modifier = Modifier
+                }, modifier = Modifier
                     .padding(end = 16.dp)
                     .align(Alignment.CenterVertically)
             ) {
@@ -367,8 +774,7 @@ class UIKit {
                         duration += 30
                     }
                     getDuration.invoke(duration.toLong())
-                },
-                modifier = Modifier
+                }, modifier = Modifier
                     .padding(start = 16.dp)
                     .align(Alignment.CenterVertically)
             ) {
@@ -382,83 +788,33 @@ class UIKit {
 
 
     @Composable
-    fun ShowDays(onSelectedDays:(List<Boolean>) -> Unit = {}) {
-
-        var selectedDays by remember { mutableStateOf(List(7) { false }) }
-
-        Row {
-            FilledTonalIconToggleButton(
-                checked = selectedDays[0],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(0, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[0], "SAT")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[1],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(1, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[1], "SUN")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[2],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(2, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[2], "MON")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[3],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(3, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[3], "TUE")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[4],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(4, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[4], "WED")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[5],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(5, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[5], "THU")
-            }
-            FilledTonalIconToggleButton(
-                checked = selectedDays[6],
-                onCheckedChange = {
-                    selectedDays = selectedDays.toMutableList().apply { set(6, it) }
-                    onSelectedDays.invoke(selectedDays)
-                }
-            ) {
-                ShowDaysText(selectedDays[6], "FRI")
-            }
+    fun CustomChip(title: String, color: Color, fontColor: Color = Color.White) {
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp, bottom = 4.dp)
+                .background(
+                    color = color,
+                    RoundedCornerShape(10.dp)
+                )
+        ) {
+            Text(
+                text = title,
+                modifier = Modifier.padding(
+                    top = 2.dp, bottom = 2.dp, start = 6.dp, end = 6.dp
+                ),
+                color = fontColor,
+                fontSize = 12.sp,
+            )
         }
+
     }
 
     @Composable
     fun ShowDaysText(selected: Boolean, title: String) {
         if (selected) {
-            Text(text = title, fontWeight = FontWeight.Bold)
+            Text(text = title, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         } else {
-            Text(text = title)
+            Text(text = title, color = colorResource(id = R.color.switch_text_unselected), fontSize = 12.sp)
         }
     }
 
@@ -471,104 +827,69 @@ class UIKit {
         Row(modifier = Modifier.fillMaxWidth()) {
             val chipModifier = Modifier.padding(start = 4.dp)
 
-            FilterChip(selected = selectedChipIndex == HushType.ALWAYS,
-                onClick = {
-                    selectedChipIndex = HushType.ALWAYS
-                    onHushTypeSelected.invoke(HushType.ALWAYS)
-                },
-                label = { Text("Mute Always") },
-                modifier = chipModifier,
-                leadingIcon = {
-                    Box(
-                        Modifier.animateContentSize(keyframes {
-                            durationMillis = 100
-                        })
-                    ) {
-                        if (selectedChipIndex == HushType.ALWAYS) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
+            FilterChip(selected = selectedChipIndex == HushType.ALWAYS, onClick = {
+                selectedChipIndex = HushType.ALWAYS
+                onHushTypeSelected.invoke(HushType.ALWAYS)
+            }, label = { Text("Mute Always") }, modifier = chipModifier, leadingIcon = {
+                Box(
+                    Modifier.animateContentSize(keyframes {
+                        durationMillis = 100
+                    })
+                ) {
+                    if (selectedChipIndex == HushType.ALWAYS) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
                     }
+                }
 
-                })
+            })
 
-            FilterChip(selected = selectedChipIndex == HushType.DURATION,
-                onClick = {
-                    selectedChipIndex = HushType.DURATION
-                    onHushTypeSelected.invoke(HushType.DURATION)
-                },
-                label = { Text("Duration") },
-                modifier = chipModifier,
-                leadingIcon = {
-                    Box(
-                        Modifier.animateContentSize(keyframes {
-                            durationMillis = 100
-                        })
-                    ) {
-                        if (selectedChipIndex == HushType.DURATION) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
+            FilterChip(selected = selectedChipIndex == HushType.DURATION, onClick = {
+                selectedChipIndex = HushType.DURATION
+                onHushTypeSelected.invoke(HushType.DURATION)
+            }, label = { Text("Duration") }, modifier = chipModifier, leadingIcon = {
+                Box(
+                    Modifier.animateContentSize(keyframes {
+                        durationMillis = 100
+                    })
+                ) {
+                    if (selectedChipIndex == HushType.DURATION) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
                     }
+                }
 
-                })
+            })
 
-            FilterChip(selected = selectedChipIndex == HushType.DAYS,
-                onClick = {
-                    selectedChipIndex = HushType.DAYS
-                    onHushTypeSelected.invoke(HushType.DAYS)
-                },
-                label = { Text("Days") },
-                modifier = chipModifier,
-                leadingIcon = {
-                    Box(
-                        Modifier.animateContentSize(keyframes {
-                            durationMillis = 100
-                        })
-                    ) {
-                        if (selectedChipIndex == HushType.DAYS) {
-                            Icon(
-                                imageVector = Icons.Default.Done,
-                                contentDescription = null,
-                                modifier = Modifier.size(FilterChipDefaults.IconSize)
-                            )
-                        }
+            FilterChip(selected = selectedChipIndex == HushType.DAYS, onClick = {
+                selectedChipIndex = HushType.DAYS
+                onHushTypeSelected.invoke(HushType.DAYS)
+            }, label = { Text("Days") }, modifier = chipModifier, leadingIcon = {
+                Box(
+                    Modifier.animateContentSize(keyframes {
+                        durationMillis = 100
+                    })
+                ) {
+                    if (selectedChipIndex == HushType.DAYS) {
+                        Icon(
+                            imageVector = Icons.Default.Done,
+                            contentDescription = null,
+                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                        )
                     }
+                }
 
-                })
+            })
         }
     }
 
-    @Composable
-    private fun ShowTimeRangeText(
-        selectedTimeStart: MutableState<LocalTime?>,
-        selectedTimeEnd: MutableState<LocalTime?>,
-    ) {
-        if (selectedTimeStart.value != null && selectedTimeEnd.value != null) {
-            Timber.d("Text Can be shown")
-            Text(
-                modifier = Modifier.padding(8.dp),
-                fontSize = 12.sp,
-                text = "App will be silent from Today ${selectedTimeStart.value} to " + "${
-                    if (selectedTimeStart.value!!.isBefore(selectedTimeEnd.value)) "Today" else "Tomorrow"
-                } ${selectedTimeEnd.value}",
-            )
-        } else {
-            Text(
-                modifier = Modifier.padding(8.dp),
-                fontSize = 12.sp,
-                text = "App will be silent from --:-- to --:--",
-            )
-        }
-
-    }
-
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun TwoLineButton(
         txt1: String, txt2: String, selectedTime: MutableState<LocalTime?> = remember {
@@ -582,6 +903,7 @@ class UIKit {
         }
 
         OpenClock(sheetState, title, selectedTime)
+
 
         Button(onClick = {
             sheetState.show()
@@ -619,29 +941,57 @@ class UIKit {
         )
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
-//    @Preview(showSystemUi = true, device = "spec:width=411dp,height=891dp")
-    @Composable
-    fun MainActivityScreenPreview() {
-        MainActivityScreen(
+    fun get12HrsFrom24Hrs(inputTime: String): String {
+        val timeFormat = SimpleDateFormat("hh:mm", Locale.getDefault())
+        val time = timeFormat.parse(inputTime)
+        val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return outputFormat.format(time)
 
-        )
     }
+//
+//    @Preview
+//    @Composable
+//    fun PreviewInitConfig() {
+//        ShowInitConfig(selectedApp = SelectedAppForList(
+//            SelectedApp(
+//                1,
+//                "Test APP",
+//                "com.hush.hush",
+//                HushType.DAYS,
+//                0,
+//                "FRI,SAT",
+//                null,
+//                null,
+//                13212312313,
+//                3123123123,
+//                true
+//            ), icon = null
+//
+//        ), chooseSelectedDays = { "" })
+//    }
+//
+//    //    @Preview
+//    @Composable
+//    fun PreviewSelectedAppItem() {
+//        SelectedAppItem(
+//            selectedApp = SelectedAppForList(
+//                SelectedApp(
+//                    1,
+//                    "Test APP",
+//                    "com.hush.hush",
+//                    HushType.DAYS,
+//                    0,
+//                    "FRI,SAT",
+//                    null,
+//                    null,
+//                    13212312313,
+//                    3123123123,
+//                    true
+//                ), icon = null
+//
+//            )
+//        )
+//    }
 
-    @Preview
-    @Composable
-    fun OpenAppSelectedDialog() {
-        val openState = remember {
-            mutableStateOf(true)
-        }
-
-        val selected = remember {
-            mutableStateOf(
-                InstalledPackageInfo("Test 1", "com.test1")
-            )
-        }
-
-        OpenAppSelectedDialog(openDialog = openState, selectedApp = selected)
-    }
-
+    data class StartEndTime(var startTime: String, var endTime: String)
 }
