@@ -6,18 +6,25 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
+import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
 import dev.souravdas.hush.others.Constants
+import dev.souravdas.hush.others.HushType
+import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 @HiltViewModel
-class MainActivityVM @Inject constructor(private val selectAppRepository: SelectAppRepository, private val dataStoreManager: DataStoreManager) : BaseViewModel() {
+class MainActivityVM @Inject constructor(
+    private val selectAppRepository: SelectAppRepository,
+    private val dataStoreManager: DataStoreManager,
+    private val utils: Utils
+) : BaseViewModel() {
 
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
@@ -30,9 +37,10 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         const val SELECTED_APP = "SELECTED_APP"
     }
 
-    fun getDaysFromSelected(days: List<Int>):String{
+    fun getDaysFromSelected(days: List<Int>): String {
         Timber.d("Found Day list $days")
-        val daysOfWeek = listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN") // days of week abbreviations
+        val daysOfWeek =
+            listOf("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN") // days of week abbreviations
         val selectedDays = StringBuilder()
 
         for (i in days.indices) {
@@ -48,7 +56,8 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
 
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
-            val selectedAppFromDB = selectAppRepository.getSelectedApp(selectedApp.packageName?:"")
+            val selectedAppFromDB =
+                selectAppRepository.getSelectedApp(selectedApp.packageName ?: "")
             if (selectedAppFromDB != null) {
                 selectAppRepository.delete(selectedAppFromDB)
             }
@@ -59,14 +68,14 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
     fun getSelectedApp() {
         viewModelScope.launch {
             selectAppRepository.getSelectedAppsWithFlow().map {
-                val installedApps = getPackageList().associateBy ({it.packageName},{it.icon})
-                it.map {selectedApp ->
-                    SelectedAppForList(selectedApp,installedApps[selectedApp.packageName])
+                val installedApps = getPackageList().associateBy({ it.packageName }, { it.icon })
+                it.map { selectedApp ->
+                    SelectedAppForList(selectedApp, installedApps[selectedApp.packageName])
                 }.sortedWith(
                     compareByDescending<SelectedAppForList> { it.selectedApp.isComplete }
                         .thenByDescending { it.selectedApp.timeCreated }
                 )
-            }.collect{
+            }.collect {
                 _selectedAppsSF.value = it
             }
         }
@@ -84,7 +93,7 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         val packageNames = mutableListOf<InstalledPackageInfo>()
 
         for (packageInfo in packages) {
-            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName!= HushApp.context.packageName )
+            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName != HushApp.context.packageName)
                 packageNames.add(
                     InstalledPackageInfo(
                         packageInfo.loadLabel(pm).toString(),
@@ -96,17 +105,18 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
         return packageNames
     }
 
+
     fun getHushStatusAsFlow(): Flow<Boolean> {
         return dataStoreManager.getBooleanValueAsFlow(Constants.DS_HUSH_STATUS)
     }
 
-    suspend fun getHusStatus():Boolean{
+    suspend fun getHusStatus(): Boolean {
         return dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
     }
 
-    fun setHushStatus(value: Boolean){
+    fun setHushStatus(value: Boolean) {
         viewModelScope.launch {
-            dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS,value)
+            dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS, value)
         }
     }
 
@@ -123,6 +133,35 @@ class MainActivityVM @Inject constructor(private val selectAppRepository: Select
     fun removeApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
             selectAppRepository.removedSelectedApp(selectedApp)
+        }
+    }
+
+    fun addConfigInSelectedApp(
+        app: SelectedApp,
+        type: HushType,
+        startEndTime: UIKit.StartEndTime,
+        duration: Long,
+        daysList: List<String?>,
+        logNotification: Boolean
+    ) {
+        executedSuspendedCodeBlock {
+            val selectedApp = SelectedApp(
+                appName = app.appName,
+                packageName = app.packageName,
+                hushType = type,
+                durationInMinutes = duration,
+                muteDays = utils.getStringFromDaysList(daysList),
+                startTime = utils.toLocalTime(startEndTime.startTime),
+                endTime = utils.toLocalTime(startEndTime.endTime),
+                timeUpdated = System.currentTimeMillis(),
+                isComplete = true
+            )
+
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName ?: "")
+            if (selectedAppFromDB != null) {
+                selectAppRepository.delete(selectedAppFromDB)
+            }
+            selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 

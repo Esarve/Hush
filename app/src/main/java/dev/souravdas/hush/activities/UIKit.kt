@@ -38,7 +38,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -293,11 +292,11 @@ class UIKit()  {
                     SelectedAppItem(
                         selectedApp = app,
                         onRemoveClick = onRemoveClick,
-                        onItemSelected = {
-                            viewModel.addOrUpdateSelectedApp(it)
+                        onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
+                            viewModel.addConfigInSelectedApp(app.selectedApp,type,startEndTime,duration,daysList,logNotification)
                         },
-                        chooseSelectedDays = {
-                            viewModel.getDaysFromSelected(it)
+                        onCancelClick = {
+                            viewModel.removeApp(app.selectedApp)
                         }
                     )
                 }
@@ -309,8 +308,8 @@ class UIKit()  {
     fun SelectedAppItem(
         selectedApp: SelectedAppForList,
         onRemoveClick: (SelectedApp) -> Unit = {},
-        onItemSelected: (SelectedApp) -> Unit = {},
-        chooseSelectedDays: (List<Int>) -> String = { "" }
+        onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
+        onCancelClick: () -> Unit
     ) {
         var showOptions by remember {
             mutableStateOf(false)
@@ -378,11 +377,7 @@ class UIKit()  {
                 val buttonModifier = Modifier.padding(end = 4.dp)
 
                 AnimatedVisibility(showInitConfig) {
-                    ShowInitConfig(
-                        selectedApp,
-                        onItemSelected = onItemSelected,
-                        chooseSelectedDays = chooseSelectedDays
-                    )
+                    ShowInitConfig(onConfigDone, onCancelClick)
                 }
 
                 AnimatedVisibility(showOptions) {
@@ -396,9 +391,8 @@ class UIKit()  {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ShowInitConfig(
-        selectedApp: SelectedAppForList,
-        onItemSelected: (SelectedApp) -> Unit = {},
-        chooseSelectedDays: (List<Int>) -> String,
+        onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
+        onCancelClick: () -> Unit
     ) {
         Box(
             modifier = Modifier
@@ -426,7 +420,7 @@ class UIKit()  {
                 var startEndTimePair by remember {
                     mutableStateOf(StartEndTime("00:00", "23:59"))
                 }
-                var selectedDayList: List<Int> = emptyList()
+                var selectedDayList = emptyList<String?>()
                 var selectedDuration: Long = 0
                 var husType: HushType by remember {
                     mutableStateOf(HushType.ALWAYS)
@@ -446,9 +440,7 @@ class UIKit()  {
                             .padding(top = 8.dp, bottom = 8.dp)
                     ) {
                         ShowDays {
-                            selectedDayList =
-                                it.mapIndexed { index, isSelected -> if (isSelected) index else null }
-                                    .filterNotNull()
+                            selectedDayList = it
                         }
                         Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
                             Text(
@@ -526,7 +518,6 @@ class UIKit()  {
                             .padding(start = 8.dp)
                     )
                 }
-                // TODO: CHANGE HERE -> Modify instead add
 
                 if (showTimePickerStart) {
                     ShowTimePicker(
@@ -553,61 +544,11 @@ class UIKit()  {
                         })
                 }
 
-                AddCancelButtonBar(onAddClick = {}, onCancelClick = {})
-//                Row() {
-//                    val modifier =
-//                        Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
-//                    Spacer(modifier = Modifier.weight(1f))
-//
-//                    Text(text = "Cancel", modifier = modifier
-//                        .clickable {
-//
-//                        })
-//
-//                    Text(text = "Add", fontWeight = FontWeight.Medium,
-//                        modifier = modifier
-//                            .clickable {
-//
-//                            })
-//
-////                    TextButton(modifier = Modifier.padding(start = 4.dp), onClick = {
-////                        onItemSelected.invoke(
-////                            SelectedApp(
-////                                appName = selectedApp.selectedApp.appName,
-////                                packageName = selectedApp.selectedApp.packageName,
-////                                hushType = husType,
-////                                muteDays = chooseSelectedDays.invoke(selectedDayList),
-////                                durationInMinutes = selectedDuration,
-////                                startTime = selectedTimeStart.value,
-////                                endTime = selectedTimeEnd.value,
-////                                timeUpdated = System.currentTimeMillis(),
-////                                isComplete = true
-////                            )
-////                        )
-////                    }) {
-////
-////                    }
-//
-////                    TextButton(modifier = Modifier.padding(start = 4.dp), onClick = {
-////                        onItemSelected.invoke(
-////                            SelectedApp(
-////                                appName = selectedApp.selectedApp.appName,
-////                                packageName = selectedApp.selectedApp.packageName,
-////                                hushType = husType,
-////                                muteDays = chooseSelectedDays.invoke(selectedDayList),
-////                                durationInMinutes = selectedDuration,
-////                                startTime = selectedTimeStart.value,
-////                                endTime = selectedTimeEnd.value,
-////                                timeUpdated = System.currentTimeMillis(),
-////                                isComplete = true
-////                            )
-////                        )
-////                    }) {
-////
-////                    }
-//                }
-
-
+                AddCancelButtonBar(onAddClick = {onConfigDone.invoke(
+                    husType,startEndTimePair,selectedDuration,selectedDayList,logNotificationCb
+                )}, onCancelClick = {
+                    onCancelClick.invoke()
+                })
             }
         }
 
@@ -774,56 +715,56 @@ class UIKit()  {
 
 
     @Composable
-    fun ShowDays(onSelectedDays: (List<Boolean>) -> Unit = {}) {
+    fun ShowDays(onSelectedDays: (List<String?>) -> Unit = {}) {
 
-        var selectedDays by remember { mutableStateOf(List(7) { false }) }
+        var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
 
         Row(
             Modifier
                 .fillMaxWidth()
                 .padding(top = 8.dp, bottom = 8.dp)
         ) {
-            FilledTonalIconToggleButton(checked = selectedDays[0], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(0, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[0].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(0, "SAT") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[0], "SAT")
+                ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[1], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(1, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[1].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(1, "SUN") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[1], "SUN")
+                ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[2], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(2, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[2].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(2, "MON") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[2], "MON")
+                ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[3], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(3, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[3].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(3, "TUE") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[3], "TUE")
+                ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[4], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(4, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[4].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(4, "WED") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[4], "WED")
+                ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[5], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(5, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[5].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(5, "THU") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[5], "THU")
+                ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
             }
-            FilledTonalIconToggleButton(checked = selectedDays[6], onCheckedChange = {
-                selectedDays = selectedDays.toMutableList().apply { set(6, it) }
+            FilledTonalIconToggleButton(checked = !selectedDays[6].isNullOrEmpty(), onCheckedChange = {
+                selectedDays = selectedDays.toMutableList().apply { set(6, "FRI") }
                 onSelectedDays.invoke(selectedDays)
             }) {
-                ShowDaysText(selectedDays[6], "FRI")
+                ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
             }
         }
     }
@@ -982,27 +923,6 @@ class UIKit()  {
             ),
         )
     }
-
-    @Preview
-    @Composable
-    fun PreviewInitConfig() {
-        ShowInitConfig(selectedApp = SelectedAppForList(
-            SelectedApp(
-                1,
-                "Test APP",
-                "com.hush.hush",
-                HushType.DAYS,
-                0,
-                "FRI,SAT",
-                null,
-                null,
-                13212312313,
-                3123123123,
-                true
-            ), icon = null
-
-        ), chooseSelectedDays = { "" })
-    }
     fun get12HrsFrom24Hrs (inputTime: String):String{
         val timeFormat = SimpleDateFormat("hh:mm", Locale.getDefault())
         val time = timeFormat.parse(inputTime)
@@ -1010,29 +930,50 @@ class UIKit()  {
         return outputFormat.format(time)
 
     }
-
-    //    @Preview
-    @Composable
-    fun PreviewSelectedAppItem() {
-        SelectedAppItem(
-            selectedApp = SelectedAppForList(
-                SelectedApp(
-                    1,
-                    "Test APP",
-                    "com.hush.hush",
-                    HushType.DAYS,
-                    0,
-                    "FRI,SAT",
-                    null,
-                    null,
-                    13212312313,
-                    3123123123,
-                    true
-                ), icon = null
-
-            )
-        )
-    }
+//
+//    @Preview
+//    @Composable
+//    fun PreviewInitConfig() {
+//        ShowInitConfig(selectedApp = SelectedAppForList(
+//            SelectedApp(
+//                1,
+//                "Test APP",
+//                "com.hush.hush",
+//                HushType.DAYS,
+//                0,
+//                "FRI,SAT",
+//                null,
+//                null,
+//                13212312313,
+//                3123123123,
+//                true
+//            ), icon = null
+//
+//        ), chooseSelectedDays = { "" })
+//    }
+//
+//    //    @Preview
+//    @Composable
+//    fun PreviewSelectedAppItem() {
+//        SelectedAppItem(
+//            selectedApp = SelectedAppForList(
+//                SelectedApp(
+//                    1,
+//                    "Test APP",
+//                    "com.hush.hush",
+//                    HushType.DAYS,
+//                    0,
+//                    "FRI,SAT",
+//                    null,
+//                    null,
+//                    13212312313,
+//                    3123123123,
+//                    true
+//                ), icon = null
+//
+//            )
+//        )
+//    }
 
     data class StartEndTime(var startTime: String, var endTime: String)
 }

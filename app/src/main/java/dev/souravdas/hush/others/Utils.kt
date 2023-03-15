@@ -1,6 +1,8 @@
 package dev.souravdas.hush.others
 
 import dev.souravdas.hush.models.SelectedApp
+import org.threeten.bp.LocalTime
+import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -42,5 +44,20 @@ class Utils {
         val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
         return outputFormat.format(time)
 
+    }
+
+    fun toLocalTime(stringTime: String): LocalTime {
+        val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        return LocalTime.parse(stringTime, formatter)
+    }
+
+    fun getStringFromDaysList(daysList: List<String?>): String {
+        val sb = StringBuilder()
+        for (item in daysList){
+            if (!item.isNullOrEmpty()){
+                sb.append(item).append(",")
+            }
+        }
+        return if (sb.toString().isEmpty()) "" else sb.toString().substring(0, sb.length-1)
     }
 }
