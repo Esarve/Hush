@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.FabPosition
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -140,7 +141,8 @@ class UIKit()  {
 
     @OptIn(
         ExperimentalMaterial3Api::class,
-        ExperimentalLayoutApi::class, ExperimentalMaterialApi::class
+        ExperimentalLayoutApi::class,
+        ExperimentalMaterialApi::class
     )
     @Composable
     fun MainActivityScreen(
@@ -248,25 +250,25 @@ class UIKit()  {
     ) {
         viewModel.getSelectedApp()
         val itemList = viewModel.selectedAppsSF.collectAsState(initial = emptyList())
-        Box(modifier = modifier.padding(8.dp)) {
-            LazyColumn {
-                item {
-                    Box(Modifier.padding(10.dp)) {
-                        Text(text = "Ongoing Hush!", fontSize = 16.sp)
+        LazyColumn(modifier = modifier.padding(8.dp).fillMaxSize()) {
+            item {
+                Box(Modifier.padding(10.dp)) {
+                    Text(text = "Ongoing Hush!", fontSize = 16.sp)
+                }
+            }
+            items(itemList.value, key = {
+                it.selectedApp.id
+            }) { app ->
+                SelectedAppItem(
+                    selectedApp = app,
+                    onRemoveClick = onRemoveClick,
+                    onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
+                        viewModel.addConfigInSelectedApp(app.selectedApp,type,startEndTime,duration,daysList,logNotification)
+                    },
+                    onCancelClick = {
+                        viewModel.removeApp(app.selectedApp)
                     }
-                }
-                items(itemList.value) { app ->
-                    SelectedAppItem(
-                        selectedApp = app,
-                        onRemoveClick = onRemoveClick,
-                        onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
-                            viewModel.addConfigInSelectedApp(app.selectedApp,type,startEndTime,duration,daysList,logNotification)
-                        },
-                        onCancelClick = {
-                            viewModel.removeApp(app.selectedApp)
-                        }
-                    )
-                }
+                )
             }
         }
     }
@@ -286,73 +288,70 @@ class UIKit()  {
         }
 
         showInitConfig = !selectedApp.selectedApp.isComplete
-        Box(
-            modifier = Modifier
-                .clickable {
-                    if (!showInitConfig) {
-                        showOptions = !showOptions
-                    }
+
+        Column(modifier = Modifier
+            .fillMaxHeight()
+            .clickable {
+                if (!showInitConfig) {
+                    showOptions = !showOptions
                 }
-                .padding(bottom = 10.dp)
-                .background(
-                    colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp)
+            }
+            .padding(bottom = 10.dp)
+            .background(
+                colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp)
+            )
+            .padding(top = 8.dp, bottom = 8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                Image(
+                    painter = rememberDrawablePainter(
+                        drawable = selectedApp.icon
+                    ),
+                    contentDescription = "appIcon",
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(CircleShape)
                 )
-                .padding(top = 8.dp, bottom = 8.dp)
-
-
-        ) {
-            Column() {
                 Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(start = 8.dp, end = 8.dp)
                 ) {
-                    Image(
-                        painter = rememberDrawablePainter(
-                            drawable = selectedApp.icon
-                        ),
-                        contentDescription = "appIcon",
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
+                    Text(
+                        text = selectedApp.selectedApp.appName,
+                        fontSize = 24.sp,
                     )
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth().padding(start = 8.dp, end = 8.dp)
-                    ) {
-                        Text(
-                            text = selectedApp.selectedApp.appName,
-                            fontSize = 24.sp,
-                        )
 
-                        if(selectedApp.selectedApp.hushType != null){
-                            if (selectedApp.selectedApp.hushType == HushType.DURATION
-                                && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
-                            ) {
-                                CustomChip(title = "Expired", color = Color.Red)
-                            } else {
-                                CustomChip(
-                                    title = selectedApp.selectedApp.hushType.toString(),
-                                    color = colorResource(id = R.color.color_lavender)
-                                )
-                            }
+                    if(selectedApp.selectedApp.hushType != null){
+                        if (selectedApp.selectedApp.hushType == HushType.DURATION
+                            && System.currentTimeMillis() >= selectedApp.selectedApp.timeUpdated + selectedApp.selectedApp.durationInMinutes!! * 60000
+                        ) {
+                            CustomChip(title = "Expired", color = Color.Red)
+                        } else {
+                            CustomChip(
+                                title = selectedApp.selectedApp.hushType.toString(),
+                                color = colorResource(id = R.color.color_lavender)
+                            )
                         }
                     }
-
-                }
-                val buttonModifier = Modifier.padding(end = 4.dp)
-
-                AnimatedVisibility(showInitConfig) {
-                    ShowInitConfig(onConfigDone, onCancelClick)
                 }
 
-                AnimatedVisibility(showOptions) {
-                    ShowOptions(buttonModifier, onRemoveClick, selectedApp)
-                }
+            }
+            val buttonModifier = Modifier.padding(end = 4.dp)
+
+            AnimatedVisibility(showInitConfig) {
+                ShowInitConfig(onConfigDone, onCancelClick)
             }
 
+            AnimatedVisibility(showOptions) {
+                ShowOptions(buttonModifier, onRemoveClick, selectedApp)
+            }
         }
     }
 
@@ -362,162 +361,158 @@ class UIKit()  {
         onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
         onCancelClick: () -> Unit
     ) {
-        Box(
+        Column(
             modifier = Modifier
-                .wrapContentWidth()
-                .wrapContentHeight()
                 .padding(start = 8.dp, end = 8.dp)
+                .wrapContentWidth()
         ) {
+            var showTimePickerStart by remember {
+                mutableStateOf(false)
+            }
 
-            Column(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .wrapContentHeight()
-            ) {
-                var showTimePickerStart by remember {
-                    mutableStateOf(false)
-                }
+            var showTimePickerEnd by remember {
+                mutableStateOf(false)
+            }
 
-                var showTimePickerEnd by remember {
-                    mutableStateOf(false)
-                }
+            var logNotificationCb by remember {
+                mutableStateOf(false) //This will be true in the fututre
+            }
+            val startEndTimePair by remember {
+                mutableStateOf(StartEndTime("00:00", "23:59"))
+            }
+            var selectedDayList = emptyList<String?>()
+            var selectedDuration: Long = 0
+            var husType: HushType by remember {
+                mutableStateOf(HushType.ALWAYS)
+            }
 
-                var logNotificationCb by remember {
-                    mutableStateOf(false) //This will be true in the fututre
-                }
-                var startEndTimePair by remember {
-                    mutableStateOf(StartEndTime("00:00", "23:59"))
-                }
-                var selectedDayList = emptyList<String?>()
-                var selectedDuration: Long = 0
-                var husType: HushType by remember {
-                    mutableStateOf(HushType.ALWAYS)
-                }
+            ShowChipRow {
+                husType = it
+            };
 
-                ShowChipRow {
-                    husType = it
-                };
+            AnimatedVisibility(visible = husType == HushType.ALWAYS) {
+                // default
+            }
 
-                when (husType) {
-                    HushType.ALWAYS -> {}
-
-                    HushType.DAYS -> Column(
-                        modifier = Modifier
-                            .wrapContentWidth()
-                            .wrapContentHeight(unbounded = true)
-                            .padding(top = 8.dp, bottom = 8.dp)
-                    ) {
-                        ShowDays {
-                            selectedDayList = it
-                        }
-                        Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
-                            Text(
-                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-                                text = "Start Time"
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        showTimePickerStart = true
-                                    }
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Edit,
-                                    contentDescription = "Edit",
-                                    modifier = Modifier
-                                        .size(20.dp)
-                                )
-                                Text(
-                                    text = get12HrsFrom24Hrs(startEndTimePair.startTime),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(start = 24.dp)
-                                )
-                            }
-                            Text(
-                                modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-                                text = "End Time"
-                            )
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        showTimePickerEnd = true
-                                    }
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Edit,
-                                    contentDescription = "Edit",
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Text(
-                                    text = get12HrsFrom24Hrs(startEndTimePair.endTime),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    modifier = Modifier.padding(start = 24.dp)
-                                )
-                            }
-                        }
+            AnimatedVisibility(visible = husType == HushType.DAYS) {
+                Column(
+                    modifier = Modifier
+                        .wrapContentWidth()
+                        .wrapContentHeight(unbounded = true)
+                        .padding(top = 8.dp, bottom = 8.dp)
+                ) {
+                    ShowDays {
+                        selectedDayList = it
                     }
-
-                    HushType.DURATION -> DurationSelector {
-                        selectedDuration = it
-                    }
-                }
-
-                Row(modifier = Modifier.padding(8.dp)) {
-                    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                        Checkbox(
-                            checked = logNotificationCb,
-                            onCheckedChange = {
-                                logNotificationCb = !logNotificationCb
-
-                                if (it) Constants.showNIY()
-                            }
+                    Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
+                        Text(
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                            text = "Start Time"
                         )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showTimePickerStart = true
+                                }
+                        ) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit",
+                                modifier = Modifier
+                                    .size(20.dp)
+                            )
+                            Text(
+                                text = get12HrsFrom24Hrs(startEndTimePair.startTime),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 24.dp)
+                            )
+                        }
+                        Text(
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+                            text = "End Time"
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    showTimePickerEnd = true
+                                }
+                        ) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = get12HrsFrom24Hrs(startEndTimePair.endTime),
+                                fontSize = 24.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(start = 24.dp)
+                            )
+                        }
                     }
-                    Text(
-                        text = "Log Notifications",
-                        Modifier
-                            .align(Alignment.CenterVertically)
-                            .padding(start = 8.dp)
+                }
+            }
+
+            AnimatedVisibility(visible = husType == HushType.DURATION) {
+                DurationSelector {
+                    selectedDuration = it
+                }
+            }
+
+            Row(modifier = Modifier.padding(8.dp)) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                    Checkbox(
+                        checked = logNotificationCb,
+                        onCheckedChange = {
+                            logNotificationCb = !logNotificationCb
+
+                            if (it) Constants.showNIY()
+                        }
                     )
                 }
-
-                if (showTimePickerStart) {
-                    ShowTimePicker(
-                        Pair(startEndTimePair.startTime.split(":")[0].toInt(), startEndTimePair.startTime.split(":")[1].toInt()),
-                        "Pick a start time",
-                        {
-                            Timber.d(it)
-                            startEndTimePair.startTime = it
-                            showTimePickerStart = false
-                        }, {
-                            showTimePickerStart = false
-                        })
-                }
-                if (showTimePickerEnd) {
-                    ShowTimePicker(
-                        Pair(startEndTimePair.endTime.split(":")[0].toInt(), startEndTimePair.endTime.split(":")[1].toInt()),
-                        "Pick an end time",
-                        {
-                            Timber.d(it)
-                            startEndTimePair.endTime = it
-                            showTimePickerEnd = false
-                        }, {
-                            showTimePickerEnd = false
-                        })
-                }
-
-                AddCancelButtonBar(onAddClick = {onConfigDone.invoke(
-                    husType,startEndTimePair,selectedDuration,selectedDayList,logNotificationCb
-                )}, onCancelClick = {
-                    onCancelClick.invoke()
-                })
+                Text(
+                    text = "Log Notifications",
+                    Modifier
+                        .align(Alignment.CenterVertically)
+                        .padding(start = 8.dp)
+                )
             }
+
+            if (showTimePickerStart) {
+                ShowTimePicker(
+                    Pair(startEndTimePair.startTime.split(":")[0].toInt(), startEndTimePair.startTime.split(":")[1].toInt()),
+                    "Pick a start time",
+                    {
+                        Timber.d(it)
+                        startEndTimePair.startTime = it
+                        showTimePickerStart = false
+                    }, {
+                        showTimePickerStart = false
+                    })
+            }
+            if (showTimePickerEnd) {
+                ShowTimePicker(
+                    Pair(startEndTimePair.endTime.split(":")[0].toInt(), startEndTimePair.endTime.split(":")[1].toInt()),
+                    "Pick an end time",
+                    {
+                        Timber.d(it)
+                        startEndTimePair.endTime = it
+                        showTimePickerEnd = false
+                    }, {
+                        showTimePickerEnd = false
+                    })
+            }
+
+            AddCancelButtonBar(onAddClick = {onConfigDone.invoke(
+                husType,startEndTimePair,selectedDuration,selectedDayList,logNotificationCb
+            )}, onCancelClick = {
+                onCancelClick.invoke()
+            })
         }
 
     }

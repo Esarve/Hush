@@ -50,15 +50,18 @@ class MainActivityVM @Inject constructor(
 
     fun getSelectedApp() {
         viewModelScope.launch {
-            selectAppRepository.getSelectedAppsWithFlow().map {
+            selectAppRepository.getSelectedAppsWithFlow().map { apps ->
                 val installedApps = getPackageList().associateBy({ it.packageName }, { it.icon })
-                it.map { selectedApp ->
-                    SelectedAppForList(selectedApp, installedApps[selectedApp.packageName])
-                }.sortedWith(
-                    compareBy<SelectedAppForList> { it.selectedApp.isComplete }
-                        .thenByDescending { it.selectedApp.timeCreated }
-                )
-            }.collect {
+                apps.sortedWith(
+                    compareBy<SelectedApp> { it.isComplete }
+                        .thenByDescending { it.timeCreated }
+                ).map {
+                    SelectedAppForList(
+                        it,
+                        installedApps[it.packageName]
+                    )
+                }
+            }.collectLatest {
                 _selectedAppsSF.value = it
             }
         }
