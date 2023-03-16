@@ -4,5 +4,6 @@
     <string name="hush_service">Hush Service</string>
     <string name="hush_service_running">Hush Service is running…</string>
     <string name="keep_alive_service">Keep Alive Service</string>
+    <string name="notification_alert_dialog_body">"Hey! I mute notifications from other apps according to your preference. To perform this, I need notification access permission. No worries. I am a completely opensource app and I do not collect any userdata 😊 "</string>
 
 </resources>

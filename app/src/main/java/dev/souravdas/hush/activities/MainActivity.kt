@@ -35,13 +35,16 @@ class MainActivity : ComponentActivity() {
         setContent {
             viewModel.getSelectedApp()
 
-            HushTheme {
-                UIKit().MainActivityScreen()
+            HushTheme() {
+                UIKit().MainActivityScreen(onNotificationPermissionGet = {
+                    openNotificationAccessSettingsIfNeeded(this)
+                }, checkNotificationPermission = {
+                    isNotificationListenerEnabled(this)
+                })
             }
         }
 
         checkService();
-        openNotificationAccessSettingsIfNeeded(this)
     }
 
     private fun checkService() {
@@ -61,11 +64,6 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun openNotificationAccessSettingsIfNeeded(activity: Activity) {
-        if (isNotificationListenerEnabled(activity)) {
-            // Permission is already granted, no need to prompt the user
-            return
-        }
-
         // Permission is not granted, prompt the user to grant it
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         activity.startActivity(intent)
