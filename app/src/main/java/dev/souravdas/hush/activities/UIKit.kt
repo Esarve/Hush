@@ -11,15 +11,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme as MD3
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.FabPosition
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.SwitchColors
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
@@ -37,10 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -51,14 +45,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
-import com.maxkeppeker.sheets.core.models.base.Header
-import com.maxkeppeker.sheets.core.models.base.rememberSheetState
-import com.maxkeppeler.sheets.clock.ClockDialog
-import com.maxkeppeler.sheets.clock.models.ClockConfig
-import com.maxkeppeler.sheets.clock.models.ClockSelection
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
@@ -68,10 +56,10 @@ import dev.souravdas.hush.models.SelectedAppForList
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import kotlinx.coroutines.launch
-import org.threeten.bp.LocalTime
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.compose.material3.MaterialTheme as MD3
 
 /**
  * Created by Sourav
@@ -206,7 +194,14 @@ class UIKit() {
             sheetPeekHeight = 56.dp,
             topBar = {
                 TopAppBar(
-                    title = { Text(stringResource(id = R.string.app_name)) }
+                    title = {
+                        Text(
+                            stringResource(id = R.string.app_name),
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = MD3.colorScheme.onBackground
+                        )
+                    }
                 )
             },
             sheetContent = {
@@ -394,7 +389,7 @@ class UIKit() {
                     ),
                     contentDescription = "appIcon",
                     modifier = Modifier
-                        .size(56.dp)
+                        .size(50.dp)
                         .clip(CircleShape)
                 )
                 Row(
@@ -421,7 +416,7 @@ class UIKit() {
                             )
                         } else {
                             CustomChip(
-                                title = selectedApp.selectedApp.hushType.toString(),
+                                title = selectedApp.selectedApp.hushType.label,
                             )
                         }
                     }
@@ -995,7 +990,6 @@ class UIKit() {
 
             })
     }
-
 
 
     fun get12HrsFrom24Hrs(inputTime: String): String {

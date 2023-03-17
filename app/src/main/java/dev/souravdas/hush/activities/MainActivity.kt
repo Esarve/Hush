@@ -1,32 +1,33 @@
 package dev.souravdas.hush
 
 import android.app.Activity
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.material.*
-import androidx.compose.runtime.*
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
-import dev.souravdas.hush.services.KeepAliveService
 import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.models.InstalledPackageInfo
+import dev.souravdas.hush.others.Utils
+import dev.souravdas.hush.services.KeepAliveService
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var utils: Utils
     private val viewModel: MainActivityVM by viewModels()
     private var doubleBackToExitPressedOnce = false
 
