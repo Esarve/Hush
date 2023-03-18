@@ -62,6 +62,8 @@ class KeepAliveService : Service() {
 
         startForeground(FOREGROUND_SERVICE_ID, notification)
 
+
+
         return START_STICKY
     }
 

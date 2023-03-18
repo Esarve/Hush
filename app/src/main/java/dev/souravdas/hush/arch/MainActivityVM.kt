@@ -88,7 +88,9 @@ class MainActivityVM @Inject constructor(
                     )
                 )
         }
-        return packageNames
+        return packageNames.sortedBy {
+            it.appName
+        }
     }
 
 
