@@ -22,6 +22,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainActivityVM @Inject constructor(
     private val selectAppRepository: SelectAppRepository,
+    private val appLogRepository: AppLogRepository,
     private val dataStoreManager: DataStoreManager,
     private val utils: Utils
 ) : BaseViewModel() {
@@ -121,6 +122,7 @@ class MainActivityVM @Inject constructor(
 
     fun removeApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
+            appLogRepository.deleteAllBySelectedAppId(selectedApp.id)
             selectAppRepository.removedSelectedApp(selectedApp)
         }
     }
@@ -134,7 +136,7 @@ class MainActivityVM @Inject constructor(
         logNotificationvalue: Boolean
     ) {
         executedSuspendedCodeBlock {
-            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName ?: "")
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
             if (selectedAppFromDB != null) {
                 with(selectedAppFromDB) {
                     appName = app.appName
@@ -170,6 +172,16 @@ class MainActivityVM @Inject constructor(
     fun removeIncompleteApp() {
         executedSuspendedCodeBlock {
             selectAppRepository.removedIncompleteApps()
+        }
+    }
+
+    fun updateComplete(app: SelectedAppForList){
+        executedSuspendedCodeBlock {
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.selectedApp.packageName)
+            if (selectedAppFromDB != null){
+                selectedAppFromDB.isComplete = false
+                selectAppRepository.update(selectedAppFromDB)
+            }
         }
     }
 

@@ -117,7 +117,7 @@ fun AddCancelButtonBar(
 ) {
     Row() {
         val modifier =
-            Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
+            Modifier.padding(vertical =  8.dp)
         Spacer(modifier = Modifier.weight(1f))
 
         Text(
@@ -126,14 +126,17 @@ fun AddCancelButtonBar(
             modifier = modifier
                 .clickable {
                     onCancelClick.invoke()
-                })
+                }
+                .padding(8.dp))
 
+        Spacer(modifier = Modifier.weight(0.05f))
         Text(text = "Add",
             fontWeight = FontWeight.Medium,
             color = MaterialTheme.colorScheme.onPrimaryContainer,
             modifier = modifier
                 .clickable {
                     onAddClick.invoke()
-                })
+                }
+                .padding(8.dp))
     }
 }

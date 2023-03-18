@@ -13,4 +13,8 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
     suspend fun insertLog(appLog: AppLog) {
         appLogDao.insertLog(appLog)
     }
+
+    suspend fun deleteAllBySelectedAppId(selectedAppId:Int){
+        appLogDao.deleteAllByForeignKey(selectedAppId)
+    }
 }

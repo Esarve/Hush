@@ -211,11 +211,12 @@ class MainScreen() {
                 }
             }
             items(itemList.value, key = {
-                it.selectedApp.id
+                it.selectedApp.timeUpdated
             }) { app ->
                 SelectedAppItem(
                     selectedApp = app,
                     onRemoveClick = onRemoveClick,
+                    onEditClick = { viewModel.updateComplete(app) },
                     onConfigDone = { type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean ->
                         viewModel.addConfigInSelectedApp(
                             app.selectedApp,
@@ -238,6 +239,7 @@ class MainScreen() {
     fun SelectedAppItem(
         selectedApp: SelectedAppForList,
         onRemoveClick: (SelectedApp) -> Unit = {},
+        onEditClick: (SelectedApp) -> Unit,
         onConfigDone: (type: HushType, startEndTime: StartEndTime, duration: Long, daysList: List<String?>, logNotification: Boolean) -> Unit,
         onCancelClick: () -> Unit
     ) {
@@ -317,7 +319,7 @@ class MainScreen() {
             }
 
             AnimatedVisibility(showOptions) {
-                ShowOptions(buttonModifier, onRemoveClick, selectedApp)
+                ShowOptions(buttonModifier, onRemoveClick, onEditClick, selectedApp)
             }
         }
     }
@@ -480,6 +482,7 @@ class MainScreen() {
                             Icon(
                                 Icons.Outlined.Edit,
                                 contentDescription = "Edit",
+                                tint = MD3.colorScheme.onPrimaryContainer,
                                 modifier = Modifier
                                     .size(20.dp)
                             )
@@ -507,6 +510,7 @@ class MainScreen() {
                             Icon(
                                 Icons.Outlined.Edit,
                                 contentDescription = "Edit",
+                                tint = MD3.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(
@@ -594,6 +598,7 @@ class MainScreen() {
     fun ShowOptions(
         @SuppressLint("ModifierParameter") buttonModifier: Modifier,
         onRemoveClick: (SelectedApp) -> Unit = {},
+        onEditClick: (SelectedApp) -> Unit,
         selectedApp: SelectedAppForList
     ) {
         Row(
@@ -612,7 +617,7 @@ class MainScreen() {
 
             TextButton(
                 modifier = buttonModifier,
-                onClick = { Constants.showNIY() }) {
+                onClick = { onEditClick.invoke(selectedApp.selectedApp) }) {
                 Text("Edit", color = MD3.colorScheme.onSecondaryContainer)
             }
 
