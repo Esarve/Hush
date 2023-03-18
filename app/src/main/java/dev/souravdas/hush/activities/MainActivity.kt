@@ -16,7 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
-import dev.souravdas.hush.activities.UIKit
+import dev.souravdas.hush.compose.main.MainScreen
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
             viewModel.getSelectedApp()
 
             HushTheme() {
-                UIKit().MainActivityScreen(onNotificationPermissionGet = {
+                MainScreen().MainActivityScreen(onNotificationPermissionGet = {
                     openNotificationAccessSettingsIfNeeded(this)
                 }, checkNotificationPermission = {
                     isNotificationListenerEnabled(this)

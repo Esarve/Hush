@@ -6,6 +6,8 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import dev.souravdas.hush.arch.AppLogDao
+import dev.souravdas.hush.arch.AppLogRepository
 import dev.souravdas.hush.arch.SelectAppRepository
 import dev.souravdas.hush.arch.SelectedAppDao
 import dev.souravdas.hush.others.Utils
@@ -31,8 +33,18 @@ object Modules {
     }
 
     @Provides
+    fun provideAppLogDao(hushDB: HushDB): AppLogDao{
+        return hushDB.appLogDao()
+    }
+
+    @Provides
     fun provideSelectAppRepository(selectedAppDao: SelectedAppDao): SelectAppRepository {
         return SelectAppRepository(selectedAppDao)
+    }
+
+    @Provides
+    fun providesAppLogRepository(appLogDao: AppLogDao): AppLogRepository {
+        return AppLogRepository(appLogDao)
     }
 
     @Provides

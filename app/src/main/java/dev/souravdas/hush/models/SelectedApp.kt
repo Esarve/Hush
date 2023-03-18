@@ -1,5 +1,6 @@
 package dev.souravdas.hush.models
 
+import android.service.notification.StatusBarNotification
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import dev.souravdas.hush.others.HushType
@@ -10,14 +11,15 @@ import java.io.Serializable
 data class SelectedApp (
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    val appName: String,
-    val packageName: String,
-    val hushType: HushType? = null,
-    val durationInMinutes: Long? = null,
-    val muteDays: String? = null,
-    val startTime: LocalTime? = null,
-    val endTime: LocalTime? = null,
+    var appName: String,
+    var packageName: String,
+    var hushType: HushType? = null,
+    var durationInMinutes: Long? = null,
+    var muteDays: String? = null,
+    var startTime: LocalTime? = null,
+    var endTime: LocalTime? = null,
     val timeCreated: Long = System.currentTimeMillis(),
-    val timeUpdated: Long,
-    val isComplete: Boolean
+    var timeUpdated: Long,
+    var logNotification: Boolean,
+    var isComplete: Boolean
 ): Serializable

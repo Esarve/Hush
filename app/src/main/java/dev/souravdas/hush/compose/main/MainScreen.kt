@@ -1,4 +1,4 @@
-package dev.souravdas.hush.activities
+package dev.souravdas.hush.compose.main
 
 import android.annotation.SuppressLint
 import android.widget.Toast
@@ -11,18 +11,15 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.FabPosition
 import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -34,23 +31,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
 import dev.souravdas.hush.others.Constants
@@ -66,113 +57,7 @@ import androidx.compose.material3.MaterialTheme as MD3
  * On 2/22/2023 11:45 PM
  * For Hush!
  */
-class UIKit() {
-    @OptIn(ExperimentalMaterialApi::class)
-    @Composable
-    fun InstalledAppList(
-        items: List<InstalledPackageInfo>,
-        onItemClick: (SelectedApp) -> Unit = {},
-    ) {
-        val scope = rememberCoroutineScope()
-        val modifier = Modifier.padding(4.dp)
-        Box(
-            modifier = Modifier
-                .fillMaxHeight(fraction = 0.7f)
-        ) {
-            Column() {
-                Box(
-                    modifier = Modifier
-                        .height(56.dp)
-                        .fillMaxWidth()
-                        .background(color = MD3.colorScheme.primary)
-                ) {
-                    Text(
-                        text = "Swipe up to select an app",
-                        modifier = Modifier.align(alignment = Alignment.Center),
-                        color = MD3.colorScheme.onPrimary
-                    )
-                }
-                val lazyListState = rememberLazyListState()
-                LazyColumn(
-                    state = lazyListState,
-                    modifier = Modifier.background(color = MD3.colorScheme.background)
-                ) {
-                    itemsIndexed(items = items) { index, item ->
-
-                        ListItem(
-                            modifier = Modifier.clickable {
-                                scope.launch {
-                                    onItemClick.invoke(
-                                        SelectedApp(
-                                            appName = item.appName,
-                                            packageName = item.packageName,
-                                            timeUpdated = System.currentTimeMillis(),
-                                            isComplete = false
-                                        )
-                                    )
-                                }
-                            },
-                            icon = {
-                                Image(
-                                    painter = rememberDrawablePainter(
-                                        drawable = item.icon ?: ContextCompat.getDrawable(
-                                            LocalContext.current, R.mipmap.ic_launcher_round
-                                        )
-                                    ),
-                                    contentDescription = "appIcon",
-                                    modifier = Modifier.size(40.dp)
-                                )
-                            },
-                            text = {
-                                Text(
-                                    text = item.appName,
-                                    textAlign = TextAlign.Center,
-                                    color = MD3.colorScheme.onBackground,
-                                    modifier = Modifier.padding(start = 4.dp)
-                                )
-                            }
-                        )
-                    }
-                }
-            }
-
-        }
-    }
-
-    @Composable
-    fun ShowAlertDialog(
-        onConfirmClick: () -> Unit
-    ) {
-        AlertDialog(
-            onDismissRequest = {},
-            icon = {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp)
-                )
-            },
-            title = {
-                Text(text = "Notification Permission Necessary")
-            },
-            text = {
-                Text(text = stringResource(id = R.string.notification_alert_dialog_body))
-            },
-            confirmButton = {
-                Button(onClick = {
-                    onConfirmClick.invoke()
-                    Toast.makeText(
-                        HushApp.context,
-                        "Please Select Hush! from the list",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }) {
-                    Text(text = stringResource(id = android.R.string.ok))
-                }
-            }
-        )
-    }
-
+class MainScreen() {
     @OptIn(
         ExperimentalMaterial3Api::class,
         ExperimentalMaterialApi::class, ExperimentalLayoutApi::class
@@ -415,9 +300,11 @@ class UIKit() {
                                 fontColor = Color.White
                             )
                         } else {
-                            CustomChip(
-                                title = selectedApp.selectedApp.hushType.label,
-                            )
+                            selectedApp.selectedApp.hushType?.let {
+                                CustomChip(
+                                    title = it.label,
+                                )
+                            }
                         }
                     }
                 }
@@ -455,7 +342,7 @@ class UIKit() {
             }
 
             var logNotificationCb by remember {
-                mutableStateOf(false) //This will be true in the fututre
+                mutableStateOf(true)
             }
             val startEndTimePair by remember {
                 mutableStateOf(StartEndTime("00:00", "23:59"))
@@ -704,82 +591,6 @@ class UIKit() {
     }
 
     @Composable
-    fun AddCancelButtonBar(
-        onAddClick: () -> Unit,
-        onCancelClick: () -> Unit = {}
-    ) {
-        Row() {
-            val modifier =
-                Modifier.padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
-            Spacer(modifier = Modifier.weight(1f))
-
-            Text(
-                text = "Cancel",
-                color = MD3.colorScheme.onPrimaryContainer,
-                modifier = modifier
-                    .clickable {
-                        onCancelClick.invoke()
-                    })
-
-            Text(text = "Add",
-                fontWeight = FontWeight.Medium,
-                color = MD3.colorScheme.onPrimaryContainer,
-                modifier = modifier
-                    .clickable {
-                        onAddClick.invoke()
-                    })
-        }
-    }
-
-    @OptIn(ExperimentalMaterial3Api::class)
-    @Composable
-    fun ShowTimePicker(
-        time: Pair<Int, Int>,
-        title: String,
-        onTimeSelected: (String) -> Unit,
-        onDialogDismiss: () -> Unit
-    ) {
-        val state = rememberTimePickerState(time.first, time.second)
-
-        Dialog(
-            onDismissRequest = { onDialogDismiss.invoke() }, properties = DialogProperties(
-                dismissOnBackPress = false,
-                dismissOnClickOutside = false
-            )
-        ) {
-            Surface(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MD3.colorScheme.background)
-                    .padding(16.dp)
-            ) {
-                Column(
-                    Modifier.background(MD3.colorScheme.background),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Start,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = title,
-                            fontSize = 24.sp,
-                            color = MD3.colorScheme.onBackground,
-                            modifier = Modifier.padding(bottom = 16.dp)
-                        )
-                    }
-                    TimePicker(state = state)
-                    AddCancelButtonBar(onAddClick = {
-                        onTimeSelected.invoke(state.hour.toString() + ":" + state.minute)
-                    }, onCancelClick = {
-                        onDialogDismiss.invoke()
-                    })
-                }
-            }
-        }
-    }
-
-    @Composable
     fun ShowOptions(
         @SuppressLint("ModifierParameter") buttonModifier: Modifier,
         onRemoveClick: (SelectedApp) -> Unit = {},
@@ -991,8 +802,7 @@ class UIKit() {
             })
     }
 
-
-    fun get12HrsFrom24Hrs(inputTime: String): String {
+    private fun get12HrsFrom24Hrs(inputTime: String): String {
         val timeFormat = SimpleDateFormat("hh:mm", Locale.getDefault())
         val time = timeFormat.parse(inputTime)
         val outputFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())

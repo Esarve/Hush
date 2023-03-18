@@ -1,5 +1,6 @@
 package dev.souravdas.hush.arch
 
+import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.SelectedApp
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -12,11 +13,16 @@ import javax.inject.Singleton
  * For Hush!
  */
 @Singleton
-class SelectAppCache @Inject constructor(private val repository: SelectAppRepository) {
+class SelectAppCache @Inject constructor(private val repository: SelectAppRepository, private val logRepository: AppLogRepository) {
     private val selectedAppsFlow = repository.getSelectedAppsWithFlow()
     private val databaseUpdatesFlow = repository.getDBUpdatesWithFlow()
 
     fun getSelectedApps(): Flow<List<SelectedApp>> = combine(selectedAppsFlow, databaseUpdatesFlow) { selectedApps, _ ->
         selectedApps
     }
+
+    suspend fun logNotification(appLog: AppLog){
+        logRepository.insertLog(appLog)
+    }
+
 }

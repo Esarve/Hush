@@ -13,7 +13,7 @@ interface SelectedAppDao {
     @Query("SELECT * FROM selected_app")
     fun getAllSelectedAppsRaw(): List<SelectedApp>
 
-    @Update(entity = SelectedApp::class)
+    @Update(entity = SelectedApp::class, onConflict = OnConflictStrategy.REPLACE)
     suspend fun update(selectedApp: SelectedApp)
 
     @Query("SELECT * FROM selected_app")
@@ -22,7 +22,7 @@ interface SelectedAppDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(selectedApp: SelectedApp)
 
-    @Delete
+    @Delete (entity = SelectedApp::class)
     suspend fun delete(selectedApp: SelectedApp)
 
     @Query("DELETE FROM selected_app WHERE isComplete= :isComplete")

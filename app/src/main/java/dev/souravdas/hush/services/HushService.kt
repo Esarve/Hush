@@ -1,5 +1,6 @@
 package dev.souravdas.hush.services
 
+import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
@@ -12,6 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.arch.SelectAppCache
+import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
@@ -88,11 +90,11 @@ class HushService : NotificationListenerService() {
 
                     when (app!!.hushType) {
                         HushType.ALWAYS -> {
-                            cancelNotification(notification.key)
+                            cancelAndLog(notification, app!!)
                         }
                         HushType.DURATION -> {
                             if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!! * 60000) {
-                                cancelNotification(notification.key)
+                                cancelAndLog(notification, app!!)
                             } else {
                                 Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
                             }
@@ -102,7 +104,7 @@ class HushService : NotificationListenerService() {
                             val now = LocalTime.now()
                             app?.let {
                                 if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(now) && it.endTime!!.isAfter(now))){
-                                    cancelNotification(notification.key)
+                                    cancelAndLog(notification, app!!)
                                 }
                             }
 
@@ -115,6 +117,26 @@ class HushService : NotificationListenerService() {
                 }
             }
 
+        }
+    }
+
+    private fun cancelAndLog(statusBarNotification: StatusBarNotification, app: SelectedApp) {
+        val tmp = statusBarNotification
+        cancelNotification(statusBarNotification.key)
+        logNotification(tmp, app)
+    }
+
+    private fun logNotification(statusBarNotification: StatusBarNotification, app: SelectedApp) {
+        if (app.logNotification){
+            scope.launch {
+                selectAppCache.logNotification(
+                    AppLog(
+                        selected_app_id = app.id,
+                        title = statusBarNotification.notification.extras.getString(Notification.EXTRA_TITLE),
+                        body = statusBarNotification.notification.extras.getString(Notification.EXTRA_TEXT),
+                    )
+                )
+            }
         }
     }
 

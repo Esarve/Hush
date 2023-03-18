@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
-import dev.souravdas.hush.activities.UIKit
+import dev.souravdas.hush.compose.main.MainScreen
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
@@ -42,9 +42,10 @@ class MainActivityVM @Inject constructor(
             val selectedAppFromDB =
                 selectAppRepository.getSelectedApp(selectedApp.packageName ?: "")
             if (selectedAppFromDB != null) {
-                selectAppRepository.delete(selectedAppFromDB)
-            }
-            selectAppRepository.addSelectedApp(selectedApp)
+                selectedAppFromDB.isComplete = false
+                selectAppRepository.update(selectedAppFromDB)
+            }else
+                selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
@@ -127,29 +128,42 @@ class MainActivityVM @Inject constructor(
     fun addConfigInSelectedApp(
         app: SelectedApp,
         type: HushType,
-        startEndTime: UIKit.StartEndTime,
+        startEndTime: MainScreen.StartEndTime,
         duration: Long,
         daysList: List<String?>,
-        logNotification: Boolean
+        logNotificationvalue: Boolean
     ) {
         executedSuspendedCodeBlock {
-            val selectedApp = SelectedApp(
-                appName = app.appName,
-                packageName = app.packageName,
-                hushType = type,
-                durationInMinutes = duration,
-                muteDays = utils.getStringFromDaysList(daysList),
-                startTime = utils.toLocalTime(startEndTime.startTime),
-                endTime = utils.toLocalTime(startEndTime.endTime),
-                timeUpdated = System.currentTimeMillis(),
-                isComplete = true
-            )
-
             val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName ?: "")
             if (selectedAppFromDB != null) {
-                selectAppRepository.delete(selectedAppFromDB)
+                with(selectedAppFromDB) {
+                    appName = app.appName
+                    packageName = app.packageName
+                    hushType = type
+                    durationInMinutes = duration
+                    muteDays = utils.getStringFromDaysList(daysList)
+                    startTime = utils.toLocalTime(startEndTime.startTime)
+                    endTime = utils.toLocalTime(startEndTime.endTime)
+                    timeUpdated = System.currentTimeMillis()
+                    logNotification = logNotificationvalue
+                    isComplete = true
+                }
+                selectAppRepository.update(selectedAppFromDB)
+            }else{
+                val selectedApp = SelectedApp(
+                    appName = app.appName,
+                    packageName = app.packageName,
+                    hushType = type,
+                    durationInMinutes = duration,
+                    muteDays = utils.getStringFromDaysList(daysList),
+                    startTime = utils.toLocalTime(startEndTime.startTime),
+                    endTime = utils.toLocalTime(startEndTime.endTime),
+                    timeUpdated = System.currentTimeMillis(),
+                    logNotification = logNotificationvalue,
+                    isComplete = true
+                )
+                selectAppRepository.addSelectedApp(selectedApp)
             }
-            selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
