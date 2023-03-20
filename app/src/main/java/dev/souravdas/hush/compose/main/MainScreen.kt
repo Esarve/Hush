@@ -37,6 +37,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.HushApp
@@ -64,7 +65,7 @@ class MainScreen() {
     )
     @Composable
     fun MainActivityScreen(
-        viewModel: MainActivityVM = viewModel(),
+        viewModel: MainActivityVM = hiltViewModel(),
         checkNotificationPermission: () -> Boolean,
         onNotificationPermissionGet: () -> Unit
     ) {
