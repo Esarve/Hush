@@ -1,4 +1,4 @@
-package dev.souravdas.hush
+package dev.souravdas.hush.activities
 
 import android.app.Activity
 import android.content.Context
@@ -14,13 +14,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
-import dev.souravdas.hush.compose.main.MainScreen
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.nav.NavGraph
+import dev.souravdas.hush.nav.Screens
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -30,18 +34,23 @@ class MainActivity : ComponentActivity() {
     lateinit var utils: Utils
     private val viewModel: MainActivityVM by viewModels()
     private var doubleBackToExitPressedOnce = false
+    private lateinit var navController: NavHostController
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             viewModel.getSelectedApp()
 
+            navController = rememberNavController()
+
             HushTheme() {
-                MainScreen().MainActivityScreen(onNotificationPermissionGet = {
-                    openNotificationAccessSettingsIfNeeded(this)
-                }, checkNotificationPermission = {
-                    isNotificationListenerEnabled(this)
-                })
+                NavGraph(
+                    navController = navController,
+                    onNotificationPermissionGet = {
+                        openNotificationAccessSettingsIfNeeded(this)
+                    }, checkNotificationPermission = {
+                        isNotificationListenerEnabled(this)
+                    })
             }
         }
 
@@ -50,14 +59,19 @@ class MainActivity : ComponentActivity() {
 
     private fun checkService() {
         lifecycleScope.launch {
-            viewModel.getHushStatusAsFlow().collect() {value ->
-                if (value){
+            viewModel.getHushStatusAsFlow().collect() { value ->
+                if (value) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                        startForegroundService(Intent(this@MainActivity, KeepAliveService::class.java))
-                    }else{
+                        startForegroundService(
+                            Intent(
+                                this@MainActivity,
+                                KeepAliveService::class.java
+                            )
+                        )
+                    } else {
                         startService(Intent(this@MainActivity, KeepAliveService::class.java))
                     }
-                }else{
+                } else {
                     stopService(Intent(this@MainActivity, KeepAliveService::class.java))
                 }
             }
@@ -76,21 +90,25 @@ class MainActivity : ComponentActivity() {
         return enabledPackages.contains(packageName)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            viewModel.removeIncompleteApp()
-            finishAffinity()
-            return
+        if (navController.currentDestination!!.route == Screens.MainScreen.route){
+            if (doubleBackToExitPressedOnce) {
+                viewModel.removeIncompleteApp()
+                finishAffinity()
+                return
+            }
+
+            this.doubleBackToExitPressedOnce = true
+            Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
+
+            Handler(Looper.getMainLooper()).postDelayed(Runnable {
+                doubleBackToExitPressedOnce = false
+            }, 2000)
+        }else{
+            super.onBackPressed()
         }
-
-        this.doubleBackToExitPressedOnce = true
-        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
-
-        Handler(Looper.getMainLooper()).postDelayed(Runnable { doubleBackToExitPressedOnce = false }, 2000)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
 }
 

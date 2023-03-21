@@ -6,8 +6,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
-import dev.souravdas.hush.compose.main.MainScreen
 import dev.souravdas.hush.base.BaseViewModel
+import dev.souravdas.hush.compose.main.AppConfig
+import dev.souravdas.hush.compose.main.StartEndTime
+import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
@@ -33,9 +35,12 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
+    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
+    val appLog = _appLog.asStateFlow()
+
     companion object {
         const val APP_LIST = "APP_LIST"
-        const val SELECTED_APP = "SELECTED_APP"
+        const val LOG = "LOG"
     }
 
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
@@ -47,6 +52,14 @@ class MainActivityVM @Inject constructor(
                 selectAppRepository.update(selectedAppFromDB)
             }else
                 selectAppRepository.addSelectedApp(selectedApp)
+        }
+    }
+
+    fun getLog(id: Int){
+        viewModelScope.launch {
+            appLogRepository.getAllBySelectedAppID(id).collect{
+                _appLog.value = it
+            }
         }
     }
 
@@ -127,27 +140,21 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun addConfigInSelectedApp(
-        app: SelectedApp,
-        type: HushType,
-        startEndTime: MainScreen.StartEndTime,
-        duration: Long,
-        daysList: List<String?>,
-        logNotificationvalue: Boolean
-    ) {
+    fun addConfigInSelectedApp(appConfig: AppConfig) {
         executedSuspendedCodeBlock {
+            val app = appConfig.selectedApp
             val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
             if (selectedAppFromDB != null) {
                 with(selectedAppFromDB) {
                     appName = app.appName
                     packageName = app.packageName
-                    hushType = type
-                    durationInMinutes = duration
-                    muteDays = utils.getStringFromDaysList(daysList)
-                    startTime = utils.toLocalTime(startEndTime.startTime)
-                    endTime = utils.toLocalTime(startEndTime.endTime)
+                    hushType = appConfig.type
+                    durationInMinutes = appConfig.duration
+                    muteDays = utils.getStringFromDaysList(appConfig.daysList)
+                    startTime = utils.toLocalTime(appConfig.startEndTime.startTime)
+                    endTime = utils.toLocalTime(appConfig.startEndTime.endTime)
                     timeUpdated = System.currentTimeMillis()
-                    logNotification = logNotificationvalue
+                    logNotification = appConfig.logNotification
                     isComplete = true
                 }
                 selectAppRepository.update(selectedAppFromDB)
@@ -155,13 +162,13 @@ class MainActivityVM @Inject constructor(
                 val selectedApp = SelectedApp(
                     appName = app.appName,
                     packageName = app.packageName,
-                    hushType = type,
-                    durationInMinutes = duration,
-                    muteDays = utils.getStringFromDaysList(daysList),
-                    startTime = utils.toLocalTime(startEndTime.startTime),
-                    endTime = utils.toLocalTime(startEndTime.endTime),
+                    hushType = appConfig.type,
+                    durationInMinutes = appConfig.duration,
+                    muteDays = utils.getStringFromDaysList(appConfig.daysList),
+                    startTime = utils.toLocalTime(appConfig.startEndTime.startTime),
+                    endTime = utils.toLocalTime(appConfig.startEndTime.endTime),
                     timeUpdated = System.currentTimeMillis(),
-                    logNotification = logNotificationvalue,
+                    logNotification = appConfig.logNotification,
                     isComplete = true
                 )
                 selectAppRepository.addSelectedApp(selectedApp)
@@ -175,9 +182,9 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun updateComplete(app: SelectedAppForList){
+    fun updateComplete(app: SelectedApp){
         executedSuspendedCodeBlock {
-            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.selectedApp.packageName)
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
             if (selectedAppFromDB != null){
                 selectedAppFromDB.isComplete = false
                 selectAppRepository.update(selectedAppFromDB)
