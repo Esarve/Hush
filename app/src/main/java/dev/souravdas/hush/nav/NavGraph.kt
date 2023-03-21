@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import dev.souravdas.hush.compose.main.MainScreen
+import dev.souravdas.hush.compose.main.MainActivityScreen
 
 /**
  * Created by Sourav
@@ -24,7 +24,7 @@ fun NavGraph(
         composable(
             route = Screens.MainScreen.route,
         ) {
-            MainScreen().MainActivityScreen(
+            MainActivityScreen(
                 onNotificationPermissionGet = onNotificationPermissionGet,
                 checkNotificationPermission = checkNotificationPermission
             )
