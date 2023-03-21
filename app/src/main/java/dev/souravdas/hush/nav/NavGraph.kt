@@ -36,11 +36,16 @@ fun NavGraph(
 
         composable(
             route = Screens.LogScreen.route,
-            arguments = listOf(navArgument("app_id"){
-                type = NavType.LongType
-            })
+            arguments = listOf(
+                navArgument("app_id") {
+                    type = NavType.LongType
+                },
+                navArgument("app_name"){
+                    type = NavType.StringType
+                }
+            )
         ) {
-            AppLogList(it.arguments?.getLong("app_id"))
+            AppLogList(it.arguments?.getLong("app_id"), it.arguments?.getString("app_name"), navController)
         }
     }
 }

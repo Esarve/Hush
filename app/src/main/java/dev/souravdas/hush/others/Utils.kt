@@ -60,4 +60,10 @@ class Utils {
         }
         return if (sb.toString().isEmpty()) "" else sb.toString().substring(0, sb.length-1)
     }
+
+    fun getStringDateFromMillis(millis: Long): String{
+        val date = Date(millis)
+        val sdf = SimpleDateFormat("dd-MM-yy hh:mm a", Locale.UK)
+        return sdf.format(date)
+    }
 }

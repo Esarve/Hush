@@ -287,7 +287,7 @@ fun MainActivityScreen(
                     onEditClick = editAppLambda,
                     onConfigDone = addConfigLambda,
                     onNotificationLogClick = {
-                        navController.navigate(route = "log_screen/" + app.selectedApp.id.toLong())
+                        navController.navigate(route = "log_screen/${app.selectedApp.id.toLong()}/${app.selectedApp.appName}")
                     }
                 )
             }
