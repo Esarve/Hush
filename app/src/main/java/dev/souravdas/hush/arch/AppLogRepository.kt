@@ -1,6 +1,8 @@
 package dev.souravdas.hush.arch
 
 import dev.souravdas.hush.models.AppLog
+import dev.souravdas.hush.models.SelectedApp
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 /**
@@ -17,4 +19,6 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
     suspend fun deleteAllBySelectedAppId(selectedAppId:Int){
         appLogDao.deleteAllByForeignKey(selectedAppId)
     }
+
+    fun getAllBySelectedAppID(selectedAppId: Int): Flow<List<AppLog>> = appLogDao.getAllByForeignKey(selectedAppId)
 }

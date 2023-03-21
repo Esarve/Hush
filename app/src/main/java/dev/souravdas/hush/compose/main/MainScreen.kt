@@ -18,30 +18,38 @@ import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.nav.Screens
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import kotlinx.coroutines.launch
@@ -61,6 +69,7 @@ import androidx.compose.material3.MaterialTheme as MD3
 )
 @Composable
 fun MainActivityScreen(
+    navController: NavController,
     viewModel: MainActivityVM = hiltViewModel(),
     checkNotificationPermission: () -> Boolean,
     onNotificationPermissionGet: () -> Unit
@@ -70,6 +79,10 @@ fun MainActivityScreen(
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val list = viewModel.appListSF.collectAsState()
+
+    var dropDownMenuExpanded by remember {
+        mutableStateOf(false)
+    }
 
     BottomSheetScaffold(
         backgroundColor = MD3.colorScheme.background,
@@ -84,8 +97,61 @@ fun MainActivityScreen(
                         fontWeight = FontWeight.Medium,
                         color = MD3.colorScheme.onBackground
                     )
-                }
-            )
+                },
+                actions = {
+                    // search icon
+//                    TopAppBarActionButton(
+//                        imageVector = Icons.Outlined.Search,
+//                        description = "Search"
+//                    ) {
+//
+//                    }
+//
+//                    // lock icon
+//                    TopAppBarActionButton(
+//                        imageVector = Icons.Outlined.Lock,
+//                        description = "Lock"
+//                    ) {
+//
+//                    }
+
+                    // options icon (vertical dots)
+                    TopAppBarActionButton(
+                        imageVector = Icons.Outlined.MoreVert,
+                        description = "Options"
+                    ) {
+                        // show the drop down menu
+                        dropDownMenuExpanded = true
+                    }
+
+                    // drop down menu
+                    DropdownMenu(
+                        expanded = dropDownMenuExpanded,
+                        onDismissRequest = {
+                            dropDownMenuExpanded = false
+                        },
+                        // play around with these values
+                        // to position the menu properly
+                        offset = DpOffset(x = 10.dp, y = (-60).dp)
+                    ) {
+                        // this is a column scope
+                        // items are added vertically
+
+                        DropdownMenuItem(onClick = {
+
+                            dropDownMenuExpanded = false
+                        }) {
+                            Text("Settings")
+                        }
+
+                        DropdownMenuItem(onClick = {
+
+                            dropDownMenuExpanded = false
+                        }) {
+                            Text("About")
+                        }
+                    }
+                })
         },
         sheetContent = {
             InstalledAppList(items = list.value) { item ->
@@ -219,10 +285,26 @@ fun MainActivityScreen(
                     selectedApp = app,
                     onRemoveClick = removeAppLambda,
                     onEditClick = editAppLambda,
-                    onConfigDone = addConfigLambda
+                    onConfigDone = addConfigLambda,
+                    onNotificationLogClick = {
+                        navController.navigate(route = "log_screen/" + app.selectedApp.id.toLong())
+                    }
                 )
             }
         }
+    }
+}
+
+@Composable
+fun TopAppBarActionButton(
+    imageVector: ImageVector,
+    description: String,
+    onClick: () -> Unit
+) {
+    IconButton(onClick = {
+        onClick()
+    }) {
+        Icon(imageVector = imageVector, contentDescription = description)
     }
 }
 
@@ -232,6 +314,7 @@ fun SelectedAppItem(
     onRemoveClick: (SelectedApp) -> Unit = {},
     onEditClick: (SelectedApp) -> Unit,
     onConfigDone: (AppConfig) -> Unit,
+    onNotificationLogClick: (SelectedApp) -> Unit
 ) {
     var showOptions by remember {
         mutableStateOf(false)
@@ -309,7 +392,7 @@ fun SelectedAppItem(
         }
 
         AnimatedVisibility(showOptions) {
-            ShowOptions(buttonModifier, onRemoveClick, onEditClick, selectedApp)
+            ShowOptions(buttonModifier, onRemoveClick, onEditClick, selectedApp, onNotificationLogClick)
         }
     }
 }
@@ -597,7 +680,8 @@ fun ShowOptions(
     @SuppressLint("ModifierParameter") buttonModifier: Modifier,
     onRemoveClick: (SelectedApp) -> Unit = {},
     onEditClick: (SelectedApp) -> Unit,
-    selectedApp: SelectedAppForList
+    selectedApp: SelectedAppForList,
+    onNotificationLogClick: (SelectedApp) -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -609,7 +693,7 @@ fun ShowOptions(
     ) {
         TextButton(
             modifier = buttonModifier,
-            onClick = { Constants.showNIY() }) {
+            onClick = { onNotificationLogClick.invoke(selectedApp.selectedApp) }) {
             Text("Notification History", color = MD3.colorScheme.onSecondaryContainer)
         }
 

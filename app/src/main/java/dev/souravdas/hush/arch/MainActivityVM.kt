@@ -9,6 +9,7 @@ import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.compose.main.AppConfig
 import dev.souravdas.hush.compose.main.StartEndTime
+import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
@@ -34,9 +35,12 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
+    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
+    val appLog = _appLog.asStateFlow()
+
     companion object {
         const val APP_LIST = "APP_LIST"
-        const val SELECTED_APP = "SELECTED_APP"
+        const val LOG = "LOG"
     }
 
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
@@ -48,6 +52,14 @@ class MainActivityVM @Inject constructor(
                 selectAppRepository.update(selectedAppFromDB)
             }else
                 selectAppRepository.addSelectedApp(selectedApp)
+        }
+    }
+
+    fun getLog(id: Int){
+        viewModelScope.launch {
+            appLogRepository.getAllBySelectedAppID(id).collect{
+                _appLog.value = it
+            }
         }
     }
 

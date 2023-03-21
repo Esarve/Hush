@@ -20,9 +20,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.nav.NavGraph
+import dev.souravdas.hush.nav.Screens
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -88,23 +90,25 @@ class MainActivity : ComponentActivity() {
         return enabledPackages.contains(packageName)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
-        if (doubleBackToExitPressedOnce) {
-            viewModel.removeIncompleteApp()
-            finishAffinity()
-            return
+        if (navController.currentDestination!!.route == Screens.MainScreen.route){
+            if (doubleBackToExitPressedOnce) {
+                viewModel.removeIncompleteApp()
+                finishAffinity()
+                return
+            }
+
+            this.doubleBackToExitPressedOnce = true
+            Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
+
+            Handler(Looper.getMainLooper()).postDelayed(Runnable {
+                doubleBackToExitPressedOnce = false
+            }, 2000)
+        }else{
+            super.onBackPressed()
         }
-
-        this.doubleBackToExitPressedOnce = true
-        Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
-
-        Handler(Looper.getMainLooper()).postDelayed(Runnable {
-            doubleBackToExitPressedOnce = false
-        }, 2000)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-    }
 }
 

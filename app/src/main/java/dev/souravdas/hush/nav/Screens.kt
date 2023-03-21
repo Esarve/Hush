@@ -7,5 +7,5 @@ package dev.souravdas.hush.nav
  */
 sealed class Screens(val route: String){
     object MainScreen: Screens(route = "main_screen")
-    object LogScreen: Screens(route = "log_screen")
+    object LogScreen: Screens(route = "log_screen/{app_id}")
 }
