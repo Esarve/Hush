@@ -264,20 +264,19 @@ fun MainActivityScreen(
             )
         }
 
+        Box(Modifier.padding(16.dp)) {
+            Text(
+                text = "Ongoing Hush!",
+                fontSize = 16.sp,
+                color = MD3.colorScheme.onBackground
+            )
+        }
+
         LazyColumn(
             modifier = modifier
                 .padding(8.dp)
                 .fillMaxSize()
         ) {
-            item {
-                Box(Modifier.padding(10.dp)) {
-                    Text(
-                        text = "Ongoing Hush!",
-                        fontSize = 16.sp,
-                        color = MD3.colorScheme.onBackground
-                    )
-                }
-            }
             items(selectedList, key = {
                 it.selectedApp.timeUpdated
             }) { app ->
