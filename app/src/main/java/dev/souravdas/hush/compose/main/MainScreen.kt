@@ -66,6 +66,7 @@ fun MainActivityScreen(
     onNotificationPermissionGet: () -> Unit
 ) {
     viewModel.getInstalledApps()
+    viewModel.getSelectedApp()
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val list = viewModel.appListSF.collectAsState()
@@ -147,6 +148,11 @@ fun MainActivityScreen(
                 viewModel.removeApp(app)
             }
         }
+        val addConfigLambda = remember<(AppConfig) -> Unit> {
+            { app ->
+                viewModel.addConfigInSelectedApp(app)
+            }
+        }
 
         if (showNotificationPermissionAlertDialog)
             ShowAlertDialog {
@@ -211,12 +217,9 @@ fun MainActivityScreen(
             }) { app ->
                 SelectedAppItem(
                     selectedApp = app,
-                    onRemoveClick = viewModel::removeApp,
-                    onEditClick = viewModel::updateComplete,
-                    onConfigDone = viewModel::addConfigInSelectedApp,
-                    onCancelClick = {
-                        viewModel.removeApp(app.selectedApp)
-                    }
+                    onRemoveClick = removeAppLambda,
+                    onEditClick = editAppLambda,
+                    onConfigDone = addConfigLambda
                 )
             }
         }
@@ -229,7 +232,6 @@ fun SelectedAppItem(
     onRemoveClick: (SelectedApp) -> Unit = {},
     onEditClick: (SelectedApp) -> Unit,
     onConfigDone: (AppConfig) -> Unit,
-    onCancelClick: () -> Unit
 ) {
     var showOptions by remember {
         mutableStateOf(false)
@@ -303,7 +305,7 @@ fun SelectedAppItem(
         val buttonModifier = Modifier.padding(end = 4.dp)
 
         AnimatedVisibility(showInitConfig) {
-            ShowInitConfig(selectedApp.selectedApp, onConfigDone, onCancelClick)
+            ShowInitConfig(selectedApp.selectedApp, onConfigDone, onRemoveClick)
         }
 
         AnimatedVisibility(showOptions) {
@@ -317,7 +319,7 @@ fun SelectedAppItem(
 fun ShowInitConfig(
     app: SelectedApp,
     onConfigDone: (AppConfig) -> Unit,
-    onCancelClick: () -> Unit
+    onRemoveClick: (SelectedApp) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -584,7 +586,7 @@ fun ShowInitConfig(
                 )
             )
         }, onCancelClick = {
-            onCancelClick.invoke()
+            onRemoveClick.invoke(app)
         })
     }
 
