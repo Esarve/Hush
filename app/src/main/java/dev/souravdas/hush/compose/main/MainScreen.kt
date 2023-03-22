@@ -138,14 +138,14 @@ fun MainActivityScreen(
                         // items are added vertically
 
                         DropdownMenuItem(onClick = {
-
+                            navController.navigate(route = Screens.SettingsScreen.route)
                             dropDownMenuExpanded = false
                         }) {
                             Text("Settings")
                         }
 
                         DropdownMenuItem(onClick = {
-
+                            navController.navigate(route = Screens.SettingsScreen.route)
                             dropDownMenuExpanded = false
                         }) {
                             Text("About")

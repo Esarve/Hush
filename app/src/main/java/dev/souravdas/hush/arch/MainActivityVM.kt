@@ -9,10 +9,7 @@ import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.compose.main.AppConfig
 import dev.souravdas.hush.compose.main.StartEndTime
-import dev.souravdas.hush.models.AppLog
-import dev.souravdas.hush.models.InstalledPackageInfo
-import dev.souravdas.hush.models.SelectedApp
-import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.models.*
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import dev.souravdas.hush.others.Utils
@@ -37,6 +34,9 @@ class MainActivityVM @Inject constructor(
 
     private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
     val appLog = _appLog.asStateFlow()
+
+    private val _hushConfig = MutableSharedFlow<HushConfig>()
+    val hushConfig = _hushConfig.asSharedFlow()
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -179,6 +179,18 @@ class MainActivityVM @Inject constructor(
     fun removeIncompleteApp() {
         executedSuspendedCodeBlock {
             selectAppRepository.removedIncompleteApps()
+        }
+    }
+
+    fun getHushConfig(){
+        viewModelScope.launch {
+            _hushConfig.tryEmit(
+                HushConfig(
+                    dataStoreManager.getBooleanValue(Constants.DS_DND),
+                    dataStoreManager.getBooleanValue(Constants.DS_DELETE_EXPIRE),
+                    dataStoreManager.getBooleanValue(Constants.DS_NOTIFY_MUTE)
+                )
+            )
         }
     }
 

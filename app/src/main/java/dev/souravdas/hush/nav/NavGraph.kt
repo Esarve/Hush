@@ -1,5 +1,6 @@
 package dev.souravdas.hush.nav
 
+import android.transition.Scene
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -7,6 +8,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import dev.souravdas.hush.compose.AppLogList
+import dev.souravdas.hush.compose.SettingsPage
 import dev.souravdas.hush.compose.main.MainActivityScreen
 
 /**
@@ -46,6 +48,12 @@ fun NavGraph(
             )
         ) {
             AppLogList(it.arguments?.getLong("app_id"), it.arguments?.getString("app_name"), navController)
+        }
+
+        composable(
+            route = Screens.SettingsScreen.route
+        ){
+            SettingsPage(navController = navController)
         }
     }
 }
