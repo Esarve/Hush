@@ -10,6 +10,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -145,7 +146,7 @@ fun MainActivityScreen(
                         }
 
                         DropdownMenuItem(onClick = {
-                            navController.navigate(route = Screens.SettingsScreen.route)
+                            navController.navigate(route = Screens.AboutScreen.route)
                             dropDownMenuExpanded = false
                         }) {
                             Text("About")
@@ -191,6 +192,7 @@ fun MainActivityScreen(
         Timber.d(selectedList.size.toString())
         val modifier = Modifier.consumeWindowInsets(mo)
         val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
+        val listState = rememberLazyListState()
         var showNotificationPermissionAlertDialog by remember {
             mutableStateOf(!checkNotificationPermission.invoke())
         }
@@ -207,6 +209,9 @@ fun MainActivityScreen(
         val editAppLambda = remember<(SelectedApp) -> Unit> {
             { app ->
                 viewModel.updateComplete(app)
+                scope.launch {
+                    listState.scrollToItem(index = 1)
+                }
             }
         }
         val removeAppLambda = remember<(SelectedApp) -> Unit> {
@@ -273,6 +278,7 @@ fun MainActivityScreen(
         }
 
         LazyColumn(
+            state = listState,
             modifier = modifier
                 .padding(8.dp)
                 .fillMaxSize()

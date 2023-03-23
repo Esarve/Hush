@@ -20,6 +20,7 @@ import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.HushConfig
+import dev.souravdas.hush.others.Constants
 import kotlinx.coroutines.flow.collect
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,11 +28,29 @@ import kotlinx.coroutines.flow.collect
 fun SettingsPage(viewModel: MainActivityVM = hiltViewModel(), navController: NavHostController) {
     val hushConfig by viewModel.hushConfig.collectAsState(initial = HushConfig())
 
-    var notificationsEnabled by remember { mutableStateOf(true) }
-    var darkModeEnabled by remember { mutableStateOf(false) }
-    var locationTrackingEnabled by remember { mutableStateOf(true) }
-    var automaticUpdatesEnabled by remember { mutableStateOf(true) }
-    var languageSelectionEnabled by remember { mutableStateOf(false) }
+    val isDnd by remember { mutableStateOf(hushConfig.isDnd) }
+    val isRemovedExpired by remember { mutableStateOf(hushConfig.isAutoDeleteExpired) }
+    val isNotify by remember { mutableStateOf(hushConfig.isNotificationReminder) }
+
+    val onDndCheckChangeLambda = remember<(Boolean) -> Unit> {
+        {
+            viewModel.changeBooleanDS(Constants.DS_DND, it)
+        }
+    }
+
+    val onRemovedExpiredChangeLambda = remember<(Boolean) -> Unit> {
+        {
+            viewModel.changeBooleanDS(Constants.DS_DELETE_EXPIRE, it)
+        }
+    }
+
+    val onNotifyChangeLambda = remember<(Boolean) -> Unit> {
+        {
+            viewModel.changeBooleanDS(Constants.DS_NOTIFY_MUTE, it)
+        }
+    }
+
+
 
     Scaffold(
         topBar = {
@@ -39,7 +58,7 @@ fun SettingsPage(viewModel: MainActivityVM = hiltViewModel(), navController: Nav
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = { Text(text = "Settings") },
                 navigationIcon = {
-                    androidx.compose.material3.Icon(
+                    Icon(
                         Icons.Outlined.ArrowBack,
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
@@ -58,18 +77,18 @@ fun SettingsPage(viewModel: MainActivityVM = hiltViewModel(), navController: Nav
         ) {
             ToggleRow(
                 label = "Enable DND while muting notifications",
-                checked = hushConfig.isDnd,
-                onCheckedChange = { notificationsEnabled = it }
+                checked = isDnd,
+                onCheckedChange = onDndCheckChangeLambda
             )
             ToggleRow(
                 label = "Automatically remove expired mutes",
-                checked = hushConfig.isAutoDeleteExpired,
-                onCheckedChange = { darkModeEnabled = it }
+                checked = isRemovedExpired,
+                onCheckedChange = onRemovedExpiredChangeLambda
             )
             ToggleRow(
                 label = "Notify if there's too many notification being muted",
-                checked = hushConfig.isAutoDeleteExpired,
-                onCheckedChange = { locationTrackingEnabled = it }
+                checked = isNotify,
+                onCheckedChange = onNotifyChangeLambda
             )
 //            ToggleRow(
 //                label = { Text(text = "Automatic Updates") },

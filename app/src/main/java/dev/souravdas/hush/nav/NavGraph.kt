@@ -7,6 +7,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import dev.souravdas.hush.compose.AboutScreen
 import dev.souravdas.hush.compose.AppLogList
 import dev.souravdas.hush.compose.SettingsPage
 import dev.souravdas.hush.compose.main.MainActivityScreen
@@ -54,6 +55,12 @@ fun NavGraph(
             route = Screens.SettingsScreen.route
         ){
             SettingsPage(navController = navController)
+        }
+
+        composable(
+            route = Screens.AboutScreen.route
+        ){
+            AboutScreen(navController)
         }
     }
 }

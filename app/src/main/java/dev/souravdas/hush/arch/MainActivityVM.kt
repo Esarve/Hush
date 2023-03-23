@@ -63,6 +63,12 @@ class MainActivityVM @Inject constructor(
         }
     }
 
+    fun changeBooleanDS(key: String ,boolean: Boolean){
+        viewModelScope.launch {
+            dataStoreManager.writeBooleanData(key,boolean)
+        }
+    }
+
     fun getSelectedApp() {
         viewModelScope.launch {
             selectAppRepository.getSelectedAppsWithFlow().map { apps ->

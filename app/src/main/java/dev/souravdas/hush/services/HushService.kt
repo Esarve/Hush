@@ -4,6 +4,8 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
+import android.os.Build.VERSION
+import android.os.Build.VERSION_CODES
 import android.os.Handler
 import android.os.Looper
 import android.service.notification.NotificationListenerService
@@ -14,6 +16,7 @@ import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.arch.SelectAppCache
 import dev.souravdas.hush.models.AppLog
+import dev.souravdas.hush.models.HushConfig
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
@@ -21,6 +24,7 @@ import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
@@ -53,6 +57,7 @@ class HushService : NotificationListenerService() {
     @Inject
     lateinit var dataStoreManager: DataStoreManager
     private var selectedApps: List<SelectedApp> = emptyList()
+    private var hushConfig: HushConfig = HushConfig()
 
     override fun onCreate() {
         super.onCreate()
@@ -60,6 +65,10 @@ class HushService : NotificationListenerService() {
             selectAppCache.getSelectedApps().collect {
                 Timber.tag(TAG).i("Received app onCreate list $it")
                 selectedApps = it
+            }
+
+            selectAppCache.getConfig().collect{
+                hushConfig = it
             }
         }
     }
@@ -85,7 +94,6 @@ class HushService : NotificationListenerService() {
                         app = it
                         it.packageName == notification.packageName
                     }) {
-                    enableDndModeFor4Seconds()
                     Timber.tag(TAG).i("App found on List. Cancelling notification")
 
                     when (app!!.hushType) {
@@ -121,6 +129,8 @@ class HushService : NotificationListenerService() {
     }
 
     private fun cancelAndLog(statusBarNotification: StatusBarNotification, app: SelectedApp) {
+        if (VERSION.SDK_INT >= VERSION_CODES.M)
+            enableDndModeFor4Seconds()
         val tmp = statusBarNotification
         cancelNotification(statusBarNotification.key)
         logNotification(tmp, app)
@@ -140,11 +150,11 @@ class HushService : NotificationListenerService() {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.M)
-    fun enableDndModeFor4Seconds() {
+    @RequiresApi(VERSION_CODES.M)
+    private fun enableDndModeFor4Seconds() {
         val notificationManager =
             HushApp.context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        if (notificationManager.isNotificationPolicyAccessGranted && !isMute) {
+        if (!hushConfig.isDnd && notificationManager.isNotificationPolicyAccessGranted && !isMute) {
             val oldInterruptionFilter = notificationManager.currentInterruptionFilter
             notificationManager.setInterruptionFilter(NotificationManager.INTERRUPTION_FILTER_PRIORITY)
             isMute = true
