@@ -67,6 +67,8 @@ class HushService : NotificationListenerService() {
                 selectedApps = it
             }
 
+            isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
+
             selectAppCache.getConfig().collect{
                 hushConfig = it
             }
