@@ -1,5 +1,9 @@
 package dev.souravdas.hush.compose
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,18 +16,18 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavController
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
-import dagger.Provides
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
+
 
 /**
  * Created by Sourav
@@ -59,6 +63,7 @@ fun AboutScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(it)
         ) {
+            val activity = (LocalContext.current as Activity)
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.8f)
@@ -90,7 +95,9 @@ fun AboutScreen(navController: NavController) {
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
                 ) {
                     GlideImage(
                         model = "https://github.com/Esarve.png",
@@ -99,6 +106,14 @@ fun AboutScreen(navController: NavController) {
                             .width(64.dp)
                             .height(64.dp)
                             .clip(CircleShape)
+                            .clickable {
+                                activity.startActivity(
+                                    Intent(
+                                        Intent.ACTION_VIEW,
+                                        Uri.parse("https://souravdas.dev")
+                                    )
+                                )
+                            }
                     )
                     Text(
                         text = "Sourav Das\nhttps://souravdas.dev",
@@ -117,11 +132,21 @@ fun AboutScreen(navController: NavController) {
                 )
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 16.dp)
+                        .clickable {
+                            activity.startActivity(
+                                Intent(
+                                    Intent.ACTION_VIEW,
+                                    Uri.parse("https://www.raishaq.com/")
+                                )
+                            )
+                        }
                 ) {
-                    GlideImage(
-                        model = "https://lh3.googleusercontent.com/_DAIFu6wp6wZJBWDR4KVQ6cV4DE3Ov2h9Vvn-3RztW6xJxuGo_sg2gdkZ2dFZTLzANuZ_Bu4EMIKXSIGZAHoYOzqxzY7tisGgq5WpiRNh9kqzh_0WSQZZrGo1d2Vsj2m=w1280",
-                        contentDescription = "devimg",
+                    Image(
+                        painterResource(id = R.drawable.roach),
+                        contentDescription = "roachimg",
                         modifier = Modifier
                             .width(64.dp)
                             .height(64.dp)

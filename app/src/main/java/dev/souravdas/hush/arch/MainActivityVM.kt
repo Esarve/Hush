@@ -35,8 +35,16 @@ class MainActivityVM @Inject constructor(
     private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
-    private val _hushConfig = MutableSharedFlow<HushConfig>()
-    val hushConfig = _hushConfig.asSharedFlow()
+    private val _dsIsDnd = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DND)
+    private val _dsIsRemoveExpired = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DELETE_EXPIRE)
+    private val _dsIsNotifyMute = dataStoreManager.getBooleanValueAsFlow(Constants.DS_NOTIFY_MUTE)
+
+    val hushConfig : Flow<HushConfig> = combine(_dsIsDnd, _dsIsRemoveExpired,_dsIsNotifyMute) {a,b,c ->
+        HushConfig(a,b,c)
+    }
+
+    suspend fun getBoolean(key:String):Boolean = dataStoreManager.getBooleanValue(key)
+
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -188,17 +196,17 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun getHushConfig(){
-        viewModelScope.launch {
-            _hushConfig.tryEmit(
-                HushConfig(
-                    dataStoreManager.getBooleanValue(Constants.DS_DND),
-                    dataStoreManager.getBooleanValue(Constants.DS_DELETE_EXPIRE),
-                    dataStoreManager.getBooleanValue(Constants.DS_NOTIFY_MUTE)
-                )
-            )
-        }
-    }
+//    fun getHushConfig(){
+//        viewModelScope.launch {
+//            _hushConfig.tryEmit(
+//                HushConfig(
+//                    dataStoreManager.getBooleanValue(Constants.DS_DND),
+//                    dataStoreManager.getBooleanValue(Constants.DS_DELETE_EXPIRE),
+//                    dataStoreManager.getBooleanValue(Constants.DS_NOTIFY_MUTE)
+//                )
+//            )
+//        }
+//    }
 
     fun updateComplete(app: SelectedApp){
         executedSuspendedCodeBlock {
