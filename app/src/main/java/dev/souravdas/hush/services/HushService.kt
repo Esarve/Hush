@@ -131,7 +131,7 @@ class HushService : NotificationListenerService() {
     }
 
     private fun cancelAndLog(statusBarNotification: StatusBarNotification, app: SelectedApp) {
-        if (VERSION.SDK_INT >= VERSION_CODES.M)
+        if (VERSION.SDK_INT >= VERSION_CODES.M && hushConfig.isDnd)
             enableDndModeFor4Seconds()
         val tmp = statusBarNotification
         cancelNotification(statusBarNotification.key)
