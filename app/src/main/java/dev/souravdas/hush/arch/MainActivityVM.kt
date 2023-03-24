@@ -6,11 +6,10 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
-import dev.souravdas.hush.activities.UIKit
 import dev.souravdas.hush.base.BaseViewModel
-import dev.souravdas.hush.models.InstalledPackageInfo
-import dev.souravdas.hush.models.SelectedApp
-import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.compose.main.AppConfig
+import dev.souravdas.hush.compose.main.StartEndTime
+import dev.souravdas.hush.models.*
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import dev.souravdas.hush.others.Utils
@@ -22,6 +21,7 @@ import javax.inject.Inject
 @HiltViewModel
 class MainActivityVM @Inject constructor(
     private val selectAppRepository: SelectAppRepository,
+    private val appLogRepository: AppLogRepository,
     private val dataStoreManager: DataStoreManager,
     private val utils: Utils
 ) : BaseViewModel() {
@@ -32,9 +32,23 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
+    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
+    val appLog = _appLog.asStateFlow()
+
+    private val _dsIsDnd = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DND)
+    private val _dsIsRemoveExpired = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DELETE_EXPIRE)
+    private val _dsIsNotifyMute = dataStoreManager.getBooleanValueAsFlow(Constants.DS_NOTIFY_MUTE)
+
+    val hushConfig : Flow<HushConfig> = combine(_dsIsDnd, _dsIsRemoveExpired,_dsIsNotifyMute) {a,b,c ->
+        HushConfig(a,b,c)
+    }
+
+    suspend fun getBoolean(key:String):Boolean = dataStoreManager.getBooleanValue(key)
+
+
     companion object {
         const val APP_LIST = "APP_LIST"
-        const val SELECTED_APP = "SELECTED_APP"
+        const val LOG = "LOG"
     }
 
     fun addOrUpdateSelectedApp(selectedApp: SelectedApp) {
@@ -42,9 +56,24 @@ class MainActivityVM @Inject constructor(
             val selectedAppFromDB =
                 selectAppRepository.getSelectedApp(selectedApp.packageName ?: "")
             if (selectedAppFromDB != null) {
-                selectAppRepository.delete(selectedAppFromDB)
+                selectedAppFromDB.isComplete = false
+                selectAppRepository.update(selectedAppFromDB)
+            }else
+                selectAppRepository.addSelectedApp(selectedApp)
+        }
+    }
+
+    fun getLog(id: Int){
+        viewModelScope.launch {
+            appLogRepository.getAllBySelectedAppID(id).collect{
+                _appLog.value = it
             }
-            selectAppRepository.addSelectedApp(selectedApp)
+        }
+    }
+
+    fun changeBooleanDS(key: String ,boolean: Boolean){
+        viewModelScope.launch {
+            dataStoreManager.writeBooleanData(key,boolean)
         }
     }
 
@@ -120,42 +149,72 @@ class MainActivityVM @Inject constructor(
 
     fun removeApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
+            appLogRepository.deleteAllBySelectedAppId(selectedApp.id)
             selectAppRepository.removedSelectedApp(selectedApp)
         }
     }
 
-    fun addConfigInSelectedApp(
-        app: SelectedApp,
-        type: HushType,
-        startEndTime: UIKit.StartEndTime,
-        duration: Long,
-        daysList: List<String?>,
-        logNotification: Boolean
-    ) {
+    fun addConfigInSelectedApp(appConfig: AppConfig) {
         executedSuspendedCodeBlock {
-            val selectedApp = SelectedApp(
-                appName = app.appName,
-                packageName = app.packageName,
-                hushType = type,
-                durationInMinutes = duration,
-                muteDays = utils.getStringFromDaysList(daysList),
-                startTime = utils.toLocalTime(startEndTime.startTime),
-                endTime = utils.toLocalTime(startEndTime.endTime),
-                timeUpdated = System.currentTimeMillis(),
-                isComplete = true
-            )
-
-            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName ?: "")
+            val app = appConfig.selectedApp
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
             if (selectedAppFromDB != null) {
-                selectAppRepository.delete(selectedAppFromDB)
+                with(selectedAppFromDB) {
+                    appName = app.appName
+                    packageName = app.packageName
+                    hushType = appConfig.type
+                    durationInMinutes = appConfig.duration
+                    muteDays = utils.getStringFromDaysList(appConfig.daysList)
+                    startTime = utils.toLocalTime(appConfig.startEndTime.startTime)
+                    endTime = utils.toLocalTime(appConfig.startEndTime.endTime)
+                    timeUpdated = System.currentTimeMillis()
+                    logNotification = appConfig.logNotification
+                    isComplete = true
+                }
+                selectAppRepository.update(selectedAppFromDB)
+            }else{
+                val selectedApp = SelectedApp(
+                    appName = app.appName,
+                    packageName = app.packageName,
+                    hushType = appConfig.type,
+                    durationInMinutes = appConfig.duration,
+                    muteDays = utils.getStringFromDaysList(appConfig.daysList),
+                    startTime = utils.toLocalTime(appConfig.startEndTime.startTime),
+                    endTime = utils.toLocalTime(appConfig.startEndTime.endTime),
+                    timeUpdated = System.currentTimeMillis(),
+                    logNotification = appConfig.logNotification,
+                    isComplete = true
+                )
+                selectAppRepository.addSelectedApp(selectedApp)
             }
-            selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
     fun removeIncompleteApp() {
         executedSuspendedCodeBlock {
             selectAppRepository.removedIncompleteApps()
+        }
+    }
+
+//    fun getHushConfig(){
+//        viewModelScope.launch {
+//            _hushConfig.tryEmit(
+//                HushConfig(
+//                    dataStoreManager.getBooleanValue(Constants.DS_DND),
+//                    dataStoreManager.getBooleanValue(Constants.DS_DELETE_EXPIRE),
+//                    dataStoreManager.getBooleanValue(Constants.DS_NOTIFY_MUTE)
+//                )
+//            )
+//        }
+//    }
+
+    fun updateComplete(app: SelectedApp){
+        executedSuspendedCodeBlock {
+            val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
+            if (selectedAppFromDB != null){
+                selectedAppFromDB.isComplete = false
+                selectAppRepository.update(selectedAppFromDB)
+            }
         }
     }
 

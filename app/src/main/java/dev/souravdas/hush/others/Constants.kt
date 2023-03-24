@@ -10,6 +10,9 @@ import dev.souravdas.hush.HushApp
  */
 object Constants {
     const val DS_HUSH_STATUS = "hush_status"
+    const val DS_DND = "dnd"
+    const val DS_DELETE_EXPIRE = "delete_expire"
+    const val DS_NOTIFY_MUTE = "notify_mute"
 
     fun showNIY (){
         Toast.makeText(

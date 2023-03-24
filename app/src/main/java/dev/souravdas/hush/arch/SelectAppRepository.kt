@@ -14,7 +14,10 @@ class SelectAppRepository @Inject constructor(val selectedAppDao: SelectedAppDao
     suspend fun getSelectedApps(): List<SelectedApp> = selectedAppDao.getAllSelectedApps()
     fun getSelectedAppsRaw(): List<SelectedApp> = selectedAppDao.getAllSelectedAppsRaw()
 
-    suspend fun update(selectedApp: SelectedApp) = selectedAppDao.update(selectedApp)
+    suspend fun update(selectedApp: SelectedApp) {
+        selectedApp.timeUpdated = System.currentTimeMillis()
+        selectedAppDao.update(selectedApp)
+    }
     suspend fun delete(selectedApp: SelectedApp) = selectedAppDao.delete(selectedApp)
     suspend fun removedSelectedApp(selectedApp: SelectedApp) = selectedAppDao.delete(selectedApp);
 
