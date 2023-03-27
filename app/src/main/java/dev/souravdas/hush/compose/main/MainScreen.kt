@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.FabPosition
-import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
@@ -29,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -94,9 +94,9 @@ fun MainActivityScreen(
                 title = {
                     Text(
                         stringResource(id = R.string.app_name),
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MD3.colorScheme.onBackground
+                        style =MD3.typography.displaySmall,
+                        color = MD3.colorScheme.onBackground,
+                        modifier = Modifier.padding(horizontal = 8.dp)
                     )
                 },
                 actions = {
@@ -186,11 +186,14 @@ fun MainActivityScreen(
                 )
             }
         },
+
         modifier = Modifier.background(MD3.colorScheme.background)
     ) { mo ->
         val selectedList by viewModel.selectedAppsSF.collectAsState(emptyList())
         Timber.d(selectedList.size.toString())
-        val modifier = Modifier.consumeWindowInsets(mo)
+        val modifier = Modifier
+            .consumeWindowInsets(mo)
+            .padding(horizontal = 16.dp)
         val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
         val listState = rememberLazyListState()
         var showNotificationPermissionAlertDialog by remember {
@@ -233,54 +236,88 @@ fun MainActivityScreen(
 
 //            <--- Hush Service Toggle ---->
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
+            modifier = modifier
+                .padding(top = 8.dp)
                 .fillMaxWidth()
-                .padding(8.dp)
-                .background(
-                    color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .clickable {
-                    if (checkNotificationPermission.invoke())
-                        viewModel.setHushStatus(!hushStatus.value)
-                    else
-                        showNotificationPermissionAlertDialog = true
-                }
         )
         {
-            Text(
-                text = "Start Hush Service",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                color = if (hushStatus.value) MD3.colorScheme.onPrimary else MD3.colorScheme.onSurfaceVariant,
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
                 modifier = Modifier
-                    .padding(start = 8.dp)
-                    .align(alignment = Alignment.CenterVertically)
-            )
+                    .fillMaxWidth()
+                    .background(
+                        color = if (hushStatus.value) MD3.colorScheme.primaryContainer else MD3.colorScheme.surfaceVariant,
+                        shape = RoundedCornerShape(12.dp)
+                    )
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                        .clickable {
+                            if (checkNotificationPermission.invoke())
+                                viewModel.setHushStatus(!hushStatus.value)
+                            else
+                                showNotificationPermissionAlertDialog = true
+                        }
+                ) {
+                    Text(
+                        text = "Start Hush Service",
+                        style = MD3.typography.titleMedium,
+                        fontSize = 18.sp,
+                        fontWeight = if (hushStatus.value) FontWeight.Bold else FontWeight.Normal,
+                        color = if (hushStatus.value) MD3.colorScheme.onPrimaryContainer else MD3.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .align(alignment = Alignment.CenterVertically)
+                    )
 
-            Switch(
-                checked = hushStatus.value,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MD3.colorScheme.primaryContainer
-                ),
-                onCheckedChange = setHushStatus,
-                modifier = Modifier.padding(end = 8.dp)
-            )
+                    Switch(
+                        checked = hushStatus.value,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = MD3.colorScheme.primaryContainer
+                        ),
+                        onCheckedChange = setHushStatus,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                }
+
+                AnimatedVisibility(visible = !hushStatus.value) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                Color(0xFFFFE082),
+                                RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                            )
+                    ) {
+                        Text(
+                            text = "Turn on hush service to mute notifications",
+                            style = MD3.typography.labelMedium,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                }
+            }
+
         }
 
-        Box(Modifier.padding(16.dp)) {
+        Box(modifier.padding(vertical = 16.dp)) {
             Text(
                 text = "Ongoing Hush!",
-                fontSize = 16.sp,
-                color = MD3.colorScheme.onBackground
+                style = MD3.typography.titleMedium,
+                color = MD3.colorScheme.onBackground,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
 
         LazyColumn(
             state = listState,
             modifier = modifier
-                .padding(8.dp)
                 .fillMaxSize()
         ) {
             items(selectedList, key = {
@@ -397,7 +434,13 @@ fun SelectedAppItem(
         }
 
         AnimatedVisibility(showOptions) {
-            ShowOptions(buttonModifier, onRemoveClick, onEditClick, selectedApp, onNotificationLogClick)
+            ShowOptions(
+                buttonModifier,
+                onRemoveClick,
+                onEditClick,
+                selectedApp,
+                onNotificationLogClick
+            )
         }
     }
 }
@@ -450,78 +493,65 @@ fun ShowInitConfig(
                     .wrapContentHeight(unbounded = true)
                     .padding(top = 8.dp, bottom = 8.dp)
             ) {
+                val buttonColor = IconButtonDefaults.outlinedIconToggleButtonColors(
+                        containerColor = MD3.colorScheme.primaryContainer,
+                        checkedContainerColor = MD3.colorScheme.tertiary
+                    )
 
                 Row(
-                    Modifier
+                    horizontalArrangement = Arrangement.SpaceEvenly,
+                    modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp, bottom = 8.dp)
                 ) {
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[0].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(0, if (it) "SAT" else null) }
                         }) {
                         ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[1].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(1, if (it) "SUN" else null) }
                         }) {
                         ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[2].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(2, if (it) "MON" else null) }
                         }) {
                         ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[3].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(3, if (it) "TUE" else null) }
                         }) {
                         ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[4].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(4, if (it) "WED" else null) }
                         }) {
                         ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[5].isNullOrEmpty(),
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        ),
+                        colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(5, if (it) "THU" else null) }
@@ -529,16 +559,13 @@ fun ShowInitConfig(
                     ) {
                         ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
                     }
-                    FilledTonalIconToggleButton(
+                    OutlinedIconToggleButton(
                         checked = !selectedDays[6].isNullOrEmpty(),
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(6, if (it) "FRI" else null) }
                         },
-                        colors = IconButtonDefaults.filledIconToggleButtonColors(
-                            containerColor = MD3.colorScheme.surfaceVariant,
-                            checkedContainerColor = MD3.colorScheme.tertiary
-                        )
+                        colors = buttonColor
                     ) {
                         ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
                     }
@@ -722,7 +749,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
     Row(
         modifier = Modifier
             .background(
-                colorResource(id = R.color.whiteBG), RoundedCornerShape(12.dp)
+                MD3.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)
             )
             .height(48.dp)
             .fillMaxWidth(),
@@ -744,7 +771,8 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
         ) {
             Icon(
                 painterResource(id = R.drawable.twotone_remove_circle_24),
-                contentDescription = "Decrease duration by 10 minutes"
+                contentDescription = "Decrease duration by 10 minutes",
+                tint = MD3.colorScheme.onSecondaryContainer
             )
         }
 
@@ -756,6 +784,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
             } else {
                 "${duration} min"
             },
+            color = MD3.colorScheme.onSecondaryContainer,
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp)
                 .align(Alignment.CenterVertically)
@@ -773,7 +802,8 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
         ) {
             Icon(
                 painterResource(id = R.drawable.twotone_add_circle_24),
-                contentDescription = "Increase duration by 10 minutes"
+                contentDescription = "Increase duration by 10 minutes",
+                tint = MD3.colorScheme.onSecondaryContainer
             )
         }
     }
@@ -818,7 +848,7 @@ fun ShowDaysText(selected: Boolean, title: String) {
     } else {
         Text(
             text = title,
-            color = MD3.colorScheme.onSurfaceVariant,
+            color = MD3.colorScheme.onPrimaryContainer,
             fontSize = 12.sp
         )
     }
