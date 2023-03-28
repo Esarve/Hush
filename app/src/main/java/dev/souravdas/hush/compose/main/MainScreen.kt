@@ -495,8 +495,9 @@ fun ShowInitConfig(
             ) {
                 val buttonColor = IconButtonDefaults.outlinedIconToggleButtonColors(
                         containerColor = MD3.colorScheme.primaryContainer,
-                        checkedContainerColor = MD3.colorScheme.tertiary
+                        checkedContainerColor = MD3.colorScheme.tertiary,
                     )
+                val modifier = Modifier.height(36.dp).width(36.dp)
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
@@ -505,6 +506,7 @@ fun ShowInitConfig(
                         .padding(top = 8.dp, bottom = 8.dp)
                 ) {
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[0].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -514,6 +516,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[1].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -523,6 +526,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[2].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -532,6 +536,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[3].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -541,6 +546,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[4].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -550,6 +556,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[5].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -560,6 +567,7 @@ fun ShowInitConfig(
                         ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
                     }
                     OutlinedIconToggleButton(
+                        modifier = modifier,
                         checked = !selectedDays[6].isNullOrEmpty(),
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
@@ -638,7 +646,7 @@ fun ShowInitConfig(
         }
 
         Row(modifier = Modifier.padding(8.dp)) {
-            CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+            CompositionLocalProvider(androidx.compose.material3.LocalMinimumInteractiveComponentEnforcement provides false) {
                 Checkbox(
                     checked = logNotificationCb,
                     onCheckedChange = {
