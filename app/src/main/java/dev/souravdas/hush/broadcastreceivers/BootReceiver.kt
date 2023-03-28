@@ -3,9 +3,12 @@ package dev.souravdas.hush.broadcastreceivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.base.datastore.DataStoreManager
+import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.services.KeepAliveService
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +32,8 @@ class BootReceiver : BroadcastReceiver() {
     private val scope = CoroutineScope(Dispatchers.IO + job)
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED ||intent.action == Intent.ACTION_REBOOT) {
+            Toast.makeText(context, "Boot Completer Received", Toast.LENGTH_SHORT).show()
             scope.launch {
                 if (dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)){
                     val serviceIntent = Intent(context, KeepAliveService::class.java)
