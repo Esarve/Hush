@@ -43,14 +43,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.compose.AppLogList
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
-import dev.souravdas.hush.nav.Screens
+import dev.souravdas.hush.nav.AboutScreen
+import dev.souravdas.hush.nav.AppLogScreen
+import dev.souravdas.hush.nav.SettingsScreen
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import kotlinx.coroutines.launch
@@ -70,8 +74,7 @@ import androidx.compose.material3.MaterialTheme as MD3
 )
 @Composable
 fun MainActivityScreen(
-    navController: NavController,
-    viewModel: MainActivityVM = hiltViewModel(),
+    viewModel: MainActivityVM = viewModel(),
     checkNotificationPermission: () -> Boolean,
     onNotificationPermissionGet: () -> Unit
 ) {
@@ -80,6 +83,7 @@ fun MainActivityScreen(
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val list = viewModel.appListSF.collectAsState()
+    val navigator = LocalNavigator.currentOrThrow
 
     var dropDownMenuExpanded by remember {
         mutableStateOf(false)
@@ -139,14 +143,14 @@ fun MainActivityScreen(
                         // items are added vertically
 
                         DropdownMenuItem(onClick = {
-                            navController.navigate(route = Screens.SettingsScreen.route)
+                            navigator.push(SettingsScreen)
                             dropDownMenuExpanded = false
                         }) {
                             Text("Settings")
                         }
 
                         DropdownMenuItem(onClick = {
-                            navController.navigate(route = Screens.AboutScreen.route)
+                            navigator.push(AboutScreen)
                             dropDownMenuExpanded = false
                         }) {
                             Text("About")
@@ -329,7 +333,7 @@ fun MainActivityScreen(
                     onEditClick = editAppLambda,
                     onConfigDone = addConfigLambda,
                     onNotificationLogClick = {
-                        navController.navigate(route = "log_screen/${app.selectedApp.id.toLong()}/${app.selectedApp.appName}")
+                        navigator.push(AppLogScreen(app_id = app.selectedApp.id.toLong(), appName = app.selectedApp.appName))
                     }
                 )
             }
@@ -497,7 +501,9 @@ fun ShowInitConfig(
                         containerColor = MD3.colorScheme.primaryContainer,
                         checkedContainerColor = MD3.colorScheme.tertiary,
                     )
-                val modifier = Modifier.height(36.dp).width(36.dp)
+                val modifier = Modifier
+                    .height(36.dp)
+                    .width(36.dp)
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,
