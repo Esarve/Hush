@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -84,6 +85,7 @@ fun MainActivityScreen(
     val scaffoldState = rememberBottomSheetScaffoldState()
     val list = viewModel.appListSF.collectAsState()
     val navigator = LocalNavigator.currentOrThrow
+    val focusManager = LocalFocusManager.current
 
     var dropDownMenuExpanded by remember {
         mutableStateOf(false)
@@ -104,23 +106,6 @@ fun MainActivityScreen(
                     )
                 },
                 actions = {
-                    // search icon
-//                    TopAppBarActionButton(
-//                        imageVector = Icons.Outlined.Search,
-//                        description = "Search"
-//                    ) {
-//
-//                    }
-//
-//                    // lock icon
-//                    TopAppBarActionButton(
-//                        imageVector = Icons.Outlined.Lock,
-//                        description = "Lock"
-//                    ) {
-//
-//                    }
-
-                    // options icon (vertical dots)
                     TopAppBarActionButton(
                         imageVector = Icons.Outlined.MoreVert,
                         description = "Options"
@@ -135,12 +120,8 @@ fun MainActivityScreen(
                         onDismissRequest = {
                             dropDownMenuExpanded = false
                         },
-                        // play around with these values
-                        // to position the menu properly
                         offset = DpOffset(x = 10.dp, y = (-60).dp)
                     ) {
-                        // this is a column scope
-                        // items are added vertically
 
                         DropdownMenuItem(onClick = {
                             navigator.push(SettingsScreen)
@@ -161,6 +142,7 @@ fun MainActivityScreen(
         sheetContent = {
             InstalledAppList(items = list.value) { item ->
                 scope.launch {
+                    focusManager.clearFocus()
                     scaffoldState.bottomSheetState.collapse()
                 }.invokeOnCompletion {
                     // TODO: insert here
