@@ -14,21 +14,18 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +34,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -50,9 +46,9 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.compose.AppLogList
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
+import dev.souravdas.hush.models.UIEvent
 import dev.souravdas.hush.nav.AboutScreen
 import dev.souravdas.hush.nav.AppLogScreen
 import dev.souravdas.hush.nav.SettingsScreen
@@ -76,8 +72,6 @@ import androidx.compose.material3.MaterialTheme as MD3
 @Composable
 fun MainActivityScreen(
     viewModel: MainActivityVM = viewModel(),
-    checkNotificationPermission: () -> Boolean,
-    onNotificationPermissionGet: () -> Unit
 ) {
     viewModel.getInstalledApps()
     viewModel.getSelectedApp()
@@ -124,14 +118,14 @@ fun MainActivityScreen(
                     ) {
 
                         DropdownMenuItem(onClick = {
-                            navigator.push(SettingsScreen)
+                            navigator.push(SettingsScreen())
                             dropDownMenuExpanded = false
                         }) {
                             Text("Settings")
                         }
 
                         DropdownMenuItem(onClick = {
-                            navigator.push(AboutScreen)
+                            navigator.push(AboutScreen())
                             dropDownMenuExpanded = false
                         }) {
                             Text("About")
@@ -180,15 +174,20 @@ fun MainActivityScreen(
         val modifier = Modifier
             .consumeWindowInsets(mo)
             .padding(horizontal = 16.dp)
-        val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
+        val hushStatus = viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = false)
+        val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION).collectAsState(initial = true)
         val listState = rememberLazyListState()
+
         var showNotificationPermissionAlertDialog by remember {
-            mutableStateOf(!checkNotificationPermission.invoke())
+            mutableStateOf(false)
+        }
+        LaunchedEffect(notificationPermissionStatus){
+            showNotificationPermissionAlertDialog = !notificationPermissionStatus
         }
 
         val setHushStatus = remember<(Boolean) -> Unit> {
             { status ->
-                if (checkNotificationPermission.invoke())
+                if (notificationPermissionStatus)
                     viewModel.setHushStatus(status)
                 else
                     showNotificationPermissionAlertDialog = true
@@ -217,7 +216,7 @@ fun MainActivityScreen(
         if (showNotificationPermissionAlertDialog)
             ShowAlertDialog {
                 showNotificationPermissionAlertDialog = false
-                onNotificationPermissionGet.invoke()
+                viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
             }
 
 //            <--- Hush Service Toggle ---->
@@ -244,7 +243,7 @@ fun MainActivityScreen(
                         .fillMaxWidth()
                         .height(80.dp)
                         .clickable {
-                            if (checkNotificationPermission.invoke())
+                            if (notificationPermissionStatus)
                                 viewModel.setHushStatus(!hushStatus.value)
                             else
                                 showNotificationPermissionAlertDialog = true

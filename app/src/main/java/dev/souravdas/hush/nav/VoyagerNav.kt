@@ -13,27 +13,22 @@ import dev.souravdas.hush.compose.main.MainActivityScreen
  * For Hush!
  */
 
-data class MainScreen(
-    val checkNotificationPermission: () -> Boolean,
-    val onNotificationPermissionGet: () -> Unit) : Screen{
+class MainScreen() : Screen{
 
     @Composable
     override fun Content() {
-        MainActivityScreen(
-            onNotificationPermissionGet = onNotificationPermissionGet,
-            checkNotificationPermission = checkNotificationPermission
-        )
+        MainActivityScreen()
     }
 }
 
-object SettingsScreen: Screen{
+class SettingsScreen: Screen{
     @Composable
     override fun Content() {
         SettingsPage()
     }
 }
 
-object AboutScreen: Screen{
+class AboutScreen: Screen{
     @Composable
     override fun Content() {
         AboutScreen()

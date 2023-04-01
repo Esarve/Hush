@@ -8,17 +8,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -33,7 +30,7 @@ import kotlinx.coroutines.launch
  * On 3/18/2023 12:24 PM
  * For Hush!
  */
-@OptIn(ExperimentalMaterialApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstalledAppList(
     items: List<InstalledPackageInfo>,
@@ -67,17 +64,24 @@ fun InstalledAppList(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
-            OutlinedTextField(
+            TextField(
                 value = searchText,
                 onValueChange = {
                     searchText = it
                 },
-                label = { Text("Search") },
+                placeholder = { Text(text = "Search")},
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(32.dp),
+                colors = TextFieldDefaults.textFieldColors(
+                    disabledTextColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .height(80.dp)
+                    .padding(16.dp)
             )
             val lazyListState = rememberLazyListState()
             LazyColumn(
