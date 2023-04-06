@@ -13,6 +13,7 @@ object Constants {
     const val DS_DND = "dnd"
     const val DS_DELETE_EXPIRE = "delete_expire"
     const val DS_NOTIFY_MUTE = "notify_mute"
+    const val DS_NOTIFICATION_PERMISSION = "notific_perm"
 
     fun showNIY (){
         Toast.makeText(

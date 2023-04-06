@@ -18,17 +18,15 @@ import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,21 +34,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
-import dev.souravdas.hush.nav.Screens
+import dev.souravdas.hush.models.UIEvent
+import dev.souravdas.hush.nav.AboutScreen
+import dev.souravdas.hush.nav.AppLogScreen
+import dev.souravdas.hush.nav.SettingsScreen
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
 import kotlinx.coroutines.launch
@@ -70,16 +72,15 @@ import androidx.compose.material3.MaterialTheme as MD3
 )
 @Composable
 fun MainActivityScreen(
-    navController: NavController,
-    viewModel: MainActivityVM = hiltViewModel(),
-    checkNotificationPermission: () -> Boolean,
-    onNotificationPermissionGet: () -> Unit
+    viewModel: MainActivityVM = viewModel(),
 ) {
     viewModel.getInstalledApps()
     viewModel.getSelectedApp()
     val scope = rememberCoroutineScope()
     val scaffoldState = rememberBottomSheetScaffoldState()
     val list = viewModel.appListSF.collectAsState()
+    val navigator = LocalNavigator.currentOrThrow
+    val focusManager = LocalFocusManager.current
 
     var dropDownMenuExpanded by remember {
         mutableStateOf(false)
@@ -100,23 +101,6 @@ fun MainActivityScreen(
                     )
                 },
                 actions = {
-                    // search icon
-//                    TopAppBarActionButton(
-//                        imageVector = Icons.Outlined.Search,
-//                        description = "Search"
-//                    ) {
-//
-//                    }
-//
-//                    // lock icon
-//                    TopAppBarActionButton(
-//                        imageVector = Icons.Outlined.Lock,
-//                        description = "Lock"
-//                    ) {
-//
-//                    }
-
-                    // options icon (vertical dots)
                     TopAppBarActionButton(
                         imageVector = Icons.Outlined.MoreVert,
                         description = "Options"
@@ -131,22 +115,18 @@ fun MainActivityScreen(
                         onDismissRequest = {
                             dropDownMenuExpanded = false
                         },
-                        // play around with these values
-                        // to position the menu properly
                         offset = DpOffset(x = 10.dp, y = (-60).dp)
                     ) {
-                        // this is a column scope
-                        // items are added vertically
 
                         DropdownMenuItem(onClick = {
-                            navController.navigate(route = Screens.SettingsScreen.route)
+                            navigator.push(SettingsScreen())
                             dropDownMenuExpanded = false
                         }) {
                             Text("Settings")
                         }
 
                         DropdownMenuItem(onClick = {
-                            navController.navigate(route = Screens.AboutScreen.route)
+                            navigator.push(AboutScreen())
                             dropDownMenuExpanded = false
                         }) {
                             Text("About")
@@ -157,6 +137,7 @@ fun MainActivityScreen(
         sheetContent = {
             InstalledAppList(items = list.value) { item ->
                 scope.launch {
+                    focusManager.clearFocus()
                     scaffoldState.bottomSheetState.collapse()
                 }.invokeOnCompletion {
                     // TODO: insert here
@@ -194,15 +175,20 @@ fun MainActivityScreen(
         val modifier = Modifier
             .consumeWindowInsets(mo)
             .padding(horizontal = 16.dp)
-        val hushStatus = viewModel.getHushStatusAsFlow().collectAsState(initial = false)
+        val hushStatus = viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = false)
+        val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION).collectAsState(initial = true)
         val listState = rememberLazyListState()
+
         var showNotificationPermissionAlertDialog by remember {
-            mutableStateOf(!checkNotificationPermission.invoke())
+            mutableStateOf(false)
+        }
+        LaunchedEffect(notificationPermissionStatus){
+            showNotificationPermissionAlertDialog = !notificationPermissionStatus
         }
 
         val setHushStatus = remember<(Boolean) -> Unit> {
             { status ->
-                if (checkNotificationPermission.invoke())
+                if (notificationPermissionStatus)
                     viewModel.setHushStatus(status)
                 else
                     showNotificationPermissionAlertDialog = true
@@ -231,7 +217,7 @@ fun MainActivityScreen(
         if (showNotificationPermissionAlertDialog)
             ShowAlertDialog {
                 showNotificationPermissionAlertDialog = false
-                onNotificationPermissionGet.invoke()
+                viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
             }
 
 //            <--- Hush Service Toggle ---->
@@ -258,7 +244,7 @@ fun MainActivityScreen(
                         .fillMaxWidth()
                         .height(80.dp)
                         .clickable {
-                            if (checkNotificationPermission.invoke())
+                            if (notificationPermissionStatus)
                                 viewModel.setHushStatus(!hushStatus.value)
                             else
                                 showNotificationPermissionAlertDialog = true
@@ -329,7 +315,7 @@ fun MainActivityScreen(
                     onEditClick = editAppLambda,
                     onConfigDone = addConfigLambda,
                     onNotificationLogClick = {
-                        navController.navigate(route = "log_screen/${app.selectedApp.id.toLong()}/${app.selectedApp.appName}")
+                        navigator.push(AppLogScreen(app_id = app.selectedApp.id.toLong(), appName = app.selectedApp.appName))
                     }
                 )
             }
@@ -497,7 +483,9 @@ fun ShowInitConfig(
                         containerColor = MD3.colorScheme.primaryContainer,
                         checkedContainerColor = MD3.colorScheme.tertiary,
                     )
-                val modifier = Modifier.height(36.dp).width(36.dp)
+                val modifier = Modifier
+                    .height(36.dp)
+                    .width(36.dp)
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceEvenly,

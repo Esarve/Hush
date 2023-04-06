@@ -1,6 +1,5 @@
 package dev.souravdas.hush.compose
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -16,10 +15,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.others.Utils
 
 /**
@@ -33,11 +32,11 @@ import dev.souravdas.hush.others.Utils
 fun AppLogList(
     app_id: Long?,
     appName: String?,
-    navController: NavController,
-    viewModel: MainActivityVM = hiltViewModel()
 ) {
-    viewModel.getLog(app_id!!.toInt())
+    val viewModel: MainActivityVM = viewModel()
 
+    viewModel.getLog(app_id!!.toInt())
+    val navigator = LocalNavigator.currentOrThrow
     val logs by viewModel.appLog.collectAsState(emptyList())
 
     Scaffold(
@@ -51,7 +50,7 @@ fun AppLogList(
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
                         modifier = Modifier.clickable {
-                            navController.popBackStack()
+                            navigator.popUntilRoot()
                         }
                     )
                 }
@@ -68,7 +67,8 @@ fun AppLogList(
         }
     ) {
         Box(
-            modifier = Modifier.padding(it)
+            modifier = Modifier
+                .padding(it)
                 .fillMaxHeight()
                 .background(MaterialTheme.colorScheme.background)
         ) {

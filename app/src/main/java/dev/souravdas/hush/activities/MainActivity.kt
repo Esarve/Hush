@@ -5,26 +5,24 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
+import cafe.adriel.voyager.navigator.Navigator
+import cafe.adriel.voyager.transitions.SlideTransition
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.nav.NavGraph
-import dev.souravdas.hush.nav.Screens
+import dev.souravdas.hush.models.UIEvent
+import dev.souravdas.hush.nav.MainScreen
+import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
 import kotlinx.coroutines.launch
-import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -34,32 +32,42 @@ class MainActivity : ComponentActivity() {
     lateinit var utils: Utils
     private val viewModel: MainActivityVM by viewModels()
     private var doubleBackToExitPressedOnce = false
-    private lateinit var navController: NavHostController
 
+    @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             viewModel.getSelectedApp()
 
-            navController = rememberNavController()
-
             HushTheme() {
-                NavGraph(
-                    navController = navController,
-                    onNotificationPermissionGet = {
-                        openNotificationAccessSettingsIfNeeded(this)
-                    }, checkNotificationPermission = {
-                        isNotificationListenerEnabled(this)
-                    })
+                Navigator(MainScreen()){
+                    SlideTransition(navigator = it)
+                }
             }
         }
 
         checkService();
+        initUIListeners()
+    }
+
+    private fun initUIListeners() {
+        viewModel.uiEventMLD.observe(this){event ->
+            event.getContentIfNotHandled()?.let {
+                when(it){
+                    UIEvent.invokeNotificationPermissionCheck -> {
+
+                    }
+                    UIEvent.invokeNotificationPermissionGet -> {
+                        openNotificationAccessSettingsIfNeeded(this)
+                    }
+                }
+            }
+        }
     }
 
     private fun checkService() {
         lifecycleScope.launch {
-            viewModel.getHushStatusAsFlow().collect() { value ->
+            viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collect() { value ->
                 if (value) {
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         startForegroundService(
@@ -84,30 +92,17 @@ class MainActivity : ComponentActivity() {
         activity.startActivity(intent)
     }
 
-    private fun isNotificationListenerEnabled(context: Context): Boolean {
+    private fun isNotificationListenerEnabled(context: Context) {
         val packageName = context.packageName
         val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
-        return enabledPackages.contains(packageName)
+        lifecycleScope.launch {
+            viewModel.storeBoolean(Constants.DS_NOTIFICATION_PERMISSION, enabledPackages.contains(packageName))
+        }
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (navController.currentDestination!!.route == Screens.MainScreen.route){
-            if (doubleBackToExitPressedOnce) {
-                viewModel.removeIncompleteApp()
-                finishAffinity()
-                return
-            }
-
-            this.doubleBackToExitPressedOnce = true
-            Toast.makeText(this, "Please click BACK again to exit", Toast.LENGTH_SHORT).show()
-
-            Handler(Looper.getMainLooper()).postDelayed(Runnable {
-                doubleBackToExitPressedOnce = false
-            }, 2000)
-        }else{
-            super.onBackPressed()
-        }
+    override fun onResume() {
+        isNotificationListenerEnabled(this)
+        super.onResume()
     }
 
 }

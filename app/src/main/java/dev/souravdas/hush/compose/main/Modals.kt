@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Surface
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +35,7 @@ fun ShowAlertDialog(
         onDismissRequest = {},
         icon = {
             Icon(
-                Icons.Default.Warning,
+                Icons.Rounded.Warning,
                 contentDescription = null,
                 modifier = Modifier.size(56.dp)
             )
@@ -55,7 +55,7 @@ fun ShowAlertDialog(
                     Toast.LENGTH_LONG
                 ).show()
             }) {
-                Text(text = stringResource(id = android.R.string.ok))
+                Text(text = "Allow")
             }
         }
     )

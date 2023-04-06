@@ -17,14 +17,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.others.Constants
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsPage(viewModel: MainActivityVM = hiltViewModel(), navController: NavHostController) {
+fun SettingsPage() {
+    val viewModel: MainActivityVM =viewModel()
+    val navigator = LocalNavigator.currentOrThrow
     var isDnd by remember { mutableStateOf(false) }
     var isRemovedExpired by remember { mutableStateOf(false) }
     var isNotify by remember { mutableStateOf(false) }
@@ -68,7 +71,7 @@ fun SettingsPage(viewModel: MainActivityVM = hiltViewModel(), navController: Nav
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
                         modifier = Modifier.clickable {
-                            navController.popBackStack()
+                            navigator.popUntilRoot()
                         }
                     )
                 }

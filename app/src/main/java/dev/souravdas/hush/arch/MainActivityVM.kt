@@ -2,16 +2,16 @@ package dev.souravdas.hush.arch
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.compose.main.AppConfig
-import dev.souravdas.hush.compose.main.StartEndTime
 import dev.souravdas.hush.models.*
 import dev.souravdas.hush.others.Constants
-import dev.souravdas.hush.others.HushType
+import dev.souravdas.hush.others.Event
 import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -25,6 +25,10 @@ class MainActivityVM @Inject constructor(
     private val dataStoreManager: DataStoreManager,
     private val utils: Utils
 ) : BaseViewModel() {
+    val notificationAccessPermission = MutableStateFlow(false)
+
+    private val _uiEventMLD = MutableLiveData<Event<UIEvent>>()
+    val uiEventMLD = _uiEventMLD
 
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
@@ -45,6 +49,9 @@ class MainActivityVM @Inject constructor(
 
     suspend fun getBoolean(key:String):Boolean = dataStoreManager.getBooleanValue(key)
 
+    fun dispatchUIEvent(event: UIEvent){
+        _uiEventMLD.value = Event(event)
+    }
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -102,6 +109,10 @@ class MainActivityVM @Inject constructor(
         }
     }
 
+    suspend fun storeBoolean(key:String, value:Boolean){
+        dataStoreManager.writeBooleanData(key,value)
+    }
+
     private fun getPackageList(): List<InstalledPackageInfo> {
         val pm: PackageManager = HushApp.context.packageManager
         val packages: MutableList<ApplicationInfo> = pm.getInstalledApplications(0)
@@ -123,12 +134,8 @@ class MainActivityVM @Inject constructor(
     }
 
 
-    fun getHushStatusAsFlow(): Flow<Boolean> {
-        return dataStoreManager.getBooleanValueAsFlow(Constants.DS_HUSH_STATUS)
-    }
-
-    suspend fun getHusStatus(): Boolean {
-        return dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
+    fun getHushStatusAsFlow(key: String): Flow<Boolean> {
+        return dataStoreManager.getBooleanValueAsFlow(key)
     }
 
     fun setHushStatus(value: Boolean) {
@@ -196,17 +203,6 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-//    fun getHushConfig(){
-//        viewModelScope.launch {
-//            _hushConfig.tryEmit(
-//                HushConfig(
-//                    dataStoreManager.getBooleanValue(Constants.DS_DND),
-//                    dataStoreManager.getBooleanValue(Constants.DS_DELETE_EXPIRE),
-//                    dataStoreManager.getBooleanValue(Constants.DS_NOTIFY_MUTE)
-//                )
-//            )
-//        }
-//    }
 
     fun updateComplete(app: SelectedApp){
         executedSuspendedCodeBlock {

@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat.startActivity
 import androidx.navigation.NavController
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
 
@@ -35,9 +35,10 @@ import dev.souravdas.hush.R
  * For Hush!
  */
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalGlideComposeApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(navController: NavController) {
+fun AboutScreen() {
+    val navigator = LocalNavigator.currentOrThrow
     Scaffold(
         topBar = {
             TopAppBar(
@@ -49,7 +50,7 @@ fun AboutScreen(navController: NavController) {
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
                         modifier = Modifier.clickable {
-                            navController.popBackStack()
+                            navigator.popUntilRoot()
                         }
                     )
                 }
@@ -99,21 +100,13 @@ fun AboutScreen(navController: NavController) {
                         .fillMaxWidth()
                         .padding(bottom = 16.dp)
                 ) {
-                    GlideImage(
-                        model = "https://github.com/Esarve.png",
-                        contentDescription = "devimg",
+                    Image(
+                        painterResource(id = R.drawable.esarve),
+                        contentDescription = "roachimg",
                         modifier = Modifier
                             .width(64.dp)
                             .height(64.dp)
                             .clip(CircleShape)
-                            .clickable {
-                                activity.startActivity(
-                                    Intent(
-                                        Intent.ACTION_VIEW,
-                                        Uri.parse("https://souravdas.dev")
-                                    )
-                                )
-                            }
                     )
                     Text(
                         text = "Sourav Das\nhttps://souravdas.dev",

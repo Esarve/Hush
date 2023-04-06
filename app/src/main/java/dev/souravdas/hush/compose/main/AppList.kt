@@ -7,14 +7,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.ListItem
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -30,17 +30,26 @@ import kotlinx.coroutines.launch
  * On 3/18/2023 12:24 PM
  * For Hush!
  */
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InstalledAppList(
     items: List<InstalledPackageInfo>,
     onItemClick: (SelectedApp) -> Unit = {},
 ) {
+    var searchText by remember { mutableStateOf("") }
+    var active by remember { mutableStateOf(false) }
+
+    val filteredItems = if (searchText.isBlank()) {
+        items
+    } else {
+        items.filter { it.packageName.contains(searchText, ignoreCase = true) }
+    }
+
     val scope = rememberCoroutineScope()
-    val modifier = Modifier.padding(4.dp)
     Box(
         modifier = Modifier
             .fillMaxHeight(fraction = 0.7f)
+            .background(color = MaterialTheme.colorScheme.background)
     ) {
         Column() {
             Box(
@@ -55,12 +64,30 @@ fun InstalledAppList(
                     color = MaterialTheme.colorScheme.onPrimary
                 )
             }
+            TextField(
+                value = searchText,
+                onValueChange = {
+                    searchText = it
+                },
+                placeholder = { Text(text = "Search")},
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
+                shape = RoundedCornerShape(32.dp),
+                colors = TextFieldDefaults.textFieldColors(
+                    disabledTextColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+                    .padding(16.dp)
+            )
             val lazyListState = rememberLazyListState()
             LazyColumn(
                 state = lazyListState,
-                modifier = Modifier.background(color = MaterialTheme.colorScheme.background)
             ) {
-                itemsIndexed(items = items) { index, item ->
+                itemsIndexed(items = filteredItems) { index, item ->
 
                     ListItem(
                         modifier = Modifier.clickable {
@@ -76,7 +103,7 @@ fun InstalledAppList(
                                 )
                             }
                         },
-                        icon = {
+                        leadingContent = {
                             Image(
                                 painter = rememberDrawablePainter(
                                     drawable = item.icon ?: ContextCompat.getDrawable(
@@ -87,7 +114,7 @@ fun InstalledAppList(
                                 modifier = Modifier.size(40.dp)
                             )
                         },
-                        text = {
+                        headlineText = {
                             Text(
                                 text = item.appName,
                                 textAlign = TextAlign.Center,
