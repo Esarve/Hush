@@ -12,13 +12,12 @@ import androidx.activity.viewModels
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.lifecycleScope
-import cafe.adriel.voyager.navigator.Navigator
-import cafe.adriel.voyager.transitions.SlideTransition
+import cafe.adriel.voyager.navigator.tab.TabNavigator
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.emptycompose.ui.theme.HushTheme
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.UIEvent
-import dev.souravdas.hush.nav.MainScreen
+import dev.souravdas.hush.nav.HomeTab
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
@@ -31,7 +30,6 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var utils: Utils
     private val viewModel: MainActivityVM by viewModels()
-    private var doubleBackToExitPressedOnce = false
 
     @OptIn(ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,9 +38,7 @@ class MainActivity : ComponentActivity() {
             viewModel.getSelectedApp()
 
             HushTheme() {
-                Navigator(MainScreen()){
-                    SlideTransition(navigator = it)
-                }
+                TabNavigator(HomeTab)
             }
         }
 
@@ -60,6 +56,7 @@ class MainActivity : ComponentActivity() {
                     UIEvent.invokeNotificationPermissionGet -> {
                         openNotificationAccessSettingsIfNeeded(this)
                     }
+                    UIEvent.showSelectAppSheet -> TODO()
                 }
             }
         }

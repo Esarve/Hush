@@ -1,7 +1,6 @@
 package dev.souravdas.hush.arch
 
 import dev.souravdas.hush.models.AppLog
-import dev.souravdas.hush.models.SelectedApp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -27,4 +26,5 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
     }
 
     fun getAllBySelectedAppID(selectedAppId: Int): Flow<List<AppLog>> = appLogDao.getAllByForeignKey(selectedAppId)
+    fun getAllLog(): Flow<List<AppLog>> = appLogDao.getAllLog()
 }

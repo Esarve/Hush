@@ -8,4 +8,6 @@ package dev.souravdas.hush.models
 sealed class UIEvent{
     object invokeNotificationPermissionCheck: UIEvent()
     object invokeNotificationPermissionGet: UIEvent()
+
+    object showSelectAppSheet: UIEvent()
 }

@@ -8,11 +8,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ListItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -30,7 +31,7 @@ import kotlinx.coroutines.launch
  * On 3/18/2023 12:24 PM
  * For Hush!
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun InstalledAppList(
     items: List<InstalledPackageInfo>,
@@ -52,18 +53,6 @@ fun InstalledAppList(
             .background(color = MaterialTheme.colorScheme.background)
     ) {
         Column() {
-            Box(
-                modifier = Modifier
-                    .height(56.dp)
-                    .fillMaxWidth()
-                    .background(color = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = "Swipe up to select an app",
-                    modifier = Modifier.align(alignment = Alignment.Center),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
             TextField(
                 value = searchText,
                 onValueChange = {
@@ -103,7 +92,7 @@ fun InstalledAppList(
                                 )
                             }
                         },
-                        leadingContent = {
+                        icon = {
                             Image(
                                 painter = rememberDrawablePainter(
                                     drawable = item.icon ?: ContextCompat.getDrawable(
@@ -114,7 +103,7 @@ fun InstalledAppList(
                                 modifier = Modifier.size(40.dp)
                             )
                         },
-                        headlineText = {
+                        text = {
                             Text(
                                 text = item.appName,
                                 textAlign = TextAlign.Center,

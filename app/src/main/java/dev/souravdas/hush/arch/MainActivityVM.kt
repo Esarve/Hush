@@ -36,7 +36,7 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
-    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
+    private val _appLog = MutableStateFlow<List<AppLogWithIcon>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
     private val _dsIsDnd = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DND)
@@ -70,9 +70,18 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun getLog(id: Int){
+
+    fun getLog(){
         viewModelScope.launch {
-            appLogRepository.getAllBySelectedAppID(id).collect{
+            appLogRepository.getAllLog().map{logs ->
+                val installedApps = getPackageList().associateBy({ it.packageName }, { it.icon })
+                logs.map {
+                    AppLogWithIcon(
+                        installedApps[it.packageName]!!,
+                        it
+                    )
+                }
+            }.collectLatest{
                 _appLog.value = it
             }
         }

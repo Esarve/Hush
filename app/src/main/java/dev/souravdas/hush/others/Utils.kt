@@ -1,7 +1,7 @@
 package dev.souravdas.hush.others
 
 import dev.souravdas.hush.models.SelectedApp
-import org.threeten.bp.LocalTime
+import org.threeten.bp.*
 import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -65,5 +65,30 @@ class Utils {
         val date = Date(millis)
         val sdf = SimpleDateFormat("dd-MM-yy hh:mm a", Locale.UK)
         return sdf.format(date)
+    }
+
+    fun getTimeAgo(millis: Long): String {
+        val instant = Instant.ofEpochMilli(millis)
+        val dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
+        val now = LocalDateTime.now()
+
+        val duration = Duration.between(dateTime, now)
+        val seconds = duration.seconds
+
+        return when {
+            seconds < 60 -> "$seconds seconds ago"
+            seconds < 3600 -> {
+                val minutes = seconds / 60
+                "$minutes minutes ago"
+            }
+            seconds < 86400 -> {
+                val hours = seconds / 3600
+                "$hours hours ago"
+            }
+            else -> {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                dateTime.format(formatter)
+            }
+        }
     }
 }

@@ -1,24 +1,27 @@
 package dev.souravdas.hush.compose
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
+import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.models.AppLogWithIcon
 import dev.souravdas.hush.others.Utils
 
 /**
@@ -29,80 +32,74 @@ import dev.souravdas.hush.others.Utils
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-fun AppLogList(
-    app_id: Long?,
-    appName: String?,
-) {
+fun AppLogList() {
     val viewModel: MainActivityVM = viewModel()
-
-    viewModel.getLog(app_id!!.toInt())
     val navigator = LocalNavigator.currentOrThrow
-    val logs by viewModel.appLog.collectAsState(emptyList())
+
+    val logsState = viewModel.appLog.collectAsState(emptyList())
+    val logs by rememberSaveable { logsState }
+
+    SideEffect {
+        viewModel.getLog()
+    }
+
 
     Scaffold(
         topBar = {
             TopAppBar(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                title = { Text(text = appName!!) },
-                navigationIcon = {
-                    Icon(
-                        Icons.Outlined.ArrowBack,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = "BACK",
-                        modifier = Modifier.clickable {
-                            navigator.popUntilRoot()
-                        }
-                    )
-                }
+                title = { Text(text = "Notifications") },
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = {},
-                containerColor = MaterialTheme.colorScheme.secondary,
-                contentColor = MaterialTheme.colorScheme.onSecondary,
-            ) {
-                Icon(Icons.Outlined.Delete, contentDescription = "NUKE")
-            }
+        bottomBar = {
+            FloatingNav()
         }
     ) {
-        Box(
-            modifier = Modifier
-                .padding(it)
-                .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.background)
+        LazyColumn(
+            modifier = Modifier.padding(it)
         ) {
-
-            Box(Modifier.padding(16.dp)) {
-                Text(
-                    text = "Muted Notifications",
-                    fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+            items(logs) { log ->
+                ItemView(log)
             }
-
-            LazyColumn(
-                modifier = Modifier
-            ) {
-                items(logs) { log ->
-                    Card(
-                        elevation = CardDefaults.cardElevation(4.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 8.dp)
-                    ) {
-                        Column(Modifier.padding(16.dp)) {
-                            Text(text = "Title: ${log.title ?: ""}")
-                            Text(text = "Body: ${log.body ?: ""}")
-                            System.currentTimeMillis()
-                            Text(text = "Time: " + Utils().getStringDateFromMillis(log.timeCreated))
-                        }
-                    }
-                }
-            }
-
         }
     }
 
 
+}
+
+@Composable
+fun ItemView(log: AppLogWithIcon) {
+    Card(
+        elevation = CardDefaults.cardElevation(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Image(
+                    painter = rememberDrawablePainter(drawable = log.icon),
+                    contentDescription = "APP", modifier = Modifier.size(24.dp, 24.dp)
+                )
+                Text(text = log.appLog.appName, modifier = Modifier.padding(start = 8.dp))
+                Spacer(modifier = Modifier.weight(0.6f))
+                Text(
+                    text = Utils().getTimeAgo(log.appLog.timeCreated),
+                    fontSize = 14.sp,
+                    fontStyle = FontStyle.Italic,
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
+            Text(
+                text = log.appLog.title ?: "",
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(top = 6.dp)
+            )
+            Text(
+                text = log.appLog.body ?: "",
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+        }
+    }
 }

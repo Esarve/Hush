@@ -1,8 +1,7 @@
 package dev.souravdas.hush.compose.main
 
 import android.annotation.SuppressLint
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.*
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -13,28 +12,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
-import androidx.compose.material.FabPosition
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.*
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.Icon
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +38,8 @@ import cafe.adriel.voyager.navigator.currentOrThrow
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.compose.FloatingNav
+import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.SelectedAppForList
 import dev.souravdas.hush.models.UIEvent
@@ -67,35 +60,64 @@ import androidx.compose.material3.MaterialTheme as MD3
  * For Hush!
  */
 @OptIn(
-    ExperimentalMaterial3Api::class,
-    ExperimentalMaterialApi::class, ExperimentalLayoutApi::class
+    ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, ExperimentalAnimationApi::class
 )
 @Composable
 fun MainActivityScreen(
     viewModel: MainActivityVM = viewModel(),
 ) {
-    viewModel.getInstalledApps()
-    viewModel.getSelectedApp()
+    LaunchedEffect (Unit) {
+        viewModel.getInstalledApps()
+
+    }
     val scope = rememberCoroutineScope()
-    val scaffoldState = rememberBottomSheetScaffoldState()
-    val list = viewModel.appListSF.collectAsState()
+    val listState = viewModel.appListSF.collectAsState(initial = emptyList())
     val navigator = LocalNavigator.currentOrThrow
-    val focusManager = LocalFocusManager.current
+    var showBottomSheet by remember {
+        mutableStateOf(false)
+    }
+
+    val selectedListState = viewModel.selectedAppsSF.collectAsState(emptyList())
+    val selectedList by rememberSaveable(key = "selectedList") {
+        selectedListState
+    }
+    val installedApps by remember {
+        listState
+    }
+
+
+    val addSelectedApp = remember<(SelectedApp) -> Unit> {
+        {
+            viewModel.addOrUpdateSelectedApp(selectedApp = it)
+        }
+    }
+
+    val isBottomSheetOpenLambda = remember {
+        {
+            showBottomSheet
+        }
+    }
+
+    ShowBottomSheet(installedApps, isBottomSheetOpenLambda){app ->
+        showBottomSheet = false
+        app?.let {
+            addSelectedApp.invoke(it)
+            viewModel.getSelectedApp()
+        }
+    }
+
 
     var dropDownMenuExpanded by remember {
         mutableStateOf(false)
     }
 
-    BottomSheetScaffold(
-        backgroundColor = MD3.colorScheme.background,
-        scaffoldState = scaffoldState,
-        sheetPeekHeight = 56.dp,
+    Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
                         stringResource(id = R.string.app_name),
-                        style =MD3.typography.displaySmall,
+                        style = MD3.typography.displaySmall,
                         color = MD3.colorScheme.onBackground,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
@@ -118,71 +140,44 @@ fun MainActivityScreen(
                         offset = DpOffset(x = 10.dp, y = (-60).dp)
                     ) {
 
-                        DropdownMenuItem(onClick = {
-                            navigator.push(SettingsScreen())
-                            dropDownMenuExpanded = false
-                        }) {
-                            Text("Settings")
-                        }
+                        DropdownMenuItem(
+                            text = { Text("Settings") },
+                            onClick = {
+                                navigator.push(SettingsScreen())
+                                dropDownMenuExpanded = false
+                            })
 
-                        DropdownMenuItem(onClick = {
-                            navigator.push(AboutScreen())
-                            dropDownMenuExpanded = false
-                        }) {
-                            Text("About")
-                        }
+                        DropdownMenuItem(
+                            text = { Text("About") },
+                            onClick = {
+                                navigator.push(AboutScreen())
+                                dropDownMenuExpanded = false
+                            })
                     }
                 })
         },
-        sheetContent = {
-            InstalledAppList(items = list.value) { item ->
+        bottomBar = {
+            FloatingNav {
                 scope.launch {
-                    focusManager.clearFocus()
-                    scaffoldState.bottomSheetState.collapse()
-                }.invokeOnCompletion {
-                    // TODO: insert here
-                    viewModel.addOrUpdateSelectedApp(item)
+                    showBottomSheet = true
                 }
             }
-        },
-        floatingActionButtonPosition = FabPosition.End,
-        floatingActionButton = {
-            androidx.compose.material.FloatingActionButton(
-                onClick = {
-                    scope.launch {
-                        if (scaffoldState.bottomSheetState.isExpanded) {
-                            scaffoldState.bottomSheetState.collapse()
-                        } else {
-                            scaffoldState.bottomSheetState.expand()
-                        }
-                    }
-                },
-                backgroundColor = MD3.colorScheme.secondary,
-                contentColor = MD3.colorScheme.onSecondary,
-            ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.twotone_add_24),
-                    tint = MD3.colorScheme.onSecondary,
-                    contentDescription = "Add Icon"
-                )
-            }
-        },
 
+        },
         modifier = Modifier.background(MD3.colorScheme.background)
-    ) { mo ->
-        val selectedList by viewModel.selectedAppsSF.collectAsState(emptyList())
+    ) { it ->
+
         Timber.d(selectedList.size.toString())
-        val modifier = Modifier
-            .consumeWindowInsets(mo)
-            .padding(horizontal = 16.dp)
-        val hushStatus = viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = false)
-        val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION).collectAsState(initial = true)
+        val hushStatus =
+            viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = true)
+        val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION)
+            .collectAsState(initial = true)
         val listState = rememberLazyListState()
 
         var showNotificationPermissionAlertDialog by remember {
             mutableStateOf(false)
         }
-        LaunchedEffect(notificationPermissionStatus){
+        LaunchedEffect(notificationPermissionStatus) {
             showNotificationPermissionAlertDialog = !notificationPermissionStatus
         }
 
@@ -220,107 +215,145 @@ fun MainActivityScreen(
                 viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
             }
 
-//            <--- Hush Service Toggle ---->
-        Row(
-            modifier = modifier
-                .padding(top = 8.dp)
-                .fillMaxWidth()
-        )
-        {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
+        val modifier = Modifier
+
+//            <--- Hush Service Toggle ----
+        Column(modifier = Modifier
+            .padding(it)
+            .padding(horizontal = 16.dp)) {
+            Row(
+                modifier = modifier
+                    .padding(top = 8.dp)
                     .fillMaxWidth()
-                    .background(
-                        color = if (hushStatus.value) MD3.colorScheme.primaryContainer else MD3.colorScheme.surfaceVariant,
-                        shape = RoundedCornerShape(12.dp)
-                    )
-            ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+            )
+            {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(80.dp)
-                        .clickable {
-                            if (notificationPermissionStatus)
-                                viewModel.setHushStatus(!hushStatus.value)
-                            else
-                                showNotificationPermissionAlertDialog = true
-                        }
+                        .background(
+                            color = if (hushStatus.value) MD3.colorScheme.primaryContainer else MD3.colorScheme.surfaceVariant,
+                            shape = RoundedCornerShape(12.dp)
+                        )
                 ) {
-                    Text(
-                        text = "Start Hush Service",
-                        style = MD3.typography.titleMedium,
-                        fontSize = 18.sp,
-                        fontWeight = if (hushStatus.value) FontWeight.Bold else FontWeight.Normal,
-                        color = if (hushStatus.value) MD3.colorScheme.onPrimaryContainer else MD3.colorScheme.onSurfaceVariant,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .align(alignment = Alignment.CenterVertically)
-                    )
-
-                    Switch(
-                        checked = hushStatus.value,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MD3.colorScheme.primaryContainer
-                        ),
-                        onCheckedChange = setHushStatus,
-                        modifier = Modifier.padding(end = 8.dp)
-                    )
-                }
-
-                AnimatedVisibility(visible = !hushStatus.value) {
                     Row(
-                        horizontalArrangement = Arrangement.Center,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(
-                                Color(0xFFFFE082),
-                                RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
-                            )
+                            .height(80.dp)
+                            .clickable {
+                                if (notificationPermissionStatus)
+                                    viewModel.setHushStatus(!hushStatus.value)
+                                else
+                                    showNotificationPermissionAlertDialog = true
+                            }
                     ) {
                         Text(
-                            text = "Turn on hush service to mute notifications",
-                            style = MD3.typography.labelMedium,
-                            modifier = Modifier.padding(8.dp)
+                            text = "Start Hush Service",
+                            style = MD3.typography.titleMedium,
+                            fontSize = 18.sp,
+                            fontWeight = if (hushStatus.value) FontWeight.Bold else FontWeight.Normal,
+                            color = if (hushStatus.value) MD3.colorScheme.onPrimaryContainer else MD3.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .padding(start = 8.dp)
+                                .align(alignment = Alignment.CenterVertically)
+                        )
+
+                        Switch(
+                            checked = hushStatus.value,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MD3.colorScheme.primaryContainer
+                            ),
+                            onCheckedChange = setHushStatus,
+                            modifier = Modifier.padding(end = 8.dp)
                         )
                     }
+
+                    AnimatedVisibility(visible = !hushStatus.value) {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    Color(0xFFFFE082),
+                                    RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
+                                )
+                        ) {
+                            Text(
+                                text = "Turn on hush service to mute notifications",
+                                style = MD3.typography.labelMedium,
+                                modifier = Modifier.padding(8.dp)
+                            )
+                        }
+                    }
                 }
+
             }
 
-        }
-
-        Box(modifier.padding(vertical = 16.dp)) {
-            Text(
-                text = "Ongoing Hush!",
-                style = MD3.typography.titleMedium,
-                color = MD3.colorScheme.onBackground,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        }
-
-        LazyColumn(
-            state = listState,
-            modifier = modifier
-                .fillMaxSize()
-        ) {
-            items(selectedList, key = {
-                it.selectedApp.timeUpdated
-            }) { app ->
-                SelectedAppItem(
-                    selectedApp = app,
-                    onRemoveClick = removeAppLambda,
-                    onEditClick = editAppLambda,
-                    onConfigDone = addConfigLambda,
-                    onNotificationLogClick = {
-                        navigator.push(AppLogScreen(app_id = app.selectedApp.id.toLong(), appName = app.selectedApp.appName))
-                    }
+            Box(modifier.padding(vertical = 16.dp)) {
+                Text(
+                    text = "Ongoing Hush!",
+                    style = MD3.typography.titleMedium,
+                    color = MD3.colorScheme.onBackground,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
+            }
+
+            LazyColumn(
+                state = listState,
+                modifier = modifier
+                    .fillMaxSize()
+            ) {
+                items(selectedList, key = {
+                    it.selectedApp.timeUpdated
+                }) { app ->
+                    SelectedAppItem(
+                        selectedApp = app,
+                        onRemoveClick = removeAppLambda,
+                        onEditClick = editAppLambda,
+                        onConfigDone = addConfigLambda,
+                        onNotificationLogClick = {
+                            navigator.push(
+                                AppLogScreen(
+                                    app_id = app.selectedApp.id!!.toLong(),
+                                    appName = app.selectedApp.appName
+                                )
+                            )
+                        }
+                    )
+                }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ShowBottomSheet(apps: List<InstalledPackageInfo>, isBottomSheetOpen: ()-> Boolean, onDismiss: (SelectedApp?) -> Unit){
+
+    val skipPartiallyExpanded by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    val bottomSheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = skipPartiallyExpanded
+    )
+
+    if (isBottomSheetOpen.invoke())
+        ModalBottomSheet(
+            onDismissRequest = {onDismiss.invoke(null)},
+            sheetState = bottomSheetState
+        ) {
+            InstalledAppList(apps) { item ->
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    // TODO: insert here
+                    onDismiss.invoke(item)
+                }
+            }
+        }
 }
 
 @Composable
@@ -480,9 +513,9 @@ fun ShowInitConfig(
                     .padding(top = 8.dp, bottom = 8.dp)
             ) {
                 val buttonColor = IconButtonDefaults.outlinedIconToggleButtonColors(
-                        containerColor = MD3.colorScheme.primaryContainer,
-                        checkedContainerColor = MD3.colorScheme.tertiary,
-                    )
+                    containerColor = MD3.colorScheme.primaryContainer,
+                    checkedContainerColor = MD3.colorScheme.tertiary,
+                )
                 val modifier = Modifier
                     .height(36.dp)
                     .width(36.dp)

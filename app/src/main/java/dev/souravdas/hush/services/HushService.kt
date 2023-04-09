@@ -24,7 +24,6 @@ import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalTime
@@ -144,6 +143,8 @@ class HushService : NotificationListenerService() {
                 selectAppCache.logNotification(
                     AppLog(
                         selected_app_id = app.id,
+                        appName = app.appName,
+                        packageName = app.packageName,
                         title = statusBarNotification.notification.extras.getString(Notification.EXTRA_TITLE),
                         body = statusBarNotification.notification.extras.getString(Notification.EXTRA_TEXT),
                     )

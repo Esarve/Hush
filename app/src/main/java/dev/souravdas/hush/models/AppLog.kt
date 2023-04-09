@@ -20,6 +20,8 @@ import androidx.room.PrimaryKey
 data class AppLog(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val selected_app_id: Int,
+    val appName: String,
+    val packageName: String,
     val title: String?,
     val body: String?,
     val timeCreated: Long = System.currentTimeMillis()

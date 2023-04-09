@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import dev.souravdas.hush.models.AppLog
-import dev.souravdas.hush.models.SelectedApp
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -23,4 +22,7 @@ interface AppLogDao {
 
     @Query("SELECT * FROM app_log WHERE selected_app_id= :selectedAppID")
     fun getAllByForeignKey(selectedAppID: Int): Flow<List<AppLog>>
+
+    @Query("SELECT * FROM app_log ORDER BY timeCreated DESC")
+    fun getAllLog(): Flow<List<AppLog>>
 }
