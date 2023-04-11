@@ -7,14 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import cafe.adriel.voyager.core.screen.Screen
-import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.Tab
 import cafe.adriel.voyager.navigator.tab.TabOptions
-import cafe.adriel.voyager.transitions.SlideTransition
 import dev.souravdas.hush.compose.AboutScreen
 import dev.souravdas.hush.compose.AppLogList
 import dev.souravdas.hush.compose.SettingsPage
-import dev.souravdas.hush.compose.main.MainActivityScreen
+import dev.souravdas.hush.compose.main.Home
 
 /**
  * Created by Sourav
@@ -22,13 +20,6 @@ import dev.souravdas.hush.compose.main.MainActivityScreen
  * For Hush!
  */
 
-class MainScreen() : Screen{
-
-    @Composable
-    override fun Content() {
-        MainActivityScreen()
-    }
-}
 
 object HomeTab: Tab {
     override val options: TabOptions
@@ -49,11 +40,8 @@ object HomeTab: Tab {
     @OptIn(ExperimentalAnimationApi::class)
     @Composable
     override fun Content() {
-        Navigator(MainScreen()){
-            SlideTransition(navigator = it)
-        }
+        Home()
     }
-
 }
 
 object LogTab: Tab{
@@ -72,7 +60,6 @@ object LogTab: Tab{
             }
         }
 
-    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     override fun Content() {
         AppLogList()
@@ -94,13 +81,10 @@ class AboutScreen: Screen{
     }
 }
 
-data class AppLogScreen(
-    val app_id: Long?,
-    val appName: String?,): Screen{
+class AppLogScreen(): Screen{
     @Composable
     override fun Content() {
         AppLogList()
-
     }
 
 }

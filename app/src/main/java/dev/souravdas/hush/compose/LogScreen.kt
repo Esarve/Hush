@@ -4,7 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
@@ -21,7 +24,8 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.models.AppLogWithIcon
+import dev.souravdas.hush.models.AppLog
+import dev.souravdas.hush.others.AppIconsMap
 import dev.souravdas.hush.others.Utils
 
 /**
@@ -31,6 +35,7 @@ import dev.souravdas.hush.others.Utils
  */
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+
 @Composable
 fun AppLogList() {
     val viewModel: MainActivityVM = viewModel()
@@ -44,22 +49,11 @@ fun AppLogList() {
     }
 
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(text = "Notifications") },
-            )
-        },
-        bottomBar = {
-            FloatingNav()
-        }
+    LazyColumn(
+
     ) {
-        LazyColumn(
-            modifier = Modifier.padding(it)
-        ) {
-            items(logs) { log ->
-                ItemView(log)
-            }
+        items(logs) { log ->
+            ItemView(log)
         }
     }
 
@@ -67,7 +61,7 @@ fun AppLogList() {
 }
 
 @Composable
-fun ItemView(log: AppLogWithIcon) {
+fun ItemView(log: AppLog) {
     Card(
         elevation = CardDefaults.cardElevation(4.dp),
         modifier = Modifier
@@ -77,26 +71,26 @@ fun ItemView(log: AppLogWithIcon) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painter = rememberDrawablePainter(drawable = log.icon),
+                    painter = rememberDrawablePainter(drawable = AppIconsMap.appIconMap[log.packageName]),
                     contentDescription = "APP", modifier = Modifier.size(24.dp, 24.dp)
                 )
-                Text(text = log.appLog.appName, modifier = Modifier.padding(start = 8.dp))
+                Text(text = log.appName, modifier = Modifier.padding(start = 8.dp))
                 Spacer(modifier = Modifier.weight(0.6f))
                 Text(
-                    text = Utils().getTimeAgo(log.appLog.timeCreated),
+                    text = Utils().getTimeAgo(log.timeCreated),
                     fontSize = 14.sp,
                     fontStyle = FontStyle.Italic,
                     modifier = Modifier.padding(top = 6.dp)
                 )
             }
             Text(
-                text = log.appLog.title ?: "",
+                text = log.title ?: "",
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
                 modifier = Modifier.padding(top = 6.dp)
             )
             Text(
-                text = log.appLog.body ?: "",
+                text = log.body ?: "",
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )

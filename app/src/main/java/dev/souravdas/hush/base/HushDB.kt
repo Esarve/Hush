@@ -9,7 +9,7 @@ import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.HushDBTypeConverters
 
-@Database(entities = [SelectedApp::class, AppLog::class], version = 1)
+@Database(entities = [SelectedApp::class, AppLog::class], version = 2)
 @TypeConverters(HushDBTypeConverters::class)
 abstract class HushDB: RoomDatabase() {
     abstract fun selectAppDao(): SelectedAppDao

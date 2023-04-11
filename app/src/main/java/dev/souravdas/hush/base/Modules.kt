@@ -1,6 +1,7 @@
 package dev.souravdas.hush.base
 
 import android.content.Context
+import androidx.room.Room
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -19,11 +20,12 @@ object Modules {
     @Provides
     @Singleton
     fun provideHushDB(@ApplicationContext context: Context): HushDB {
-        return androidx.room.Room.databaseBuilder(
+        return Room.databaseBuilder(
             context,
             HushDB::class.java,
             "hush_db"
-        ).build()
+        )   .addMigrations(MIGRATION_1_2)
+            .build()
     }
 
 
@@ -33,7 +35,7 @@ object Modules {
     }
 
     @Provides
-    fun provideAppLogDao(hushDB: HushDB): AppLogDao{
+    fun provideAppLogDao(hushDB: HushDB): AppLogDao {
         return hushDB.appLogDao()
     }
 
@@ -48,7 +50,7 @@ object Modules {
     }
 
     @Provides
-    fun provideUtils(): Utils{
+    fun provideUtils(): Utils {
         return Utils()
     }
 }

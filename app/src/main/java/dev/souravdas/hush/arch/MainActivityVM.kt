@@ -10,6 +10,7 @@ import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.compose.main.AppConfig
 import dev.souravdas.hush.models.*
+import dev.souravdas.hush.others.AppIconsMap
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.Event
 import dev.souravdas.hush.others.Utils
@@ -25,7 +26,6 @@ class MainActivityVM @Inject constructor(
     private val dataStoreManager: DataStoreManager,
     private val utils: Utils
 ) : BaseViewModel() {
-    val notificationAccessPermission = MutableStateFlow(false)
 
     private val _uiEventMLD = MutableLiveData<Event<UIEvent>>()
     val uiEventMLD = _uiEventMLD
@@ -33,19 +33,17 @@ class MainActivityVM @Inject constructor(
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
 
-    private val _selectedAppsSF = MutableStateFlow<List<SelectedAppForList>>(emptyList())
+    private val _selectedAppsSF = MutableStateFlow<List<SelectedApp>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
-    private val _appLog = MutableStateFlow<List<AppLogWithIcon>>(emptyList())
+    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
-    private val _dsIsDnd = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DND)
-    private val _dsIsRemoveExpired = dataStoreManager.getBooleanValueAsFlow(Constants.DS_DELETE_EXPIRE)
-    private val _dsIsNotifyMute = dataStoreManager.getBooleanValueAsFlow(Constants.DS_NOTIFY_MUTE)
-
-    val hushConfig : Flow<HushConfig> = combine(_dsIsDnd, _dsIsRemoveExpired,_dsIsNotifyMute) {a,b,c ->
-        HushConfig(a,b,c)
+    init {
+        getSelectedApp()
+        getInstalledApps()
     }
+
 
     suspend fun getBoolean(key:String):Boolean = dataStoreManager.getBooleanValue(key)
 
@@ -73,15 +71,7 @@ class MainActivityVM @Inject constructor(
 
     fun getLog(){
         viewModelScope.launch {
-            appLogRepository.getAllLog().map{logs ->
-                val installedApps = getPackageList().associateBy({ it.packageName }, { it.icon })
-                logs.map {
-                    AppLogWithIcon(
-                        installedApps[it.packageName]!!,
-                        it
-                    )
-                }
-            }.collectLatest{
+            appLogRepository.getAllLog().collect {
                 _appLog.value = it
             }
         }
@@ -96,23 +86,17 @@ class MainActivityVM @Inject constructor(
     fun getSelectedApp() {
         viewModelScope.launch {
             selectAppRepository.getSelectedAppsWithFlow().map { apps ->
-                val installedApps = getPackageList().associateBy({ it.packageName }, { it.icon })
                 apps.sortedWith(
                     compareBy<SelectedApp> { it.isComplete }
                         .thenByDescending { it.timeCreated }
-                ).map {
-                    SelectedAppForList(
-                        it,
-                        installedApps[it.packageName]
-                    )
-                }
+                )
             }.collectLatest {
                 _selectedAppsSF.value = it
             }
         }
     }
 
-    fun getInstalledApps() {
+    private fun getInstalledApps() {
         executedSuspendedCodeBlock(APP_LIST) {
             getPackageList()
         }
@@ -122,13 +106,13 @@ class MainActivityVM @Inject constructor(
         dataStoreManager.writeBooleanData(key,value)
     }
 
-    private fun getPackageList(): List<InstalledPackageInfo> {
+    fun getPackageList(): List<InstalledPackageInfo> {
         val pm: PackageManager = HushApp.context.packageManager
         val packages: MutableList<ApplicationInfo> = pm.getInstalledApplications(0)
         val packageNames = mutableListOf<InstalledPackageInfo>()
 
         for (packageInfo in packages) {
-            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName != HushApp.context.packageName)
+            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName != HushApp.context.packageName) {
                 packageNames.add(
                     InstalledPackageInfo(
                         packageInfo.loadLabel(pm).toString(),
@@ -136,6 +120,9 @@ class MainActivityVM @Inject constructor(
                         packageInfo.loadIcon(pm)
                     )
                 )
+
+                AppIconsMap.appIconMap[packageInfo.packageName] = packageInfo.loadIcon(pm)
+            }
         }
         return packageNames.sortedBy {
             it.appName

@@ -3,6 +3,7 @@ package dev.souravdas.hush.models
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import java.io.Serializable
 
 /**
  * Created by Sourav
@@ -25,4 +26,4 @@ data class AppLog(
     val title: String?,
     val body: String?,
     val timeCreated: Long = System.currentTimeMillis()
-)
+): Serializable
