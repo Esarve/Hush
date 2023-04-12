@@ -13,7 +13,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
@@ -79,10 +78,8 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
 
     val setHushStatus = remember<(Boolean) -> Unit> {
         { status ->
-            if (notificationPermissionStatus)
-                viewModel.setHushStatus(status)
-            else
-                showNotificationPermissionAlertDialog = true
+            if (notificationPermissionStatus) viewModel.setHushStatus(status)
+            else showNotificationPermissionAlertDialog = true
         }
     }
 
@@ -105,11 +102,10 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
         }
     }
 
-    if (showNotificationPermissionAlertDialog)
-        ShowAlertDialog {
-            showNotificationPermissionAlertDialog = false
-            viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
-        }
+    if (showNotificationPermissionAlertDialog) ShowAlertDialog {
+        showNotificationPermissionAlertDialog = false
+        viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
+    }
 
     val modifier = Modifier
     var isActive by remember {
@@ -122,14 +118,13 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 .padding(top = 8.dp)
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth()
-        )
-        {
+        ) {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Hush",
+                Text(text = "Hush",
                     style = MD3.typography.displayMedium,
                     color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.onSurfaceVariant,
                     modifier = Modifier.clickable {
@@ -137,11 +132,21 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                             viewModel.generateDummyLogs()
                             Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
                         }
-                    }
-                )
+                    })
 
-                FilledTonalIconToggleButton(checked = true, onCheckedChange = {isActive = !isActive} ) {
-                    Icon(Icons.Default.Star, contentDescription = "IDK")
+                FilledTonalIconToggleButton(
+                    checked = isActive,
+                    onCheckedChange = {
+                        isActive = it
+                    },
+                    colors = IconButtonDefaults.filledIconToggleButtonColors(
+                        containerColor = MD3.colorScheme.surfaceVariant,
+                        contentColor = MD3.colorScheme.onSurfaceVariant,
+                        checkedContainerColor = MD3.colorScheme.primary,
+                        checkedContentColor = MD3.colorScheme.onPrimary
+                    )
+                ) {
+                    Icon(painterResource(id = R.drawable.ic_power), contentDescription = "IDK")
                 }
             }
 
@@ -166,8 +171,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
         Column(
             modifier = Modifier
                 .background(
-                    MD3.colorScheme.background,
-                    RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
+                    MD3.colorScheme.background, RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)
                 )
                 .padding(horizontal = 16.dp)
         ) {
@@ -181,9 +185,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
             }
 
             LazyColumn(
-                state = listState,
-                modifier = modifier
-                    .fillMaxSize()
+                state = listState, modifier = modifier.fillMaxSize()
             ) {
                 items(selectedList, key = {
                     it.timeUpdated
@@ -215,27 +217,23 @@ fun ShowBottomSheet(
         skipPartiallyExpanded = skipPartiallyExpanded
     )
 
-    if (isBottomSheetOpen.invoke())
-        ModalBottomSheet(
-            onDismissRequest = { onDismiss.invoke(null) },
-            sheetState = bottomSheetState
-        ) {
-            InstalledAppList(apps) { item ->
-                scope.launch {
-                    bottomSheetState.hide()
-                }.invokeOnCompletion {
-                    // TODO: insert here
-                    onDismiss.invoke(item)
-                }
+    if (isBottomSheetOpen.invoke()) ModalBottomSheet(
+        onDismissRequest = { onDismiss.invoke(null) }, sheetState = bottomSheetState
+    ) {
+        InstalledAppList(apps) { item ->
+            scope.launch {
+                bottomSheetState.hide()
+            }.invokeOnCompletion {
+                // TODO: insert here
+                onDismiss.invoke(item)
             }
         }
+    }
 }
 
 @Composable
 fun TopAppBarActionButton(
-    imageVector: ImageVector,
-    description: String,
-    onClick: () -> Unit
+    imageVector: ImageVector, description: String, onClick: () -> Unit
 ) {
     IconButton(onClick = {
         onClick()
@@ -302,13 +300,9 @@ fun SelectedAppItem(
                     )
 
                     if (selectedApp.hushType != null) {
-                        if (selectedApp.hushType == HushType.DURATION
-                            && System.currentTimeMillis() >= selectedApp.timeUpdated + selectedApp.durationInMinutes!! * 60000
-                        ) {
+                        if (selectedApp.hushType == HushType.DURATION && System.currentTimeMillis() >= selectedApp.timeUpdated + selectedApp.durationInMinutes!! * 60000) {
                             CustomChip(
-                                title = "Expired",
-                                color = Color.Red,
-                                fontColor = Color.White
+                                title = "Expired", color = Color.Red, fontColor = Color.White
                             )
                         } else {
                             selectedApp.hushType?.let {
@@ -342,9 +336,7 @@ fun SelectedAppItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShowInitConfig(
-    app: SelectedApp,
-    onConfigDone: (AppConfig) -> Unit,
-    onRemoveClick: (SelectedApp) -> Unit
+    app: SelectedApp, onConfigDone: (AppConfig) -> Unit, onRemoveClick: (SelectedApp) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -401,8 +393,7 @@ fun ShowInitConfig(
                         .fillMaxWidth()
                         .padding(top = 8.dp, bottom = 8.dp)
                 ) {
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[0].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -411,8 +402,7 @@ fun ShowInitConfig(
                         }) {
                         ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
                     }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[1].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -421,8 +411,7 @@ fun ShowInitConfig(
                         }) {
                         ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
                     }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[2].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -431,8 +420,7 @@ fun ShowInitConfig(
                         }) {
                         ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
                     }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[3].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -441,8 +429,7 @@ fun ShowInitConfig(
                         }) {
                         ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
                     }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[4].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
@@ -451,15 +438,13 @@ fun ShowInitConfig(
                         }) {
                         ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
                     }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
+                    OutlinedIconToggleButton(modifier = modifier,
                         checked = !selectedDays[5].isNullOrEmpty(),
                         colors = buttonColor,
                         onCheckedChange = {
                             selectedDays = selectedDays.toMutableList()
                                 .apply { set(5, if (it) "THU" else null) }
-                        }
-                    ) {
+                        }) {
                         ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
                     }
                     OutlinedIconToggleButton(
@@ -481,20 +466,17 @@ fun ShowInitConfig(
                         text = "Start Time",
                         color = MD3.colorScheme.onPrimaryContainer
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    Row(verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
                                 showTimePickerStart = true
-                            }
-                    ) {
+                            }) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit",
                             tint = MD3.colorScheme.onPrimaryContainer,
-                            modifier = Modifier
-                                .size(20.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                         Text(
                             text = get12HrsFrom24Hrs(startEndTimePair.startTime),
@@ -509,14 +491,12 @@ fun ShowInitConfig(
                         text = "End Time",
                         color = MD3.colorScheme.onPrimaryContainer
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    Row(verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
                                 showTimePickerEnd = true
-                            }
-                    ) {
+                            }) {
                         Icon(
                             Icons.Outlined.Edit,
                             contentDescription = "Edit",
@@ -543,54 +523,44 @@ fun ShowInitConfig(
 
         Row(modifier = Modifier.padding(8.dp)) {
             CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                Checkbox(
-                    checked = logNotificationCb,
-                    onCheckedChange = {
-                        logNotificationCb = !logNotificationCb
+                Checkbox(checked = logNotificationCb, onCheckedChange = {
+                    logNotificationCb = !logNotificationCb
 
-                        if (it) Constants.showNIY()
-                    }
-                )
+                    if (it) Constants.showNIY()
+                })
             }
             Text(
                 text = "Log Notifications",
                 color = Color(androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer.toArgb()),
-                modifier =
-                Modifier
+                modifier = Modifier
                     .align(Alignment.CenterVertically)
                     .padding(start = 8.dp)
             )
         }
 
         if (showTimePickerStart) {
-            ShowTimePicker(
-                Pair(
-                    startEndTimePair.startTime.split(":")[0].toInt(),
-                    startEndTimePair.startTime.split(":")[1].toInt()
-                ),
-                "Pick a start time",
-                {
-                    Timber.d(it)
-                    startEndTimePair.startTime = it
-                    showTimePickerStart = false
-                }, {
-                    showTimePickerStart = false
-                })
+            ShowTimePicker(Pair(
+                startEndTimePair.startTime.split(":")[0].toInt(),
+                startEndTimePair.startTime.split(":")[1].toInt()
+            ), "Pick a start time", {
+                Timber.d(it)
+                startEndTimePair.startTime = it
+                showTimePickerStart = false
+            }, {
+                showTimePickerStart = false
+            })
         }
         if (showTimePickerEnd) {
-            ShowTimePicker(
-                Pair(
-                    startEndTimePair.endTime.split(":")[0].toInt(),
-                    startEndTimePair.endTime.split(":")[1].toInt()
-                ),
-                "Pick an end time",
-                {
-                    Timber.d(it)
-                    startEndTimePair.endTime = it
-                    showTimePickerEnd = false
-                }, {
-                    showTimePickerEnd = false
-                })
+            ShowTimePicker(Pair(
+                startEndTimePair.endTime.split(":")[0].toInt(),
+                startEndTimePair.endTime.split(":")[1].toInt()
+            ), "Pick an end time", {
+                Timber.d(it)
+                startEndTimePair.endTime = it
+                showTimePickerEnd = false
+            }, {
+                showTimePickerEnd = false
+            })
         }
 
         AddCancelButtonBar(onAddClick = {
@@ -626,15 +596,11 @@ fun ShowOptions(
             )
             .fillMaxWidth()
     ) {
-        TextButton(
-            modifier = buttonModifier,
-            onClick = { onEditClick.invoke(selectedApp) }) {
+        TextButton(modifier = buttonModifier, onClick = { onEditClick.invoke(selectedApp) }) {
             Text("Edit", color = MD3.colorScheme.onSecondaryContainer)
         }
 
-        TextButton(
-            modifier = buttonModifier,
-            onClick = { onRemoveClick.invoke(selectedApp) }) {
+        TextButton(modifier = buttonModifier, onClick = { onRemoveClick.invoke(selectedApp) }) {
             Text("Remove", color = MD3.colorScheme.onSecondaryContainer)
         }
     }
@@ -742,9 +708,7 @@ fun ShowDaysText(selected: Boolean, title: String) {
         )
     } else {
         Text(
-            text = title,
-            color = MD3.colorScheme.onPrimaryContainer,
-            fontSize = 12.sp
+            text = title, color = MD3.colorScheme.onPrimaryContainer, fontSize = 12.sp
         )
     }
 }
@@ -783,40 +747,35 @@ fun ShowTypeSelectorChip(
     onHushTypeSelected: (HushType) -> Unit
 ) {
 
-    FilterChip(
-        selected = selectedChipIndex.value == type,
-        onClick = {
-            selectedChipIndex.value = type
-            onHushTypeSelected.invoke(type)
-        },
-        colors = FilterChipDefaults.filterChipColors(
-            selectedContainerColor = MD3.colorScheme.tertiary,
-            containerColor = MD3.colorScheme.surfaceVariant,
+    FilterChip(selected = selectedChipIndex.value == type, onClick = {
+        selectedChipIndex.value = type
+        onHushTypeSelected.invoke(type)
+    }, colors = FilterChipDefaults.filterChipColors(
+        selectedContainerColor = MD3.colorScheme.tertiary,
+        containerColor = MD3.colorScheme.surfaceVariant,
 
-            ),
-        label = {
-            Text(
-                text = type.label,
-                color = if (selectedChipIndex.value == type) MD3.colorScheme.onTertiary else MD3.colorScheme.onSurfaceVariant
-            )
-        },
-        modifier = Modifier.padding(start = 4.dp), leadingIcon = {
-            Box(
-                Modifier.animateContentSize(keyframes {
-                    durationMillis = 100
-                })
-            ) {
-                if (selectedChipIndex.value == type) {
-                    Icon(
-                        imageVector = Icons.Default.Done,
-                        contentDescription = null,
-                        tint = MD3.colorScheme.onTertiary,
-                        modifier = Modifier.size(FilterChipDefaults.IconSize)
-                    )
-                }
+        ), label = {
+        Text(
+            text = type.label,
+            color = if (selectedChipIndex.value == type) MD3.colorScheme.onTertiary else MD3.colorScheme.onSurfaceVariant
+        )
+    }, modifier = Modifier.padding(start = 4.dp), leadingIcon = {
+        Box(
+            Modifier.animateContentSize(keyframes {
+                durationMillis = 100
+            })
+        ) {
+            if (selectedChipIndex.value == type) {
+                Icon(
+                    imageVector = Icons.Default.Done,
+                    contentDescription = null,
+                    tint = MD3.colorScheme.onTertiary,
+                    modifier = Modifier.size(FilterChipDefaults.IconSize)
+                )
             }
+        }
 
-        })
+    })
 }
 
 private fun get12HrsFrom24Hrs(inputTime: String): String {
