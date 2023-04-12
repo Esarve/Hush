@@ -25,4 +25,7 @@ interface AppLogDao {
 
     @Query("SELECT * FROM app_log ORDER BY timeCreated DESC")
     fun getAllLog(): Flow<List<AppLog>>
+
+    @Query("SELECT * FROM app_log WHERE timeCreated >= :lastWeek ORDER BY timeCreated DESC")
+    fun getAppLogsFromLastWeek(lastWeek: Long): Flow<List<AppLog>>
 }

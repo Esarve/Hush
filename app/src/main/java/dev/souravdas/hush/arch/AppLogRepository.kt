@@ -27,4 +27,6 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
 
     fun getAllBySelectedAppID(selectedAppId: Int): Flow<List<AppLog>> = appLogDao.getAllByForeignKey(selectedAppId)
     fun getAllLog(): Flow<List<AppLog>> = appLogDao.getAllLog()
+
+    fun getDataFromLastWeek():Flow<List<AppLog>> = appLogDao.getAppLogsFromLastWeek(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000)
 }

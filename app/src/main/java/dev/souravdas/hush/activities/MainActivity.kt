@@ -86,7 +86,6 @@ class MainActivity : ComponentActivity() {
                                     showBottomSheet.value = true
                                 }
                             }
-
                         },
                         modifier = Modifier.background(MaterialTheme.colorScheme.background),
                         content = {CurrentTab()}

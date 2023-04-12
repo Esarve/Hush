@@ -8,13 +8,11 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -70,8 +68,18 @@ fun ItemView(log: AppLog) {
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val appIconExists by remember {
+                    mutableStateOf(AppIconsMap.appIconMap.containsKey(log.packageName))
+                }
                 Image(
-                    painter = rememberDrawablePainter(drawable = AppIconsMap.appIconMap[log.packageName]),
+                    painter = rememberDrawablePainter(
+                        drawable =
+                        if (appIconExists)
+                            AppIconsMap.appIconMap[log.packageName]
+                        else LocalContext.current.getDrawable(
+                            dev.souravdas.hush.R.drawable.esarve
+                        )
+                    ),
                     contentDescription = "APP", modifier = Modifier.size(24.dp, 24.dp)
                 )
                 Text(text = log.appName, modifier = Modifier.padding(start = 8.dp))

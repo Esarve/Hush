@@ -10,13 +10,12 @@ import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
 import dev.souravdas.hush.compose.main.AppConfig
 import dev.souravdas.hush.models.*
-import dev.souravdas.hush.others.AppIconsMap
-import dev.souravdas.hush.others.Constants
-import dev.souravdas.hush.others.Event
-import dev.souravdas.hush.others.Utils
+import dev.souravdas.hush.others.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -39,15 +38,23 @@ class MainActivityVM @Inject constructor(
     private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
+    private val _appLogStats = MutableStateFlow<Resource<Map<String, Float>>>(
+        Resource.Loading(
+            emptyMap()
+        )
+    )
+    val appLogStats = _appLogStats.asStateFlow()
+
     init {
         getSelectedApp()
         getInstalledApps()
+        getLogStats()
     }
 
 
-    suspend fun getBoolean(key:String):Boolean = dataStoreManager.getBooleanValue(key)
+    suspend fun getBoolean(key: String): Boolean = dataStoreManager.getBooleanValue(key)
 
-    fun dispatchUIEvent(event: UIEvent){
+    fun dispatchUIEvent(event: UIEvent) {
         _uiEventMLD.value = Event(event)
     }
 
@@ -63,13 +70,13 @@ class MainActivityVM @Inject constructor(
             if (selectedAppFromDB != null) {
                 selectedAppFromDB.isComplete = false
                 selectAppRepository.update(selectedAppFromDB)
-            }else
+            } else
                 selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
 
-    fun getLog(){
+    fun getLog() {
         viewModelScope.launch {
             appLogRepository.getAllLog().collect {
                 _appLog.value = it
@@ -77,9 +84,23 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun changeBooleanDS(key: String ,boolean: Boolean){
+    fun getLogStats() {
         viewModelScope.launch {
-            dataStoreManager.writeBooleanData(key,boolean)
+            appLogRepository.getDataFromLastWeek().collect() { logs ->
+                val appLogsByDay = logs.groupBy {
+                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timeCreated))
+                }
+
+                val countsByDay = appLogsByDay.mapValues { it.value.size.toFloat() }
+
+                _appLogStats.value = Resource.Success(countsByDay)
+            }
+        }
+    }
+
+    fun changeBooleanDS(key: String, boolean: Boolean) {
+        viewModelScope.launch {
+            dataStoreManager.writeBooleanData(key, boolean)
         }
     }
 
@@ -102,8 +123,8 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    suspend fun storeBoolean(key:String, value:Boolean){
-        dataStoreManager.writeBooleanData(key,value)
+    suspend fun storeBoolean(key: String, value: Boolean) {
+        dataStoreManager.writeBooleanData(key, value)
     }
 
     fun getPackageList(): List<InstalledPackageInfo> {
@@ -175,7 +196,7 @@ class MainActivityVM @Inject constructor(
                     isComplete = true
                 }
                 selectAppRepository.update(selectedAppFromDB)
-            }else{
+            } else {
                 val selectedApp = SelectedApp(
                     appName = app.appName,
                     packageName = app.packageName,
@@ -200,12 +221,35 @@ class MainActivityVM @Inject constructor(
     }
 
 
-    fun updateComplete(app: SelectedApp){
+    fun updateComplete(app: SelectedApp) {
         executedSuspendedCodeBlock {
             val selectedAppFromDB = selectAppRepository.getSelectedApp(app.packageName)
-            if (selectedAppFromDB != null){
+            if (selectedAppFromDB != null) {
                 selectedAppFromDB.isComplete = false
                 selectAppRepository.update(selectedAppFromDB)
+            }
+        }
+    }
+
+    fun generateDummyLogs() {
+        val calendar = Calendar.getInstance()
+
+        viewModelScope.launch {
+            var n = 0
+            for (i in 1..20) {
+                if (i.mod(2)==0) n++
+                calendar.add(Calendar.DAY_OF_YEAR, -n)
+                appLogRepository.insertLog(
+                    AppLog(
+                        selected_app_id = 3,
+                        appName = "App ${i % 3 + 1}",
+                        packageName = "com.example.app${i % 3 + 1}",
+                        title = "Title $i",
+                        body = "Body $i",
+                        timeCreated = calendar.timeInMillis
+                    )
+                )
+
             }
         }
     }

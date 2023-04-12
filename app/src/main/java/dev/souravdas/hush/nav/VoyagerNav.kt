@@ -1,6 +1,5 @@
 package dev.souravdas.hush.nav
 
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.runtime.Composable
@@ -36,8 +35,6 @@ object HomeTab: Tab {
                 )
             }
         }
-
-    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     override fun Content() {
         Home()

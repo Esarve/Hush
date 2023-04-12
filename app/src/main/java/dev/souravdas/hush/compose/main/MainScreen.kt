@@ -1,6 +1,7 @@
 package dev.souravdas.hush.compose.main
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.animation.*
 import androidx.compose.animation.core.keyframes
 import androidx.compose.foundation.*
@@ -28,26 +29,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
-import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
-import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
-import com.patrykandpatrick.vico.compose.chart.Chart
-import com.patrykandpatrick.vico.compose.chart.column.columnChart
-import com.patrykandpatrick.vico.compose.style.currentChartStyle
-import com.patrykandpatrick.vico.core.axis.AxisPosition
-import com.patrykandpatrick.vico.core.axis.formatter.AxisValueFormatter
-import com.patrykandpatrick.vico.core.component.shape.LineComponent
 import com.patrykandpatrick.vico.core.entry.ChartEntry
-import com.patrykandpatrick.vico.core.entry.ChartEntryModelProducer
+import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
-import dev.souravdas.hush.compose.rememberMarker
+import dev.souravdas.hush.compose.HushChart
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.UIEvent
 import dev.souravdas.hush.others.AppIconsMap
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
+import dev.souravdas.hush.others.Resource
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 import timber.log.Timber
@@ -66,12 +60,11 @@ import androidx.compose.material3.MaterialTheme as MD3
 fun Home(viewModel: MainActivityVM = viewModel()) {
     Timber.d("Main Screen Recomposed")
     val selectedListState = viewModel.selectedAppsSF.collectAsState(emptyList())
-    val selectedList by remember {
-        selectedListState
-    }
+    val selectedList by remember { selectedListState }
     val scope = rememberCoroutineScope()
     val hushStatus =
         viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = true)
+    val logStats = viewModel.appLogStats.collectAsState()
     val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION)
         .collectAsState(initial = true)
     val listState = rememberLazyListState()
@@ -131,95 +124,29 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 text = "Hush",
                 style = MD3.typography.displayMedium,
                 color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.onSurfaceVariant,
+                modifier = Modifier.clickable {
+                    if (BuildConfig.DEBUG) {
+                        viewModel.generateDummyLogs()
+                        Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
+                    }
+                }
             )
 
-            val chartEntryModelProducer = listOf(
-                "2022-07-14" to 5f,
-                "2022-07-15" to 2f,
-                "2022-07-17" to 6f,
-                "2022-08-01" to 2f,
-                "2022-08-02" to 5f,
-                "2022-08-03" to 6f,
-            )
-                .mapIndexed { index, (dateString, y) ->
-                    Entry(
-                        LocalDate.parse(dateString),
-                        index.toFloat(),
-                        y
-                    )
-                }
-                .let { ChartEntryModelProducer(it) }
-
-            val axisValueFormatter =
-                AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
-                    (chartValues.chartEntryModel.entries.first().getOrNull(value.toInt()) as? Entry)
-                        ?.localDate
-                        ?.run { dayOfWeek.toString().substring(0, 3) }
-                        .orEmpty()
-                }
-
-            val defaultColumns = currentChartStyle.columnChart.columns
-            Card(
-                modifier = Modifier
-                    .padding(vertical = 16.dp)
-                    .fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier
-                        .padding(8.dp)
-                ) {
-                    Text(text = "History", style = MD3.typography.titleLarge, color = MD3.colorScheme.primary, modifier = Modifier.padding(8.dp))
-                    Chart(
-                        chart = columnChart(
-                            columns = remember(defaultColumns) {
-                                defaultColumns.map { defaultColumn ->
-                                    LineComponent(
-                                        dynamicLightColorScheme(HushApp.context).secondary.toArgb(),
-                                        16f,
-                                        defaultColumn.shape
-                                    )
-                                }
-                            },
-                            spacing = 32.dp
-                        ),
-                        chartModelProducer = chartEntryModelProducer,
-                        startAxis = startAxis(
-                            axis = null,
-                            tick = null,
-                            maxLabelCount = 3,
-                        ),
-                        bottomAxis = bottomAxis(
-                            axis = null,
-                            tick = null,
-                            valueFormatter = axisValueFormatter,
-                            guideline = null
-                        ),
-                        marker = rememberMarker(),
-                        runInitialAnimation = true,
+            when (logStats.value) {
+                is Resource.Error -> TODO("Show ERROR")
+                is Resource.Loading -> {
+                    Box(
+                        contentAlignment = Alignment.Center,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(128.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End
                     ) {
-                        CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                            Button(
-                                onClick = { /*TODO*/ },
-                                modifier = Modifier
-                                    .padding(top = 8.dp, end = 8.dp)
-                                    .size(132.dp, 32.dp)
-                            ) {
-                                Text(text = "See Full History", style = MD3.typography.labelLarge)
-
-                            }
-                        }
-
+                        CircularProgressIndicator()
                     }
-
                 }
-
+                is Resource.Success -> {
+                    HushChart((logStats.value as Resource.Success<Map<String, Float>>).data)
+                }
             }
         }
 
@@ -323,13 +250,14 @@ fun SelectedAppItem(
     Card(
         modifier = Modifier
             .fillMaxHeight()
+            .padding(bottom = 10.dp)
             .clickable {
                 if (!showInitConfig) {
                     showOptions = !showOptions
                 }
-            }
-            .padding(bottom = 10.dp),
-        colors = CardDefaults.cardColors(MD3.colorScheme.secondaryContainer)
+            },
+        colors = CardDefaults.cardColors(MD3.colorScheme.secondaryContainer),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column() {
             Row(
@@ -775,10 +703,8 @@ fun CustomChip(
     Box(
         modifier = Modifier
             .padding(top = 4.dp, bottom = 4.dp)
-            .background(
-                color = color,
-                RoundedCornerShape(10.dp)
-            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(color = color)
     ) {
         Text(
             text = title,
