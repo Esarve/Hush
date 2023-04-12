@@ -4,6 +4,8 @@ import dev.souravdas.hush.models.AppLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import org.threeten.bp.OffsetDateTime
+import org.threeten.bp.format.DateTimeFormatter
 import javax.inject.Inject
 
 /**
@@ -19,14 +21,20 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
         }
     }
 
-    suspend fun deleteAllBySelectedAppId(selectedAppId:Int){
+    suspend fun deleteAllBySelectedAppId(packageName:String){
         withContext(Dispatchers.IO){
-            appLogDao.deleteAllByForeignKey(selectedAppId)
+            appLogDao.deleteAllByPackageName(packageName)
         }
     }
 
-    fun getAllBySelectedAppID(selectedAppId: Int): Flow<List<AppLog>> = appLogDao.getAllByForeignKey(selectedAppId)
     fun getAllLog(): Flow<List<AppLog>> = appLogDao.getAllLog()
 
-    fun getDataFromLastWeek():Flow<List<AppLog>> = appLogDao.getAppLogsFromLastWeek(System.currentTimeMillis() - 7 * 24 * 60 * 60 * 1000)
+    fun getDataFromLastWeek():Flow<List<AppLog>> {
+        val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+
+        val currentDate = OffsetDateTime.now()
+        val lastWeekDate = currentDate.minusDays(7)
+
+        return appLogDao.getAppLogsFromLastWeek(startDate = lastWeekDate.format(formatter))
+    }
 }

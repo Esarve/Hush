@@ -142,7 +142,6 @@ class HushService : NotificationListenerService() {
             scope.launch {
                 selectAppCache.logNotification(
                     AppLog(
-                        selected_app_id = app.id,
                         appName = app.appName,
                         packageName = app.packageName,
                         title = statusBarNotification.notification.extras.getString(Notification.EXTRA_TITLE),

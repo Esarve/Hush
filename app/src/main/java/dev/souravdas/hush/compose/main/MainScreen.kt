@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
@@ -111,6 +112,9 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
         }
 
     val modifier = Modifier
+    var isActive by remember {
+        mutableStateOf(true)
+    }
 
     Column {
         Column(
@@ -120,17 +124,26 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 .fillMaxWidth()
         )
         {
-            Text(
-                text = "Hush",
-                style = MD3.typography.displayMedium,
-                color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable {
-                    if (BuildConfig.DEBUG) {
-                        viewModel.generateDummyLogs()
-                        Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Hush",
+                    style = MD3.typography.displayMedium,
+                    color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable {
+                        if (BuildConfig.DEBUG) {
+                            viewModel.generateDummyLogs()
+                            Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
+                        }
                     }
+                )
+
+                FilledTonalIconToggleButton(checked = true, onCheckedChange = {isActive = !isActive} ) {
+                    Icon(Icons.Default.Star, contentDescription = "IDK")
                 }
-            )
+            }
 
             when (logStats.value) {
                 is Resource.Error -> TODO("Show ERROR")
@@ -145,7 +158,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                     }
                 }
                 is Resource.Success -> {
-                    HushChart((logStats.value as Resource.Success<Map<String, Float>>).data)
+                    HushChart((logStats.value as Resource.Success<Map<LocalDate, Float>>).data)
                 }
             }
         }

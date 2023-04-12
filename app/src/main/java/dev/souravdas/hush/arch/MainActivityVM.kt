@@ -13,8 +13,9 @@ import dev.souravdas.hush.models.*
 import dev.souravdas.hush.others.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.threeten.bp.LocalDate
+import org.threeten.bp.OffsetDateTime
 import timber.log.Timber
-import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 
@@ -38,7 +39,7 @@ class MainActivityVM @Inject constructor(
     private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
-    private val _appLogStats = MutableStateFlow<Resource<Map<String, Float>>>(
+    private val _appLogStats = MutableStateFlow<Resource<Map<LocalDate, Float>>>(
         Resource.Loading(
             emptyMap()
         )
@@ -84,16 +85,31 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    fun getLogStats() {
+    private fun getLogStats() {
         viewModelScope.launch {
             appLogRepository.getDataFromLastWeek().collect() { logs ->
-                val appLogsByDay = logs.groupBy {
-                    SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date(it.timeCreated))
+                val grouped = logs.sortedBy {
+                    it.timeCreated.toEpochSecond()
+                }
+                    .groupBy {
+                        it.timeCreated.toLocalDate()
+                    }
+                val map = grouped.mapValues { it.value.size.toFloat() }
+
+                var fullWeekMap = hashMapOf<LocalDate, Float>()
+
+                (0..6).forEach {
+                    val day = LocalDate.now().minusDays(it.toLong())
+
+                    if (map.containsKey(day)){
+                        fullWeekMap[day] = map[day]!!
+                    }else{
+                        fullWeekMap[day] = 0f
+                    }
                 }
 
-                val countsByDay = appLogsByDay.mapValues { it.value.size.toFloat() }
+                _appLogStats.value = Resource.Success(fullWeekMap)
 
-                _appLogStats.value = Resource.Success(countsByDay)
             }
         }
     }
@@ -173,7 +189,7 @@ class MainActivityVM @Inject constructor(
 
     fun removeApp(selectedApp: SelectedApp) {
         executedSuspendedCodeBlock {
-            appLogRepository.deleteAllBySelectedAppId(selectedApp.id)
+            appLogRepository.deleteAllBySelectedAppId(selectedApp.packageName)
             selectAppRepository.removedSelectedApp(selectedApp)
         }
     }
@@ -232,24 +248,17 @@ class MainActivityVM @Inject constructor(
     }
 
     fun generateDummyLogs() {
-        val calendar = Calendar.getInstance()
-
         viewModelScope.launch {
-            var n = 0
             for (i in 1..20) {
-                if (i.mod(2)==0) n++
-                calendar.add(Calendar.DAY_OF_YEAR, -n)
-                appLogRepository.insertLog(
-                    AppLog(
-                        selected_app_id = 3,
-                        appName = "App ${i % 3 + 1}",
-                        packageName = "com.example.app${i % 3 + 1}",
-                        title = "Title $i",
-                        body = "Body $i",
-                        timeCreated = calendar.timeInMillis
-                    )
+                val randomDate = OffsetDateTime.now().minusDays(kotlin.random.Random.nextLong(0, 6))
+                val log = AppLog(
+                    appName = "App $i",
+                    packageName = "com.example.app$i",
+                    title = "Title $i",
+                    body = "Body $i",
+                    timeCreated = randomDate
                 )
-
+                appLogRepository.insertLog(log)
             }
         }
     }

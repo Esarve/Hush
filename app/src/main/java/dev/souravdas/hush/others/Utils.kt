@@ -1,7 +1,9 @@
 package dev.souravdas.hush.others
 
 import dev.souravdas.hush.models.SelectedApp
-import org.threeten.bp.*
+import org.threeten.bp.Duration
+import org.threeten.bp.LocalTime
+import org.threeten.bp.OffsetDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
 import java.util.*
@@ -67,10 +69,8 @@ class Utils {
         return sdf.format(date)
     }
 
-    fun getTimeAgo(millis: Long): String {
-        val instant = Instant.ofEpochMilli(millis)
-        val dateTime = LocalDateTime.ofInstant(instant, ZoneId.systemDefault())
-        val now = LocalDateTime.now()
+    fun getTimeAgo(dateTime: OffsetDateTime): String {
+        val now = OffsetDateTime.now()
 
         val duration = Duration.between(dateTime, now)
         val seconds = duration.seconds

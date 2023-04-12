@@ -1,8 +1,8 @@
 package dev.souravdas.hush.models
 
 import androidx.room.Entity
-import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import org.threeten.bp.OffsetDateTime
 import java.io.Serializable
 
 /**
@@ -10,20 +10,12 @@ import java.io.Serializable
  * On 3/18/2023 12:34 PM
  * For Hush!
  */
-@Entity(
-    tableName = "app_log",
-    foreignKeys = [ForeignKey(
-        entity = SelectedApp::class,
-        parentColumns = ["id"],
-        childColumns = ["selected_app_id"]
-    )]
-)
+@Entity(tableName = "app_log")
 data class AppLog(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    val selected_app_id: Int,
     val appName: String,
     val packageName: String,
     val title: String?,
     val body: String?,
-    val timeCreated: Long = System.currentTimeMillis()
+    val timeCreated: OffsetDateTime = OffsetDateTime.now()
 ): Serializable

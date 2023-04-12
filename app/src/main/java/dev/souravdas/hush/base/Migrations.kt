@@ -9,6 +9,17 @@ import androidx.room.migration.Migration
  */
 
 val MIGRATION_1_2: Migration = Migration(1,2){database ->
-    database.execSQL("ALTER TABLE app_log ADD COLUMN appName TEXT NOT NULL DEFAULT ''")
-    database.execSQL("ALTER TABLE app_log ADD COLUMN packageName TEXT NOT NULL DEFAULT ''")
+    database.execSQL("DROP TABLE IF EXISTS app_log")
+
+    // Create the new app_log table
+    database.execSQL(
+        "CREATE TABLE IF NOT EXISTS app_log (" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                "appName TEXT, " +
+                "packageName TEXT, " +
+                "title TEXT, " +
+                "body TEXT, " +
+                "timeCreated TEXT" +
+                ")"
+    )
 }

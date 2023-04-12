@@ -29,12 +29,12 @@ import kotlin.math.ceil
  */
 
 @Composable
-fun HushChart(dataMap: Map<String, Float>){
+fun HushChart(dataMap: Map<LocalDate, Float>){
     
     var index = 0f
     val chartEntryModelProducer = dataMap.map {
         Entry(
-            LocalDate.parse(it.key),
+            it.key,
             index++,
             it.value
         )
@@ -111,7 +111,7 @@ fun HushChart(dataMap: Map<String, Float>){
                 Row(
                     modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start
                 ) {
-                    Button(
+                    TextButton(
                         onClick = { /*TODO*/ },
                         modifier = Modifier
                             .padding(top = 8.dp, start = 8.dp)
