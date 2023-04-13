@@ -1,5 +1,6 @@
 package dev.souravdas.hush.models
 
+import androidx.compose.runtime.Immutable
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import org.threeten.bp.OffsetDateTime
@@ -11,6 +12,7 @@ import java.io.Serializable
  * For Hush!
  */
 @Entity(tableName = "app_log")
+@Immutable
 data class AppLog(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val appName: String,

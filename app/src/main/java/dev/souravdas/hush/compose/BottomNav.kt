@@ -1,5 +1,6 @@
 package dev.souravdas.hush.compose
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -70,11 +71,13 @@ fun FloatingNav(onClickAdd: () -> Unit = {}) {
                     tint = if (tabNavigator.current == HomeTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                Text(
-                    text = "Home",
-                    fontSize = 12.sp,
-                    color = if (tabNavigator.current == HomeTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
-                )
+                AnimatedVisibility(tabNavigator.current == HomeTab) {
+                    Text(
+                        text = "Home",
+                        fontSize = 12.sp,
+                        color = if (tabNavigator.current == HomeTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
             }
 
 
@@ -108,11 +111,13 @@ fun FloatingNav(onClickAdd: () -> Unit = {}) {
                     tint = if (tabNavigator.current == LogTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                Text(
-                    text = "Logs",
-                    fontSize = 12.sp,
-                    color = if (tabNavigator.current == LogTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
-                )
+                AnimatedVisibility(tabNavigator.current == LogTab) {
+                    Text(
+                        text = "Logs",
+                        fontSize = 12.sp,
+                        color = if (tabNavigator.current == LogTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
             }
 
         }

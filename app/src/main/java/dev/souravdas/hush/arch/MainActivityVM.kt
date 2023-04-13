@@ -96,17 +96,18 @@ class MainActivityVM @Inject constructor(
                     }
                 val map = grouped.mapValues { it.value.size.toFloat() }
 
-                var fullWeekMap = hashMapOf<LocalDate, Float>()
+                val fullWeekMap = hashMapOf<LocalDate, Float>()
 
-                (0..6).forEach {
-                    val day = LocalDate.now().minusDays(it.toLong())
+                if (map.isNotEmpty())
+                    (0..6).forEach {
+                        val day = LocalDate.now().minusDays(it.toLong())
 
-                    if (map.containsKey(day)){
-                        fullWeekMap[day] = map[day]!!
-                    }else{
-                        fullWeekMap[day] = 0f
+                        if (map.containsKey(day)){
+                            fullWeekMap[day] = map[day]!!
+                        }else{
+                            fullWeekMap[day] = 0f
+                        }
                     }
-                }
 
                 _appLogStats.value = Resource.Success(fullWeekMap)
 

@@ -29,8 +29,8 @@ import kotlin.math.ceil
  */
 
 @Composable
-fun HushChart(dataMap: Map<LocalDate, Float>){
-    
+fun HushChart(dataMap: Map<LocalDate, Float>) {
+
     var index = 0f
     val chartEntryModelProducer = dataMap.map {
         Entry(
@@ -53,12 +53,25 @@ fun HushChart(dataMap: Map<LocalDate, Float>){
             modifier = Modifier
                 .padding(8.dp)
         ) {
-            Text(text = "History", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(8.dp))
-            if (dataMap.isNotEmpty()){
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "History",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+
+            if (dataMap.isNotEmpty()) {
                 val marker = rememberMarker()
                 val axisValueFormatter =
                     AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
-                        (chartValues.chartEntryModel.entries.first().getOrNull(value.toInt()) as? Entry)
+                        (chartValues.chartEntryModel.entries.first()
+                            .getOrNull(value.toInt()) as? Entry)
                             ?.localDate
                             ?.run {
                                 dayOfWeek.toString().substring(0, 3)
@@ -70,7 +83,7 @@ fun HushChart(dataMap: Map<LocalDate, Float>){
                     AxisValueFormatter<AxisPosition.Vertical.Start> { value, chartValues ->
                         ceil(value).toInt().toString()
                     }
-                
+
                 ProvideChartStyle(rememberChartStyle(listOf(MaterialTheme.colorScheme.primary))) {
                     val defaultColumns = currentChartStyle.columnChart.columns
                     Chart(
@@ -121,7 +134,7 @@ fun HushChart(dataMap: Map<LocalDate, Float>){
                     }
                 }
 
-            }else{
+            } else {
                 Box(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier

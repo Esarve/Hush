@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -38,10 +39,7 @@ import dev.souravdas.hush.compose.HushChart
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.UIEvent
-import dev.souravdas.hush.others.AppIconsMap
-import dev.souravdas.hush.others.Constants
-import dev.souravdas.hush.others.HushType
-import dev.souravdas.hush.others.Resource
+import dev.souravdas.hush.others.*
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 import timber.log.Timber
@@ -55,7 +53,6 @@ import androidx.compose.material3.MaterialTheme as MD3
  * For Hush!
  */
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(viewModel: MainActivityVM = viewModel()) {
     Timber.d("Main Screen Recomposed")
@@ -64,7 +61,10 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
     val scope = rememberCoroutineScope()
     val hushStatus =
         viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = true)
-    val logStats = viewModel.appLogStats.collectAsState()
+    val _logStats = viewModel.appLogStats.collectAsState()
+    val logState by remember {
+        _logStats
+    }
     val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION)
         .collectAsState(initial = true)
     val listState = rememberLazyListState()
@@ -99,6 +99,16 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
     val addConfigLambda = remember<(AppConfig) -> Unit> {
         { app ->
             viewModel.addConfigInSelectedApp(app)
+            viewModel.setHushStatus(true)
+        }
+    }
+
+    val generateDummyDataLambda = remember {
+        {
+            if (BuildConfig.DEBUG) {
+                viewModel.generateDummyLogs()
+                Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -108,9 +118,6 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
     }
 
     val modifier = Modifier
-    var isActive by remember {
-        mutableStateOf(true)
-    }
 
     Column {
         Column(
@@ -124,20 +131,16 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "Hush",
+                Text(
+                    text = "Hush",
                     style = MD3.typography.displayMedium,
-                    color = if (hushStatus.value) MD3.colorScheme.primary else MD3.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.clickable {
-                        if (BuildConfig.DEBUG) {
-                            viewModel.generateDummyLogs()
-                            Toast.makeText(HushApp.context, "Generated", Toast.LENGTH_SHORT).show()
-                        }
-                    })
+                    color = MD3.colorScheme.primary
+                )
 
                 FilledTonalIconToggleButton(
-                    checked = isActive,
+                    checked = hushStatus.value,
                     onCheckedChange = {
-                        isActive = it
+                        setHushStatus(it)
                     },
                     colors = IconButtonDefaults.filledIconToggleButtonColors(
                         containerColor = MD3.colorScheme.surfaceVariant,
@@ -148,9 +151,33 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 ) {
                     Icon(painterResource(id = R.drawable.ic_power), contentDescription = "IDK")
                 }
+
+
             }
 
-            when (logStats.value) {
+            AnimatedVisibility (!hushStatus.value) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MD3.colorScheme.errorContainer, RoundedCornerShape(10.dp))
+                        .padding(8.dp)
+                ) {
+                    Icon(
+                        Icons.Rounded.Info,
+                        contentDescription = "Info",
+                        tint = MD3.colorScheme.error
+                    )
+                    Text(
+                        text = "Hush service is currently off",
+                        style = MD3.typography.labelLarge,
+                        color = MD3.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+                }
+            }
+
+            when (logState) {
                 is Resource.Error -> TODO("Show ERROR")
                 is Resource.Loading -> {
                     Box(
@@ -163,7 +190,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                     }
                 }
                 is Resource.Success -> {
-                    HushChart((logStats.value as Resource.Success<Map<LocalDate, Float>>).data)
+                    HushChart((logState as Resource.Success<Map<LocalDate, Float>>).data)
                 }
             }
         }
@@ -175,11 +202,11 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 )
                 .padding(horizontal = 16.dp)
         ) {
-            Box(modifier.padding(vertical = 16.dp)) {
+            Box(modifier.padding(bottom = 8.dp)) {
                 Text(
                     text = "Ongoing Hush!",
-                    style = MD3.typography.titleMedium,
-                    color = MD3.colorScheme.onBackground,
+                    style = MD3.typography.titleLarge,
+                    color = MD3.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )
             }
