@@ -7,15 +7,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ListItem
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -53,7 +51,9 @@ fun InstalledAppList(
             .background(color = MaterialTheme.colorScheme.background)
     ) {
         Column() {
-            TextField(
+            //todo: Contains a bug where soft keyboard does not appear. Link: https://issuetracker.google.com/issues/268380384?pli=1
+
+            /*TextField(
                 value = searchText,
                 onValueChange = {
                     searchText = it
@@ -71,7 +71,7 @@ fun InstalledAppList(
                     .fillMaxWidth()
                     .height(80.dp)
                     .padding(16.dp)
-            )
+            )*/
             val lazyListState = rememberLazyListState()
             LazyColumn(
                 state = lazyListState,

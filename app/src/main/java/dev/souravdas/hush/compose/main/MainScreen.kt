@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.outlined.Edit
@@ -53,6 +54,7 @@ import androidx.compose.material3.MaterialTheme as MD3
  * For Hush!
  */
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Home(viewModel: MainActivityVM = viewModel()) {
     Timber.d("Main Screen Recomposed")
@@ -155,7 +157,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
 
             }
 
-            AnimatedVisibility (!hushStatus.value) {
+            AnimatedVisibility(!hushStatus.value) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -214,14 +216,18 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
             LazyColumn(
                 state = listState, modifier = modifier.fillMaxSize()
             ) {
-                items(selectedList, key = {
-                    it.timeUpdated
-                }) { app ->
+                items(
+                    selectedList,
+                    key = {
+                        it.timeUpdated
+                    },
+                ) { app ->
                     SelectedAppItem(
                         selectedApp = app,
                         onRemoveClick = removeAppLambda,
                         onEditClick = editAppLambda,
-                        onConfigDone = addConfigLambda
+                        onConfigDone = addConfigLambda,
+                        modifier.animateItemPlacement()
                     )
                 }
             }
@@ -229,7 +235,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun ShowBottomSheet(
     apps: List<InstalledPackageInfo>,
@@ -244,18 +250,19 @@ fun ShowBottomSheet(
         skipPartiallyExpanded = skipPartiallyExpanded
     )
 
-    if (isBottomSheetOpen.invoke()) ModalBottomSheet(
-        onDismissRequest = { onDismiss.invoke(null) }, sheetState = bottomSheetState
-    ) {
-        InstalledAppList(apps) { item ->
-            scope.launch {
-                bottomSheetState.hide()
-            }.invokeOnCompletion {
-                // TODO: insert here
-                onDismiss.invoke(item)
+    if (isBottomSheetOpen.invoke())
+        ModalBottomSheet(
+            onDismissRequest = { onDismiss.invoke(null) }, sheetState = bottomSheetState
+        ) {
+            InstalledAppList(apps) { item ->
+                scope.launch {
+                    bottomSheetState.hide()
+                }.invokeOnCompletion {
+                    // TODO: insert here
+                    onDismiss.invoke(item)
+                }
             }
         }
-    }
 }
 
 @Composable
@@ -275,6 +282,7 @@ fun SelectedAppItem(
     onRemoveClick: (SelectedApp) -> Unit = {},
     onEditClick: (SelectedApp) -> Unit,
     onConfigDone: (AppConfig) -> Unit,
+    modifier: Modifier
 ) {
     var showOptions by remember {
         mutableStateOf(false)
@@ -286,7 +294,7 @@ fun SelectedAppItem(
     showInitConfig = !selectedApp.isComplete
 
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxHeight()
             .padding(bottom = 10.dp)
             .clickable {
@@ -639,7 +647,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
     Row(
         modifier = Modifier
             .background(
-                MD3.colorScheme.secondaryContainer, RoundedCornerShape(12.dp)
+                MD3.colorScheme.tertiaryContainer, RoundedCornerShape(12.dp)
             )
             .height(48.dp)
             .fillMaxWidth(),
@@ -662,7 +670,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
             Icon(
                 painterResource(id = R.drawable.twotone_remove_circle_24),
                 contentDescription = "Decrease duration by 10 minutes",
-                tint = MD3.colorScheme.onSecondaryContainer
+                tint = MD3.colorScheme.onTertiaryContainer
             )
         }
 
@@ -674,7 +682,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
             } else {
                 "${duration} min"
             },
-            color = MD3.colorScheme.onSecondaryContainer,
+            color = MD3.colorScheme.onTertiaryContainer,
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp)
                 .align(Alignment.CenterVertically)
@@ -693,7 +701,7 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
             Icon(
                 painterResource(id = R.drawable.twotone_add_circle_24),
                 contentDescription = "Increase duration by 10 minutes",
-                tint = MD3.colorScheme.onSecondaryContainer
+                tint = MD3.colorScheme.onTertiaryContainer
             )
         }
     }
