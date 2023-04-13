@@ -163,7 +163,7 @@ class MainActivityVM @Inject constructor(
             }
         }
         return packageNames.sortedBy {
-            it.appName
+            it.appName.lowercase()
         }
     }
 
