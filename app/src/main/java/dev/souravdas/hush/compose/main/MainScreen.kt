@@ -65,7 +65,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
         viewModel.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = true)
     val _logStats = viewModel.appLogStats.collectAsState()
     val logState by remember {
-        _logStats
+        mutableStateOf(_logStats)
     }
     val notificationPermissionStatus by viewModel.getHushStatusAsFlow(Constants.DS_NOTIFICATION_PERMISSION)
         .collectAsState(initial = true)
@@ -179,7 +179,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                 }
             }
 
-            when (logState) {
+            when (logState.value) {
                 is Resource.Error -> TODO("Show ERROR")
                 is Resource.Loading -> {
                     Box(
@@ -192,7 +192,10 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                     }
                 }
                 is Resource.Success -> {
-                    HushChart { (logState as Resource.Success<Map<LocalDate, Float>>).data }
+                    HushChart (
+                        dataMap = { (logState.value as Resource.Success<Map<LocalDate, Float>>).data },
+                        onRefreshClick = viewModel::getLogStats
+                    )
                 }
             }
         }

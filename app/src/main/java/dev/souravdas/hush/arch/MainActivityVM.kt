@@ -85,7 +85,7 @@ class MainActivityVM @Inject constructor(
         }
     }
 
-    private fun getLogStats() {
+    fun getLogStats() {
         viewModelScope.launch {
             appLogRepository.getDataFromLastWeek().collect() { logs ->
                 val grouped = logs.sortedBy {

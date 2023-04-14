@@ -49,7 +49,7 @@ import kotlin.math.ceil
  */
 
 @Composable
-fun HushChart(dataMap: () -> Map<LocalDate, Float>) {
+fun HushChart(dataMap: () -> Map<LocalDate, Float> , onRefreshClick : () -> Unit) {
 
     var index = 0f
     val chartEntryModelProducer = dataMap.invoke().map {
@@ -78,12 +78,7 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float>) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                val rotationState = remember { mutableStateOf(0f) }
 
-                val rotationAngle = animateFloatAsState(
-                    targetValue = rotationState.value,
-                    animationSpec = tween(durationMillis = 700)
-                )
 
                 Text(
                     text = "History",
@@ -92,9 +87,17 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float>) {
                     modifier = Modifier.padding(8.dp)
                 )
 
-                IconButton(onClick = { /*TODO*/ }) {
+                IconButton(onClick = {}) {
+                    val rotationState = remember { mutableStateOf(0f) }
+
+                    val rotationAngle = animateFloatAsState(
+                        targetValue = rotationState.value,
+                        animationSpec = tween(durationMillis = 700)
+                    )
+
                     Icon(
                         imageVector = Icons.Rounded.Refresh,
+                        tint = MaterialTheme.colorScheme.primary,
                         contentDescription = "Rotated Icon",
                         modifier = Modifier
                             .graphicsLayer {
@@ -104,6 +107,7 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float>) {
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
                             ) {
+                                onRefreshClick.invoke()
                                 rotationState.value += 360f // Rotate by 45 degrees on each click
                             }
                     )
