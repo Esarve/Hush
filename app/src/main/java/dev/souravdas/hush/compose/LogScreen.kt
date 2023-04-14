@@ -1,18 +1,22 @@
 package dev.souravdas.hush.compose
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -33,6 +37,8 @@ import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.others.AppIconsMap
 import dev.souravdas.hush.others.Utils
+import org.threeten.bp.LocalDate
+import org.threeten.bp.format.DateTimeFormatter
 
 /**
  * Created by Sourav
@@ -45,7 +51,7 @@ import dev.souravdas.hush.others.Utils
 @Composable
 fun AppLogList() {
     val viewModel: MainActivityVM = viewModel()
-    val logsState = viewModel.appLog.collectAsState(emptyList())
+    val logsState = viewModel.appLog.collectAsState(hashMapOf())
     val logs by remember { logsState }
 
     SideEffect {
@@ -53,11 +59,53 @@ fun AppLogList() {
     }
 
     LazyColumn(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp)) {
 
-    ) {
-        items(logs, key = {it.id}) { log ->
-            ItemView(log)
+        items(logs.entries.toList()) { log ->
+            HeaderItem(value = log.key.toStringForLogList())
+            log.value.forEach{
+                ItemView(log = it)
+            }
         }
+    }
+}
+
+private fun LocalDate.toStringForLogList(): String {
+    return when {
+        this.dayOfYear == LocalDate.now().dayOfYear -> {
+            "TODAY"
+        }
+        LocalDate.now().dayOfYear - this.dayOfYear <=6 -> {
+            this.dayOfWeek.toString()
+        }
+        else -> {
+            this.format(DateTimeFormatter.ofPattern("dd MMMM"))
+        }
+    }
+}
+@Composable
+fun HeaderItem(value: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+    ) {
+        Text(
+            text = value,
+            color = MaterialTheme.colorScheme.secondary,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(4.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(2.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
     }
 
 }
@@ -65,10 +113,9 @@ fun AppLogList() {
 @Composable
 fun ItemView(log: AppLog) {
     Card(
-        elevation = CardDefaults.cardElevation(4.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(vertical = 8.dp)
     ) {
         Column(Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

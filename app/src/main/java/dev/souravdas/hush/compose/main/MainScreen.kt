@@ -210,7 +210,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
             Box(modifier.padding(bottom = 8.dp)) {
                 Text(
                     text = "Ongoing Hush!",
-                    style = MD3.typography.titleLarge,
+                    style = MD3.typography.titleMedium,
                     color = MD3.colorScheme.primary,
                     modifier = Modifier.padding(horizontal = 8.dp)
                 )

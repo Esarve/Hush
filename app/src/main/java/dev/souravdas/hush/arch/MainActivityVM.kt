@@ -36,7 +36,7 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedApp>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
-    private val _appLog = MutableStateFlow<List<AppLog>>(emptyList())
+    private val _appLog = MutableStateFlow<Map<LocalDate, List<AppLog>>>(hashMapOf())
     val appLog = _appLog.asStateFlow()
 
     private val _appLogStats = MutableStateFlow<Resource<Map<LocalDate, Float>>>(
@@ -79,8 +79,12 @@ class MainActivityVM @Inject constructor(
 
     fun getLog() {
         viewModelScope.launch {
+            val appLogWithHeader: List<Pair<String?, AppLog>> = arrayListOf()
             appLogRepository.getAllLog().collect {
-                _appLog.value = it
+                val grouped = it.groupBy {
+                    it.timeCreated.toLocalDate()
+                }
+                _appLog.value = grouped
             }
         }
     }
