@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import org.threeten.bp.Duration
 import org.threeten.bp.LocalTime
 import timber.log.Timber
 import javax.inject.Inject
@@ -40,7 +41,7 @@ class HushService : NotificationListenerService() {
 
     @Inject
     lateinit var utils: Utils
-
+    private var cancelMap: HashMap<String, Pair<Long, LocalTime> > = hashMapOf()
     private var isMute = false
     companion object {
         const val TAG = "HushService"
@@ -134,6 +135,22 @@ class HushService : NotificationListenerService() {
             enableDndModeFor4Seconds()
         val tmp = statusBarNotification
         cancelNotification(statusBarNotification.key)
+        if (cancelMap.contains(tmp.packageName)){
+            val lastNotificationTime = cancelMap[tmp.packageName]!!.second
+            var notificationCount = cancelMap[tmp.packageName]!!.first
+            val diff = Duration.between(LocalTime.now(), lastNotificationTime)
+            if (diff.toMinutes() < 10 ){
+                if (notificationCount >= 5){
+                    TODO("POST NOTIFICATION")
+                }else{
+                    cancelMap[tmp.packageName] = Pair(++notificationCount, LocalTime.now())
+                }
+            }else{
+                cancelMap[tmp.packageName] = Pair(1, LocalTime.now())
+            }
+        }else{
+            cancelMap[tmp.packageName] = Pair(1, LocalTime.now())
+        }
         logNotification(tmp, app)
     }
 

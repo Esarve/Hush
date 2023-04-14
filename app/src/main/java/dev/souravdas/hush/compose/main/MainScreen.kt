@@ -192,7 +192,7 @@ fun Home(viewModel: MainActivityVM = viewModel()) {
                     }
                 }
                 is Resource.Success -> {
-                    HushChart((logState as Resource.Success<Map<LocalDate, Float>>).data)
+                    HushChart { (logState as Resource.Success<Map<LocalDate, Float>>).data }
                 }
             }
         }

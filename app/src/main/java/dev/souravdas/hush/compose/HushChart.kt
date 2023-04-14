@@ -1,11 +1,31 @@
 package dev.souravdas.hush.compose
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Refresh
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.axis.horizontal.bottomAxis
 import com.patrykandpatrick.vico.compose.axis.vertical.startAxis
@@ -29,10 +49,10 @@ import kotlin.math.ceil
  */
 
 @Composable
-fun HushChart(dataMap: Map<LocalDate, Float>) {
+fun HushChart(dataMap: () -> Map<LocalDate, Float>) {
 
     var index = 0f
-    val chartEntryModelProducer = dataMap.map {
+    val chartEntryModelProducer = dataMap.invoke().map {
         Entry(
             it.key,
             index++,
@@ -58,15 +78,39 @@ fun HushChart(dataMap: Map<LocalDate, Float>) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                val rotationState = remember { mutableStateOf(0f) }
+
+                val rotationAngle = animateFloatAsState(
+                    targetValue = rotationState.value,
+                    animationSpec = tween(durationMillis = 700)
+                )
+
                 Text(
                     text = "History",
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(8.dp)
                 )
+
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(
+                        imageVector = Icons.Rounded.Refresh,
+                        contentDescription = "Rotated Icon",
+                        modifier = Modifier
+                            .graphicsLayer {
+                                rotationZ = rotationAngle.value
+                            }
+                            .clickable(
+                                indication = null,
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                rotationState.value += 360f // Rotate by 45 degrees on each click
+                            }
+                    )
+                }
             }
 
-            if (dataMap.isNotEmpty()) {
+            if (dataMap.invoke().isNotEmpty()) {
                 val marker = rememberMarker()
                 val axisValueFormatter =
                     AxisValueFormatter<AxisPosition.Horizontal.Bottom> { value, chartValues ->
