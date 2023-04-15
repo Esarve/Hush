@@ -67,7 +67,6 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float> , onRefreshClick : () -> Unit
             .padding(vertical = 16.dp)
             .fillMaxWidth(),
         colors = CardDefaults.cardColors(MaterialTheme.colorScheme.primaryContainer),
-        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column(
             modifier = Modifier

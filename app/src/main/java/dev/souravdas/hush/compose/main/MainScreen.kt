@@ -306,7 +306,6 @@ fun SelectedAppItem(
                 }
             },
         colors = CardDefaults.cardColors(MD3.colorScheme.secondaryContainer),
-        elevation = CardDefaults.cardElevation(2.dp)
     ) {
         Column() {
             Row(
