@@ -47,7 +47,7 @@ import org.threeten.bp.format.DateTimeFormatter
 @Composable
 fun AppLogList() {
     val viewModel: MainActivityVM = viewModel()
-    val logsState = viewModel.appLog.collectAsState(hashMapOf())
+    val logsState = viewModel.appLog.collectAsState()
     val logs by remember { logsState }
 
     SideEffect {
@@ -59,11 +59,11 @@ fun AppLogList() {
             .fillMaxSize()
             .padding(horizontal = 16.dp, vertical = 8.dp)) {
 
-        items(logs.entries.toList()) { log ->
-            HeaderItem(value = log.key.toStringForLogList())
-            log.value.forEach{
-                ItemView(log = it)
+        items(logs) { logWithHeader ->
+            logWithHeader.header?.let {
+                HeaderItem(value = it.toStringForLogList())
             }
+            ItemView(logWithHeader.log)
         }
     }
 }

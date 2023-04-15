@@ -36,7 +36,7 @@ class MainActivityVM @Inject constructor(
     private val _selectedAppsSF = MutableStateFlow<List<SelectedApp>>(emptyList())
     val selectedAppsSF = _selectedAppsSF.asStateFlow()
 
-    private val _appLog = MutableStateFlow<Map<LocalDate, List<AppLog>>>(hashMapOf())
+    private val _appLog = MutableStateFlow<List<Combined>>(emptyList())
     val appLog = _appLog.asStateFlow()
 
     private val _appLogStats = MutableStateFlow<Resource<Map<LocalDate, Float>>>(
@@ -84,7 +84,21 @@ class MainActivityVM @Inject constructor(
                 val grouped = it.groupBy {
                     it.timeCreated.toLocalDate()
                 }
-                _appLog.value = grouped
+                val listWithHeader : MutableList<Combined> = mutableListOf()
+                grouped.entries.toList().forEach { item ->
+                    var header: LocalDate? = item.key
+                    item.value.forEach{ log ->
+                        listWithHeader.add(
+                            Combined(
+                                header,
+                                log
+                            )
+                        )
+                        header = null
+                    }
+
+                }
+                _appLog.value = listWithHeader
             }
         }
     }
