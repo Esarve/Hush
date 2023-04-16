@@ -21,6 +21,8 @@ android {
             useSupportLibrary true
         }
 
+        setProperty("archivesBaseName", "Hush_v" + versionName + "_" + versionCode)
+
         javaCompileOptions {
             annotationProcessorOptions {
                 arguments += [
@@ -42,6 +44,25 @@ android {
             versionNameSuffix '-test'
         }
     }
+
+    flavorDimensions "releasetype"
+    productFlavors {
+        internal{
+            dimension "releasetype"
+            buildConfigField "String", "MY_STRING_VALUE", '"VALUE 1"'
+        }
+        playstore{
+            dimension "releasetype"
+            buildConfigField "String", "MY_STRING_VALUE", '"VALUE 2"'
+        }
+    }
+
+    android.applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = "Hush!-${variant.versionName}-${variant.name}-${variant.versionCode}.apk"
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
@@ -126,6 +147,8 @@ dependencies {
     implementation "com.patrykandpatrick.vico:core:1.6.5"
     implementation "com.patrykandpatrick.vico:compose:1.6.5"
     implementation "com.patrykandpatrick.vico:compose-m3:1.6.5"
+
+    implementation 'com.google.code.gson:gson:2.10.1'
 
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

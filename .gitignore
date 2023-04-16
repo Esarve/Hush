@@ -14,5 +14,5 @@
 .cxx
 local.properties
 /.idea/inspectionProfiles/
-/.idea/*
+/.idea/
 /app/internal/

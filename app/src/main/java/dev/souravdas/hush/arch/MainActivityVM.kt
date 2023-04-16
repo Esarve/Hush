@@ -2,8 +2,10 @@ package dev.souravdas.hush.arch
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
+import android.os.Environment
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
@@ -16,6 +18,8 @@ import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 import org.threeten.bp.OffsetDateTime
 import timber.log.Timber
+import java.io.File
+import java.io.IOException
 import java.util.*
 import javax.inject.Inject
 
@@ -71,8 +75,7 @@ class MainActivityVM @Inject constructor(
             if (selectedAppFromDB != null) {
                 selectedAppFromDB.isComplete = false
                 selectAppRepository.update(selectedAppFromDB)
-            } else
-                selectAppRepository.addSelectedApp(selectedApp)
+            } else selectAppRepository.addSelectedApp(selectedApp)
         }
     }
 
@@ -84,14 +87,13 @@ class MainActivityVM @Inject constructor(
                 val grouped = it.groupBy {
                     it.timeCreated.toLocalDate()
                 }
-                val listWithHeader : MutableList<Combined> = mutableListOf()
+                val listWithHeader: MutableList<Combined> = mutableListOf()
                 grouped.entries.toList().forEach { item ->
                     var header: LocalDate? = item.key
-                    item.value.forEach{ log ->
+                    item.value.forEach { log ->
                         listWithHeader.add(
                             Combined(
-                                header,
-                                log
+                                header, log
                             )
                         )
                         header = null
@@ -103,31 +105,64 @@ class MainActivityVM @Inject constructor(
         }
     }
 
+    fun exportLog() {
+        viewModelScope.launch {
+            appLogRepository.getAllLog().collect() {
+                val gson = Gson()
+                val json = gson.toJson(it)
+
+                val downloadsFolder =
+                    HushApp.context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                val outputFile = File(downloadsFolder, "app_logs.json")
+                outputFile.writeText(json)
+            }
+        }
+    }
+
+    fun importAppLogFromJson() {
+        viewModelScope.launch {
+            val downloadsFolder =
+                HushApp.context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+            val inputFile = File(downloadsFolder, "app_logs.json")
+
+            if (!inputFile.exists()) {
+                throw IOException("File not found: app_logs.json")
+            }
+
+            val json = inputFile.readText()
+            val appLogList = Gson().fromJson(json, Array<AppLog>::class.java)
+
+            if (appLogList.isNotEmpty()) {
+                appLogList.forEach {
+                    appLogRepository.insertLog(it)
+                }
+            }
+        }
+    }
+
     fun getLogStats() {
         viewModelScope.launch {
             appLogRepository.getDataFromLastWeek().collect() { logs ->
                 val grouped = logs.sortedBy {
                     it.timeCreated.toEpochSecond()
+                }.groupBy {
+                    it.timeCreated.toLocalDate()
                 }
-                    .groupBy {
-                        it.timeCreated.toLocalDate()
-                    }
                 val map = grouped.mapValues { it.value.size.toFloat() }
 
                 val fullWeekMap = hashMapOf<LocalDate, Float>()
 
-                if (map.isNotEmpty())
-                    (0..6).forEach {
-                        val day = LocalDate.now().minusDays(it.toLong())
+                if (map.isNotEmpty()) (0..6).forEach {
+                    val day = LocalDate.now().minusDays(it.toLong())
 
-                        if (map.containsKey(day)){
-                            fullWeekMap[day] = map[day]!!
-                        }else{
-                            fullWeekMap[day] = 0f
-                        }
+                    if (map.containsKey(day)) {
+                        fullWeekMap[day] = map[day]!!
+                    } else {
+                        fullWeekMap[day] = 0f
                     }
+                }
 
-                _appLogStats.value = Resource.Success(fullWeekMap)
+                _appLogStats.value = Resource.Success(fullWeekMap.toList().sortedBy { (key,_) -> key  }.reversed().toMap())
 
             }
         }
@@ -142,10 +177,7 @@ class MainActivityVM @Inject constructor(
     fun getSelectedApp() {
         viewModelScope.launch {
             selectAppRepository.getSelectedAppsWithFlow().map { apps ->
-                apps.sortedWith(
-                    compareBy<SelectedApp> { it.isComplete }
-                        .thenByDescending { it.timeCreated }
-                )
+                apps.sortedWith(compareBy<SelectedApp> { it.isComplete }.thenByDescending { it.timeCreated })
             }.collectLatest {
                 _selectedAppsSF.value = it
             }
