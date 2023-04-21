@@ -21,10 +21,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.startActivity
-import androidx.navigation.NavController
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import com.ramcosta.composedestinations.annotation.Destination
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
 
@@ -35,10 +32,10 @@ import dev.souravdas.hush.R
  * For Hush!
  */
 
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen() {
-    val navigator = LocalNavigator.currentOrThrow
     Scaffold(
         topBar = {
             TopAppBar(
@@ -50,7 +47,6 @@ fun AboutScreen() {
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
                         modifier = Modifier.clickable {
-                            navigator.popUntilRoot()
                         }
                     )
                 }

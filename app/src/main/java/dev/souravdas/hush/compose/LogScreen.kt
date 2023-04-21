@@ -29,8 +29,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.annotation.RootNavGraph
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.others.AppIconsMap
@@ -44,9 +46,11 @@ import org.threeten.bp.format.DateTimeFormatter
  * For Hush!
  */
 
+@RootNavGraph
+@Destination
 @Composable
 fun AppLogList() {
-    val viewModel: MainActivityVM = viewModel()
+    val viewModel: MainActivityVM = hiltViewModel()
     val logsState = viewModel.appLog.collectAsState()
     val logs by remember { logsState }
 
@@ -57,7 +61,8 @@ fun AppLogList() {
     LazyColumn(
         Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 8.dp)) {
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
 
         items(logs) { logWithHeader ->
             logWithHeader.header?.let {
@@ -73,14 +78,17 @@ private fun LocalDate.toStringForLogList(): String {
         this.dayOfYear == LocalDate.now().dayOfYear -> {
             "TODAY"
         }
-        LocalDate.now().dayOfYear - this.dayOfYear <=6 -> {
+
+        LocalDate.now().dayOfYear - this.dayOfYear <= 6 -> {
             this.dayOfWeek.toString()
         }
+
         else -> {
             this.format(DateTimeFormatter.ofPattern("dd MMMM"))
         }
     }
 }
+
 @Composable
 fun HeaderItem(value: String) {
     Row(

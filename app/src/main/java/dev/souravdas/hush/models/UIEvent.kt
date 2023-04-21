@@ -9,5 +9,6 @@ sealed class UIEvent{
     object invokeNotificationPermissionCheck: UIEvent()
     object invokeNotificationPermissionGet: UIEvent()
 
+    object invokeSettingsPageOpen:UIEvent()
     object showSelectAppSheet: UIEvent()
 }

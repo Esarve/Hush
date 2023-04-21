@@ -1,12 +1,15 @@
 package dev.souravdas.hush.arch
 
+import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Environment
-import androidx.lifecycle.MutableLiveData
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
+import de.palm.composestateevents.consumed
+import de.palm.composestateevents.triggered
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.base.BaseViewModel
@@ -31,8 +34,14 @@ class MainActivityVM @Inject constructor(
     private val utils: Utils
 ) : BaseViewModel() {
 
-    private val _uiEventMLD = MutableLiveData<Event<UIEvent>>()
-    val uiEventMLD = _uiEventMLD
+    private var uiState: HushViewState
+        get() = _uiEventFlow.value
+        set(newState)  {
+            _uiEventFlow.update { newState }
+        }
+
+    private val _uiEventFlow = MutableStateFlow(HushViewState())
+    val uiEventFlow = _uiEventFlow.asStateFlow()
 
     private val _appListSF = MutableStateFlow<List<InstalledPackageInfo>>(emptyList())
     val appListSF = _appListSF.asStateFlow()
@@ -56,12 +65,7 @@ class MainActivityVM @Inject constructor(
         getLogStats()
     }
 
-
     suspend fun getBoolean(key: String): Boolean = dataStoreManager.getBooleanValue(key)
-
-    fun dispatchUIEvent(event: UIEvent) {
-        _uiEventMLD.value = Event(event)
-    }
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -223,9 +227,10 @@ class MainActivityVM @Inject constructor(
     }
 
     fun setHushStatus(value: Boolean) {
-        viewModelScope.launch {
-            dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS, value)
-        }
+        if (isNotificationListenerEnabled(HushApp.context))
+            viewModelScope.launch {
+                dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS, value)
+            }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -314,4 +319,39 @@ class MainActivityVM @Inject constructor(
         }
     }
 
+    /* <-------- UI STUFFS ----------->*/
+
+    fun dispatchUIEvent(event: UIEvent) {
+        uiState = when(event){
+            UIEvent.invokeNotificationPermissionGet -> {
+                uiState.copy(processNotificationAccessPermissionGet = triggered)
+            }
+
+            UIEvent.invokeSettingsPageOpen -> {
+                uiState.copy(processSettingsScreenOpen = triggered)
+            }
+
+            else -> TODO()
+        }
+    }
+
+    fun onConsumedSettingsOpen(){
+        uiState = uiState.copy(processSettingsScreenOpen = consumed)
+    }
+
+    fun onConsumedNotificationPermissionGet(){
+        uiState = uiState.copy(processNotificationAccessPermissionGet = consumed)
+    }
+
+    fun onConsumedStartHushService(){
+        uiState = uiState.copy(startHushService = consumed())
+    }
+
+    /* <------ Others --------> */
+
+     fun isNotificationListenerEnabled(context: Context):Boolean {
+        val packageName = context.packageName
+        val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
+        return enabledPackages.contains(packageName)
+    }
 }

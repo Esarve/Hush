@@ -4,26 +4,38 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.List
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
-import cafe.adriel.voyager.navigator.tab.Tab
-import dev.souravdas.hush.nav.HomeTab
-import dev.souravdas.hush.nav.LogTab
+import androidx.navigation.NavController
+import androidx.navigation.NavOptionsBuilder
+import com.ramcosta.composedestinations.navigation.navigate
+import dev.souravdas.hush.compose.destinations.Destination
+import dev.souravdas.hush.nav.BottomNavigationDestination
 
 /**
  * Created by Sourav
@@ -32,14 +44,9 @@ import dev.souravdas.hush.nav.LogTab
  */
 
 @Composable
-fun FloatingNav(onClickAdd: () -> Unit = {}) {
-    val tabNavigator = LocalTabNavigator.current
-    val onTabClick = remember<(Tab) -> Unit> {
-        {
-            tabNavigator.current = it
-        }
-    }
+fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
 
+    val currentDestination: Destination = navController.appCurrentDestinationAsState().value ?: NavGraphs.root.startAppDestination
 
     Card(
         modifier = Modifier
@@ -63,19 +70,23 @@ fun FloatingNav(onClickAdd: () -> Unit = {}) {
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) {
-                        onTabClick(HomeTab)
+                        navController.navigate(
+                            BottomNavigationDestination.HOME.direction,
+                            fun NavOptionsBuilder.() {
+                                launchSingleTop = true
+                            })
                     }) {
                 Icon(
                     Icons.Rounded.Home,
                     contentDescription = "icon",
-                    tint = if (tabNavigator.current == HomeTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                    tint = if (currentDestination == BottomNavigationDestination.HOME.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                AnimatedVisibility(tabNavigator.current == HomeTab) {
+                AnimatedVisibility(currentDestination == BottomNavigationDestination.HOME.direction) {
                     Text(
                         text = "Home",
                         fontSize = 12.sp,
-                        color = if (tabNavigator.current == HomeTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                        color = if (currentDestination == BottomNavigationDestination.HOME.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
@@ -103,19 +114,23 @@ fun FloatingNav(onClickAdd: () -> Unit = {}) {
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) {
-                        onTabClick(LogTab)
+                        navController.navigate(
+                            BottomNavigationDestination.LOGS.direction,
+                            fun NavOptionsBuilder.() {
+                                launchSingleTop = true
+                            })
                     }) {
                 Icon(
                     Icons.Rounded.List,
                     contentDescription = "icon",
-                    tint = if (tabNavigator.current == LogTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                    tint = if (currentDestination == BottomNavigationDestination.LOGS.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                AnimatedVisibility(tabNavigator.current == LogTab) {
+                AnimatedVisibility(currentDestination == BottomNavigationDestination.LOGS.direction) {
                     Text(
                         text = "Logs",
                         fontSize = 12.sp,
-                        color = if (tabNavigator.current == LogTab) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                        color = if (currentDestination == BottomNavigationDestination.LOGS.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
@@ -125,9 +140,4 @@ fun FloatingNav(onClickAdd: () -> Unit = {}) {
 
 }
 
-@Preview
-@Composable
-fun NavPrev() {
-    FloatingNav()
-}
 

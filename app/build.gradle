@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
     id 'com.google.dagger.hilt.android'
+    id 'com.google.devtools.ksp' version '1.8.20-1.0.11'
 }
 
 android {
@@ -58,6 +59,9 @@ android {
     }
 
     android.applicationVariants.all { variant ->
+        variant.addJavaSourceFoldersToModel(
+                new File(buildDir, "generated/ksp/${variant.name}/kotlin")
+        )
         variant.outputs.all {
             outputFileName = "Hush!-${variant.versionName}-${variant.name}-${variant.versionCode}.apk"
         }
@@ -74,7 +78,7 @@ android {
         compose true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion '1.4.3'
+        kotlinCompilerExtensionVersion '1.4.6'
     }
     packagingOptions {
         resources {
@@ -112,7 +116,7 @@ dependencies {
     implementation 'androidx.compose.material3:material3:1.1.0-beta02'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation 'androidx.activity:activity-compose:1.7.0'
-    implementation 'androidx.compose.material:material:1.4.1'
+    implementation 'androidx.compose.material:material:1.4.2'
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'junit:junit:4.13.2'
     implementation 'com.jakewharton.timber:timber:5.0.1'
@@ -136,19 +140,19 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1"
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:2.6.1"
 
-    def nav_version = "2.5.3"
-
-    def voyagerVersion = "1.0.0-rc04"
-
-    implementation "cafe.adriel.voyager:voyager-navigator:$voyagerVersion"
-    implementation("cafe.adriel.voyager:voyager-transitions:$voyagerVersion")
-    implementation("cafe.adriel.voyager:voyager-tab-navigator:$voyagerVersion")
-
     implementation "com.patrykandpatrick.vico:core:1.6.5"
     implementation "com.patrykandpatrick.vico:compose:1.6.5"
     implementation "com.patrykandpatrick.vico:compose-m3:1.6.5"
 
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    def composeDest = "1.8.39-beta"
+    implementation "io.github.raamcosta.compose-destinations:core:$composeDest"
+    implementation "io.github.raamcosta.compose-destinations:animations-core:$composeDest"
+    ksp("io.github.raamcosta.compose-destinations:ksp:$composeDest")
+
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+    implementation 'com.github.leonard-palm:compose-state-events:1.2.3'
 
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

@@ -5,10 +5,8 @@ package dev.souravdas.hush.compose
  * On 3/22/2023 2:03 PM
  * For Hush!
  */
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ArrowBack
 import androidx.compose.material3.*
@@ -17,17 +15,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import cafe.adriel.voyager.navigator.LocalNavigator
-import cafe.adriel.voyager.navigator.currentOrThrow
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ramcosta.composedestinations.annotation.Destination
 import dev.souravdas.hush.arch.MainActivityVM
+import dev.souravdas.hush.nav.Layer2graph
 import dev.souravdas.hush.others.Constants
 
+@Layer2graph
+@Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsPage() {
-    val viewModel: MainActivityVM =viewModel()
-    val navigator = LocalNavigator.currentOrThrow
+    val viewModel: MainActivityVM = hiltViewModel()
     var isDnd by remember { mutableStateOf(false) }
     var isRemovedExpired by remember { mutableStateOf(false) }
     var isNotify by remember { mutableStateOf(false) }
@@ -71,7 +70,6 @@ fun SettingsPage() {
                         tint = MaterialTheme.colorScheme.onBackground,
                         contentDescription = "BACK",
                         modifier = Modifier.clickable {
-                            navigator.popUntilRoot()
                         }
                     )
                 }
