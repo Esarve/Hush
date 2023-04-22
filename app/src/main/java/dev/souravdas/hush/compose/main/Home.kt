@@ -262,14 +262,18 @@ fun ShowBottomSheet(
         ModalBottomSheet(
             onDismissRequest = { onDismiss.invoke(null) }, sheetState = bottomSheetState
         ) {
-            InstalledAppList(apps) { item ->
+            InstalledAppList(apps, { item ->
                 scope.launch {
                     bottomSheetState.hide()
                 }.invokeOnCompletion {
                     // TODO: insert here
                     onDismiss.invoke(item)
                 }
-            }
+            }, {
+                scope.launch {
+                    bottomSheetState.expand()
+                }
+            })
         }
 }
 

@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -55,9 +56,9 @@ import kotlinx.coroutines.launch
 fun InstalledAppList(
     items: List<InstalledPackageInfo>,
     onItemClick: (SelectedApp) -> Unit = {},
+    onFocus:() -> Unit
 ) {
     var searchText by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
 
     val filteredItems = if (searchText.isBlank()) {
         items
@@ -85,8 +86,6 @@ fun InstalledAppList(
         }
 
         Column() {
-            //todo: Contains a bug where soft keyboard does not appear. Link: https://issuetracker.google.com/issues/268380384?pli=1
-
             TextField(
                 value = searchText,
                 onValueChange = {
@@ -102,8 +101,13 @@ fun InstalledAppList(
                     disabledIndicatorColor = Color.Transparent
                 ),
                 modifier = Modifier
+                    .onFocusChanged {
+                        if(it.hasFocus){
+                            onFocus.invoke()
+                        }
+                    }
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(86.dp)
                     .padding(16.dp)
             )
             val lazyListState = rememberLazyListState()
