@@ -251,11 +251,10 @@ fun ShowBottomSheet(
     onDismiss: (SelectedApp?) -> Unit
 ) {
 
-    val skipPartiallyExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     val bottomSheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = skipPartiallyExpanded
+        skipPartiallyExpanded = false
     )
 
     if (isBottomSheetOpen.invoke())

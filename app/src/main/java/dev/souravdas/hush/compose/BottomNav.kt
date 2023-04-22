@@ -34,8 +34,13 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavOptionsBuilder
 import com.ramcosta.composedestinations.navigation.navigate
+import com.ramcosta.composedestinations.spec.DirectionDestinationSpec
+import com.ramcosta.composedestinations.utils.destination
+import dev.souravdas.hush.compose.destinations.AppLogListDestination
 import dev.souravdas.hush.compose.destinations.Destination
+import dev.souravdas.hush.compose.destinations.HomeDestination
 import dev.souravdas.hush.nav.BottomNavigationDestination
+import timber.log.Timber
 
 /**
  * Created by Sourav
@@ -45,8 +50,6 @@ import dev.souravdas.hush.nav.BottomNavigationDestination
 
 @Composable
 fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
-
-    val currentDestination: Destination = navController.appCurrentDestinationAsState().value ?: NavGraphs.root.startAppDestination
 
     Card(
         modifier = Modifier
@@ -62,6 +65,7 @@ fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+            val current = BottomNavigationDestination.HOME.direction
             Column(
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -70,23 +74,35 @@ fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) {
-                        navController.navigate(
-                            BottomNavigationDestination.HOME.direction,
-                            fun NavOptionsBuilder.() {
-                                launchSingleTop = true
-                            })
+                        if (navController.currentBackStackEntry?.destination()  != HomeDestination) {
+                            Timber.i("Navigating to Home")
+                            navController.popBackStack()
+                        }
                     }) {
                 Icon(
                     Icons.Rounded.Home,
                     contentDescription = "icon",
-                    tint = if (currentDestination == BottomNavigationDestination.HOME.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                    tint = if (isCurrentDest(
+                            navController = navController,
+                            direction = current
+                        )
+                    ) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                AnimatedVisibility(currentDestination == BottomNavigationDestination.HOME.direction) {
+                AnimatedVisibility(
+                    isCurrentDest(
+                        navController = navController,
+                        direction = current
+                    )
+                ) {
                     Text(
                         text = "Home",
                         fontSize = 12.sp,
-                        color = if (currentDestination == BottomNavigationDestination.HOME.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                        color = if (isCurrentDest(
+                                navController = navController,
+                                direction = current
+                            )
+                        ) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
@@ -114,30 +130,53 @@ fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
                     .clickable(
                         indication = null,
                         interactionSource = remember { MutableInteractionSource() }) {
-                        navController.navigate(
-                            BottomNavigationDestination.LOGS.direction,
-                            fun NavOptionsBuilder.() {
-                                launchSingleTop = true
-                            })
+                        if (navController.currentBackStackEntry?.destination()  != AppLogListDestination) {
+                            Timber.d("Navigating to Logs")
+                            navController.navigate(
+                                BottomNavigationDestination.LOGS.direction,
+                                fun NavOptionsBuilder.() {
+                                    launchSingleTop = true
+                                })
+                        }
                     }) {
+                val logTab = BottomNavigationDestination.LOGS.direction
                 Icon(
                     Icons.Rounded.List,
                     contentDescription = "icon",
-                    tint = if (currentDestination == BottomNavigationDestination.LOGS.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
+                    tint = if (isCurrentDest(
+                            navController = navController,
+                            direction = logTab
+                        )
+                    ) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant,
                     modifier = Modifier.padding(horizontal = 4.dp)
                 )
-                AnimatedVisibility(currentDestination == BottomNavigationDestination.LOGS.direction) {
+                AnimatedVisibility(
+                    isCurrentDest(
+                        navController = navController,
+                        direction = logTab
+                    )
+                ) {
                     Text(
                         text = "Logs",
                         fontSize = 12.sp,
-                        color = if (currentDestination == BottomNavigationDestination.LOGS.direction) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
+                        color = if (isCurrentDest(
+                                navController = navController,
+                                direction = logTab
+                            )
+                        ) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.surfaceVariant
                     )
                 }
             }
 
         }
     }
+}
 
+@Composable
+fun isCurrentDest(navController: NavController, direction: DirectionDestinationSpec): Boolean {
+    val currentDestination: Destination =
+        navController.appCurrentDestinationAsState().value ?: NavGraphs.root.startAppDestination
+    return currentDestination == direction
 }
 
 
