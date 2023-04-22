@@ -113,7 +113,12 @@ fun FloatingNav(onClickAdd: () -> Unit = {}, navController: NavController) {
                 modifier = Modifier
                     .size(48.dp, 48.dp)
                     .clip(CircleShape)
-                    .clickable { onClickAdd.invoke() }
+                    .clickable {
+                        onClickAdd.invoke()
+                        if(navController.currentBackStackEntry?.destination()  != HomeDestination){
+                            navController.popBackStack()
+                        }
+                    }
                     .background(MaterialTheme.colorScheme.onPrimary)
             ) {
                 Icon(

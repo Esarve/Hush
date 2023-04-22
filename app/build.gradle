@@ -152,6 +152,7 @@ dependencies {
 
     implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
     implementation 'com.github.leonard-palm:compose-state-events:1.2.3'
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ArrowBack
+import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,8 +22,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.ramcosta.composedestinations.annotation.Destination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
+import dev.souravdas.hush.nav.Layer2graph
 
 
 /**
@@ -32,23 +34,20 @@ import dev.souravdas.hush.R
  * For Hush!
  */
 
+@Layer2graph
 @Destination
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen() {
+fun AboutScreen(navigator: DestinationsNavigator) {
     Scaffold(
         topBar = {
             TopAppBar(
                 modifier = Modifier.padding(horizontal = 16.dp),
                 title = { Text(text = "About") },
                 navigationIcon = {
-                    Icon(
-                        Icons.Outlined.ArrowBack,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        contentDescription = "BACK",
-                        modifier = Modifier.clickable {
-                        }
-                    )
+                    IconButton(onClick = { navigator?.popBackStack() }) {
+                        Icon(Icons.Rounded.ArrowBack, contentDescription = "Back Arrow")
+                    }
                 }
             )
         }
