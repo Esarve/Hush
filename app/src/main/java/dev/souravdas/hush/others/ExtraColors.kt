@@ -8,16 +8,24 @@ import dev.souravdas.hush.ui.theme.dark_Info
 import dev.souravdas.hush.ui.theme.dark_InfoContainer
 import dev.souravdas.hush.ui.theme.dark_onInfo
 import dev.souravdas.hush.ui.theme.dark_onInfoContainer
+import dev.souravdas.hush.ui.theme.dark_onsuccess
+import dev.souravdas.hush.ui.theme.dark_onsuccessContainer
 import dev.souravdas.hush.ui.theme.dark_onwarning
 import dev.souravdas.hush.ui.theme.dark_onwarningContainer
+import dev.souravdas.hush.ui.theme.dark_success
+import dev.souravdas.hush.ui.theme.dark_successContainer
 import dev.souravdas.hush.ui.theme.dark_warning
 import dev.souravdas.hush.ui.theme.dark_warningContainer
 import dev.souravdas.hush.ui.theme.light_Info
 import dev.souravdas.hush.ui.theme.light_InfoContainer
 import dev.souravdas.hush.ui.theme.light_onInfo
 import dev.souravdas.hush.ui.theme.light_onInfoContainer
+import dev.souravdas.hush.ui.theme.light_onsuccess
+import dev.souravdas.hush.ui.theme.light_onsuccessContainer
 import dev.souravdas.hush.ui.theme.light_onwarning
 import dev.souravdas.hush.ui.theme.light_onwarningContainer
+import dev.souravdas.hush.ui.theme.light_success
+import dev.souravdas.hush.ui.theme.light_successContainer
 import dev.souravdas.hush.ui.theme.light_warning
 import dev.souravdas.hush.ui.theme.light_warningContainer
 
@@ -26,11 +34,16 @@ object ExtraColors {
     val onInfo = ComposableColor(light_onInfo, dark_onInfo)
     val infoContainer = ComposableColor(light_InfoContainer, dark_InfoContainer)
     val onInfoContainer = ComposableColor(light_onInfoContainer, dark_onInfoContainer)
+
     val warning = ComposableColor(light_warning, dark_warning)
     val onWarning = ComposableColor(light_onwarning, dark_onwarning)
     val warningContainer = ComposableColor(light_warningContainer, dark_warningContainer)
     val onWarningContainer = ComposableColor(light_onwarningContainer, dark_onwarningContainer)
 
+    val success = ComposableColor(light_success, dark_success)
+    val onSuccess = ComposableColor(light_onsuccess, dark_onsuccess)
+    val successContainer = ComposableColor(light_successContainer, dark_successContainer)
+    val onSuccessContainer = ComposableColor(light_onsuccessContainer, dark_onsuccessContainer)
 }
 
 class ComposableColor(private val lightColor: Color, private val darkColor: Color) {

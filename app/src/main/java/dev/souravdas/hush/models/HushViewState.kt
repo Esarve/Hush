@@ -13,5 +13,6 @@ data class HushViewState(
     var isNotificationAccessProvided: Boolean = true,
     val processNotificationAccessPermissionGet: StateEvent = consumed,
     val processSettingsScreenOpen: StateEvent = consumed,
-    val startHushService: StateEventWithContent<Boolean> = consumed()
+    val startHushService: StateEventWithContent<Boolean> = consumed(),
+    val processNotificationPermissionGet: StateEvent = consumed
 )

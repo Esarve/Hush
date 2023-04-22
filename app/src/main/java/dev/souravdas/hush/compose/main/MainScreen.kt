@@ -1,15 +1,18 @@
 package dev.souravdas.hush.compose.main
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.navigation.animation.rememberAnimatedNavController
 import com.ramcosta.composedestinations.DestinationsNavHost
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
@@ -19,6 +22,7 @@ import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.compose.FloatingNav
 import dev.souravdas.hush.compose.NavGraphs
 import dev.souravdas.hush.compose.destinations.HomeDestination
+import dev.souravdas.hush.compose.destinations.PermissionScreenDestination
 import dev.souravdas.hush.compose.destinations.SettingsPageDestination
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.nav.Layer2graph
@@ -30,6 +34,8 @@ import kotlinx.coroutines.launch
  * For Hush!
  */
 
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@OptIn( ExperimentalAnimationApi::class)
 @Layer2graph(true)
 @Destination()
 @Composable
@@ -74,25 +80,36 @@ fun MainScreen(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
         }
     }
 
-    val navController = rememberNavController()
-    Scaffold(
-        bottomBar = {
-            FloatingNav({
-                scope.launch {
-                    showBottomSheet.value = true
-                }
-            }, navController)
-        },
-        modifier = Modifier.background(MaterialTheme.colorScheme.background)
-    ) {
+    val navController = rememberAnimatedNavController()
+    val notificationAccessProvided = remember {
+        mutableStateOf(viewModel.isNotificationAccessPermissionProvided())
+    }
+    Text(text = "MAIN SCREEN")
+    if (notificationAccessProvided.value)
+        Scaffold(
+            bottomBar = {
+                FloatingNav({
+                    scope.launch {
+                        showBottomSheet.value = true
+                    }
+                }, navController)
+            },
+            modifier = Modifier.background(MaterialTheme.colorScheme.background)
+        ) {
 
-        DestinationsNavHost(
-            navGraph = NavGraphs.root,
-            navController = navController,
-            dependenciesContainerBuilder = {
-                dependency(HomeDestination) {
-                    viewModel
-                }
-            })
+            DestinationsNavHost(
+                navGraph = NavGraphs.root,
+                navController = navController,
+                dependenciesContainerBuilder = {
+                    dependency(HomeDestination) {
+                        viewModel
+                    }
+                })
+        }
+    else{
+        navigator.popBackStack()
+        navigator.navigate(PermissionScreenDestination){
+           launchSingleTop = true
+        }
     }
 }

@@ -34,6 +34,7 @@ import com.google.accompanist.drawablepainter.rememberDrawablePainter
 import com.patrykandpatrick.vico.core.entry.ChartEntry
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.R
@@ -57,10 +58,10 @@ import androidx.compose.material3.MaterialTheme as MD3
  */
 
 @RootNavGraph(true)
-@Destination
+@Destination()
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun Home(viewModel: MainActivityVM) {
+fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
 
     Timber.d("Main Screen Recomposed")
     val selectedListState = viewModel.selectedAppsSF.collectAsState(emptyList())
@@ -73,7 +74,7 @@ fun Home(viewModel: MainActivityVM) {
         mutableStateOf(_logStats)
     }
     var notificationAccessPermissionStatus by remember {
-        mutableStateOf(viewModel.isNotificationListenerEnabled(HushApp.context))
+        mutableStateOf(viewModel.isNotificationAccessPermissionProvided())
     }
     val listState = rememberLazyListState()
 
@@ -115,7 +116,7 @@ fun Home(viewModel: MainActivityVM) {
 
     if (!notificationAccessPermissionStatus)
         ShowAlertDialog {
-            viewModel.dispatchUIEvent(UIEvent.invokeNotificationPermissionGet)
+
             notificationAccessPermissionStatus = true
         }
 
@@ -142,7 +143,7 @@ fun Home(viewModel: MainActivityVM) {
                 Row() {
                     FilledTonalIconButton(
                         onClick = {
-                            viewModel.dispatchUIEvent(UIEvent.invokeSettingsPageOpen)
+                            viewModel.dispatchUIEvent(UIEvent.InvokeSettingsPageOpen)
                         },
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MD3.colorScheme.surfaceVariant,

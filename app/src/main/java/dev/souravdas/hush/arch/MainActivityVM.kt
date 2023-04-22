@@ -1,10 +1,11 @@
 package dev.souravdas.hush.arch
 
-import android.content.Context
+import android.Manifest
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.Environment
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -36,7 +37,7 @@ class MainActivityVM @Inject constructor(
 
     private var uiState: HushViewState
         get() = _uiEventFlow.value
-        set(newState)  {
+        set(newState) {
             _uiEventFlow.update { newState }
         }
 
@@ -166,7 +167,10 @@ class MainActivityVM @Inject constructor(
                     }
                 }
 
-                _appLogStats.value = Resource.Success(fullWeekMap.toList().sortedBy { (key,_) -> key  }.reversed().toMap())
+                _appLogStats.value =
+                    Resource.Success(fullWeekMap.toList().sortedBy { (key, _) -> key }.reversed()
+                        .toMap()
+                    )
 
             }
         }
@@ -227,7 +231,7 @@ class MainActivityVM @Inject constructor(
     }
 
     fun setHushStatus(value: Boolean) {
-        if (isNotificationListenerEnabled(HushApp.context))
+        if (isNotificationAccessPermissionProvided())
             viewModelScope.launch {
                 dataStoreManager.writeBooleanData(Constants.DS_HUSH_STATUS, value)
             }
@@ -322,36 +326,51 @@ class MainActivityVM @Inject constructor(
     /* <-------- UI STUFFS ----------->*/
 
     fun dispatchUIEvent(event: UIEvent) {
-        uiState = when(event){
-            UIEvent.invokeNotificationPermissionGet -> {
+        uiState = when (event) {
+            UIEvent.InvokeNotificationAccessPermissionGet -> {
                 uiState.copy(processNotificationAccessPermissionGet = triggered)
             }
 
-            UIEvent.invokeSettingsPageOpen -> {
+            UIEvent.InvokeSettingsPageOpen -> {
                 uiState.copy(processSettingsScreenOpen = triggered)
+            }
+
+            UIEvent.InvokeNotificationPermissionGet -> {
+                uiState.copy(processNotificationPermissionGet = triggered)
             }
 
             else -> TODO()
         }
     }
 
-    fun onConsumedSettingsOpen(){
+    fun onConsumedSettingsOpen() {
         uiState = uiState.copy(processSettingsScreenOpen = consumed)
     }
 
-    fun onConsumedNotificationPermissionGet(){
+    fun onConsumedNotificationPermissionGet() {
         uiState = uiState.copy(processNotificationAccessPermissionGet = consumed)
     }
 
-    fun onConsumedStartHushService(){
+    fun onConsumedStartHushService() {
         uiState = uiState.copy(startHushService = consumed())
+    }
+
+    fun onConsumeNotificationPermissionGet(){
+        uiState = uiState.copy(processNotificationPermissionGet = consumed)
     }
 
     /* <------ Others --------> */
 
-     fun isNotificationListenerEnabled(context: Context):Boolean {
+    fun isNotificationAccessPermissionProvided(): Boolean {
+        val context = HushApp.context
         val packageName = context.packageName
         val enabledPackages = NotificationManagerCompat.getEnabledListenerPackages(context)
         return enabledPackages.contains(packageName)
+    }
+
+    fun isNotificationPermissionGranted(): Boolean {
+        return  ContextCompat.checkSelfPermission(
+            HushApp.context, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
     }
 }

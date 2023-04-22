@@ -27,6 +27,7 @@ import dev.souravdas.hush.R
  * On 3/18/2023 12:27 PM
  * For Hush!
  */
+
 @Composable
 fun ShowAlertDialog(
     onConfirmClick: () -> Unit
@@ -48,7 +49,6 @@ fun ShowAlertDialog(
         },
         confirmButton = {
             Button(onClick = {
-                onConfirmClick.invoke()
                 Toast.makeText(
                     HushApp.context,
                     "Please Select Hush! from the list",
@@ -57,7 +57,12 @@ fun ShowAlertDialog(
             }) {
                 Text(text = "Allow")
             }
-        }
+        },
+        tonalElevation = 10.dp,
+        properties = DialogProperties(
+            dismissOnBackPress = false,
+            dismissOnClickOutside = false
+        )
     )
 }
 
