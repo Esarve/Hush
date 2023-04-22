@@ -1,6 +1,7 @@
 package dev.souravdas.hush.compose
 
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -22,13 +23,15 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -39,12 +42,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.compose.destinations.MainScreenDestination
 import dev.souravdas.hush.models.UIEvent
 import dev.souravdas.hush.nav.Layer2graph
 import dev.souravdas.hush.others.ExtraColors
+import kotlinx.coroutines.launch
 
 /**
  * Created by Sourav
@@ -61,8 +66,11 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
         remember { mutableStateOf(vm.isNotificationAccessPermissionProvided()) }
     val isNotificationPermissionGrant =
         remember { mutableStateOf(vm.isNotificationPermissionGranted()) }
-    val uiEvent = vm.uiEventFlow.collectAsState()
-
+    val notificationPermissionReminder = remember {
+        mutableStateOf(false)
+    }
+    val scope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     val canContinue = remember {
         mutableStateOf(false)
     }
@@ -70,7 +78,10 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
     when (lifecycleState.value) {
         Lifecycle.Event.ON_RESUME -> {
             isNotificationAccessPermissionGrant.value = vm.isNotificationAccessPermissionProvided()
-            isNotificationPermissionGrant.value = vm.isNotificationPermissionGranted()
+            with(vm.isNotificationPermissionGranted()){
+                isNotificationPermissionGrant.value = this
+                notificationPermissionReminder.value = this
+            }
             canContinue.value =
                 isNotificationPermissionGrant.value && isNotificationAccessPermissionGrant.value
         }
@@ -78,7 +89,8 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
         else -> {}
     }
     Scaffold(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) {
 
         Column(
@@ -102,6 +114,7 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
                 PermissionItem(
                     title = "Notification Access", isNotificationAccessPermissionGrant.value
                 ) {
+                    Toast.makeText(HushApp.context, "Select Hush! from the list", Toast.LENGTH_LONG).show()
                     vm.dispatchUIEvent(
                         UIEvent.InvokeNotificationAccessPermissionGet
                     )
@@ -144,12 +157,20 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
             }
 
             FilledTonalButton(
-                enabled = isNotificationAccessPermissionGrant.value && isNotificationPermissionGrant.value,
+                enabled = isNotificationAccessPermissionGrant.value,
                 onClick = {
-                    navigator.popBackStack()
-                    navigator.navigate(MainScreenDestination()) {
-                        launchSingleTop = true
+                    if (notificationPermissionReminder.value){
+                        navigator.popBackStack()
+                        navigator.navigate(MainScreenDestination()) {
+                            launchSingleTop = true
+                        }
+                    }else{
+                        scope.launch {
+                            snackbarHostState.showSnackbar("Consider Providing Notification Permission for best experience")
+                            notificationPermissionReminder.value = true
+                        }
                     }
+
                 },
                 colors = ButtonDefaults.filledTonalButtonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
