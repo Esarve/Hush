@@ -5,7 +5,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
@@ -84,7 +83,6 @@ fun MainScreen(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
     val notificationAccessProvided = remember {
         mutableStateOf(viewModel.isNotificationAccessPermissionProvided())
     }
-    Text(text = "MAIN SCREEN")
     if (notificationAccessProvided.value)
         Scaffold(
             bottomBar = {
