@@ -1,8 +1,6 @@
 package dev.souravdas.hush.compose
 
 import android.os.Build
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,12 +10,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.KeyboardArrowRight
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,7 +31,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
@@ -115,30 +114,32 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
 
                 PermissionItem(title = "Ignore Battery optimisation", false, {})
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                Card(
                     modifier = Modifier
                         .padding(vertical = 16.dp)
-                        .fillMaxWidth()
-                        .background(
-                            ExtraColors.infoContainer.getColor(isSystemInDarkTheme()),
-                            RoundedCornerShape(10.dp)
-                        )
-                        .padding(8.dp)
-
+                        .fillMaxWidth(),
+                    colors = CardDefaults.cardColors(ExtraColors.infoContainer.getColor(isSystemInDarkTheme()),)
                 ) {
-                    Icon(
-                        Icons.Outlined.Info,
-                        contentDescription = "Info",
-                        tint = ExtraColors.info.getColor(isSystemInDarkTheme())
-                    )
-                    Text(
-                        text = "No data is collected. Everything will be stored locally on the device",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontStyle = FontStyle.Italic,
-                        color = ExtraColors.onInfoContainer.getColor(isSystemInDarkTheme()),
-                        modifier = Modifier.padding(start = 4.dp)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+
+                    ) {
+                        Icon(
+                            Icons.Outlined.Info,
+                            contentDescription = "Info",
+                            tint = ExtraColors.info.getColor(isSystemInDarkTheme())
+                        )
+                        Text(
+                            text = "No data is collected. Everything will be stored locally on the device",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontStyle = FontStyle.Italic,
+                            color = ExtraColors.onInfoContainer.getColor(isSystemInDarkTheme()),
+                            modifier = Modifier.padding(start = 4.dp)
+                        )
+                    }
                 }
             }
 
@@ -146,7 +147,7 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
                 enabled = isNotificationAccessPermissionGrant.value && isNotificationPermissionGrant.value,
                 onClick = {
                     navigator.popBackStack()
-                    navigator.navigate(MainScreenDestination()){
+                    navigator.navigate(MainScreenDestination()) {
                         launchSingleTop = true
                     }
                 },
@@ -172,45 +173,56 @@ fun PermissionScreen(vm: MainActivityVM, navigator: DestinationsNavigator) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionItem(title: String, isGranted: Boolean, onClick: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween,
+    Card(
+        colors = CardDefaults.cardColors(
+            if (isGranted) ExtraColors.successContainer.getColor(
+                isSystemInDarkTheme()
+            ) else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth()
             .padding(top = 16.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick.invoke() }
-            .background(
-                if (isGranted) ExtraColors.successContainer.getColor(isSystemInDarkTheme()) else MaterialTheme.colorScheme.surfaceVariant
-            )
-            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .height(64.dp)
     ) {
         Row(
-            verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .fillMaxSize()
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(8.dp)
+            ) {
+                Icon(
+                    painterResource(id = if (isGranted) R.drawable.ic_checked else R.drawable.ic_radio_uncheck_24),
+                    contentDescription = "uncheck",
+                    modifier = Modifier.size(32.dp, 32.dp),
+                    tint = if (isGranted) ExtraColors.success.getColor(isSystemInDarkTheme()) else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(start = 8.dp),
+                    color = if (isGranted) ExtraColors.onSuccessContainer.getColor(
+                        isSystemInDarkTheme()
+                    ) else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Icon(
-                painterResource(id = if (isGranted) R.drawable.ic_checked else R.drawable.ic_radio_uncheck_24),
-                contentDescription = "uncheck",
-                modifier = Modifier.size(32.dp, 32.dp),
+                Icons.Rounded.KeyboardArrowRight,
+                contentDescription = "GO",
+                modifier = Modifier
+                    .size(32.dp, 32.dp)
+                    .padding(horizontal = 8.dp),
                 tint = if (isGranted) ExtraColors.success.getColor(isSystemInDarkTheme()) else MaterialTheme.colorScheme.onSurfaceVariant
             )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp),
-                color = if (isGranted) ExtraColors.onSuccessContainer.getColor(isSystemInDarkTheme()) else MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
-        Icon(
-            Icons.Rounded.KeyboardArrowRight,
-            contentDescription = "GO",
-            modifier = Modifier
-                .size(32.dp, 32.dp)
-                .padding(horizontal = 8.dp),
-            tint = if (isGranted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
+
 }
 
 @Composable

@@ -73,9 +73,7 @@ fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
     val logState by remember {
         mutableStateOf(_logStats)
     }
-    var notificationAccessPermissionStatus by remember {
-        mutableStateOf(viewModel.isNotificationAccessPermissionProvided())
-    }
+
     val listState = rememberLazyListState()
 
 
@@ -113,12 +111,6 @@ fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
             }
         }
     }
-
-    if (!notificationAccessPermissionStatus)
-        ShowAlertDialog {
-
-            notificationAccessPermissionStatus = true
-        }
 
     val modifier = Modifier
 
