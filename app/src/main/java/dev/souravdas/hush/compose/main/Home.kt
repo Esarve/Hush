@@ -25,7 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -276,16 +275,6 @@ fun ShowBottomSheet(
         }
 }
 
-@Composable
-fun TopAppBarActionButton(
-    imageVector: ImageVector, description: String, onClick: () -> Unit
-) {
-    IconButton(onClick = {
-        onClick()
-    }) {
-        Icon(imageVector = imageVector, contentDescription = description)
-    }
-}
 
 @Composable
 fun SelectedAppItem(

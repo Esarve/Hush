@@ -19,7 +19,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -168,11 +167,11 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float> , onRefreshClick : () -> Unit
                     )
                 }
 
-                Row(
+                /*Row(
                     modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start
                 ) {
                     TextButton(
-                        onClick = { /*TODO*/ },
+                        onClick = { *//*TODO*//* },
                         modifier = Modifier
                             .padding(top = 8.dp, start = 8.dp)
                     ) {
@@ -180,7 +179,7 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float> , onRefreshClick : () -> Unit
 
                     }
                 }
-
+*/
             } else {
                 Box(
                     contentAlignment = Alignment.Center,

@@ -20,6 +20,7 @@ import de.palm.composestateevents.EventEffect
 import dev.sourav.emptycompose.ui.theme.HushTheme
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.compose.NavGraphs
+import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.Utils
 import dev.souravdas.hush.services.KeepAliveService
 import javax.inject.Inject
@@ -39,38 +40,33 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val viewModel: MainActivityVM = hiltViewModel()
-            val uiState = viewModel.uiEventFlow.collectAsState()
+            val vm: MainActivityVM = hiltViewModel()
+            val uiState = vm.uiEventFlow.collectAsState()
+            val hushStatus = vm.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = false)
 
             HushTheme {
                 DestinationsNavHost(
                     navGraph = NavGraphs.layerGraph,
                     dependenciesContainerBuilder = {
                         dependency(NavGraphs.layerGraph) {
-                            viewModel
+                            vm
                         }
                     })
             }
 
             EventEffect(
                 event = uiState.value.processNotificationAccessPermissionGet,
-                onConsumed = viewModel::onConsumedNotificationPermissionGet
+                onConsumed = vm::onConsumedNotificationPermissionGet
             ) {
                 openNotificationAccessSettingsIfNeeded()
             }
 
-            EventEffect(event = uiState.value.processNotificationPermissionGet, onConsumed =viewModel::onConsumeNotificationPermissionGet){
+            EventEffect(event = uiState.value.processNotificationPermissionGet, onConsumed =vm::onConsumeNotificationPermissionGet){
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     requestNotificationPermission(69)
                 }
             }
-
-            EventEffect(
-                event = uiState.value.startHushService,
-                onConsumed = viewModel::onConsumedStartHushService
-            ) { isStart ->
-                handleHushService(isStart)
-            }
+            handleHushService(hushStatus.value)
         }
     }
 
