@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
 import dev.souravdas.hush.arch.AppLogRepository
-import dev.souravdas.hush.arch.SelectAppCache
+import dev.souravdas.hush.arch.SelectAppRepository
 import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.HushConfig
 import dev.souravdas.hush.models.SelectedApp
@@ -26,7 +26,6 @@ import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.threeten.bp.Duration
 import org.threeten.bp.LocalTime
@@ -39,15 +38,20 @@ import javax.inject.Inject
  * For Hush
  */
 @AndroidEntryPoint
-class HushService(private val appLogRepository: AppLogRepository, private val dsm: DataStoreManager) : NotificationListenerService() {
+class HushService: NotificationListenerService() {
     private var NOTIFY_TIME_IN_MINS = 10
     private var NOTIFY_AMOUNT_MUTED = 5
 
     @Inject
     lateinit var utils: Utils
-
     @Inject
     lateinit var notifyUtils: NotifyUtils
+    @Inject
+    lateinit var appLogRepository: AppLogRepository
+    @Inject
+    lateinit var selectAppRepository: SelectAppRepository
+    @Inject
+    lateinit var dsm: DataStoreManager
 
     private var cancelMap: HashMap<String, Pair<Long, LocalTime>> = hashMapOf()
     private var isMute = false
@@ -59,86 +63,79 @@ class HushService(private val appLogRepository: AppLogRepository, private val ds
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
     private var isServiceRunning = false;
-
-    @Inject
-    lateinit var selectAppCache: SelectAppCache
-    @Inject
-    lateinit var dataStoreManager: DataStoreManager
     private var selectedApps: List<SelectedApp> = emptyList()
     private var hushConfig: HushConfig = HushConfig()
 
     override fun onCreate() {
         super.onCreate()
         scope.launch {
-            selectAppCache.getSelectedApps().collect {
-                Timber.tag(TAG).i("Received app onCreate list $it")
+//            selectAppCache.getSelectedApps().collect {
+//                Timber.tag(TAG).i("Received app onCreate list $it")
+//                selectedApps = it
+//            }
+
+            selectAppRepository.getSelectedAppsWithFlow().collect{
                 selectedApps = it
             }
 
-            isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
+            isServiceRunning = dsm.getBooleanValue(Constants.DS_HUSH_STATUS)
 
-            selectAppCache.getConfig().collect {
-                hushConfig = it
-            }
+//            selectAppCache.getConfig().collect {
+//                hushConfig = it
+//            }
         }
     }
 
     @RequiresApi(Build.VERSION_CODES.M)
     override fun onNotificationPosted(notification: StatusBarNotification) {
         scope.launch {
-            isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
+            isServiceRunning = dsm.getBooleanValue(Constants.DS_HUSH_STATUS)
+            hushConfig.isNotificationReminder = dsm.getBooleanValue(Constants.DS_NOTIFY_MUTE)
         }
         Timber.tag(TAG).i("Hush Service is running: $isServiceRunning")
         if (isServiceRunning) {
             Timber.tag(TAG).d("onNotificationPosted fired")
             Timber.tag(TAG).d("Received notification from package: ${notification.packageName}")
 
-            if (selectedApps.isEmpty()) {
-                Timber.tag(TAG).i("Selected app list empty")
-                scope.launch {
-                    selectedApps = selectAppCache.getSelectedApps().firstOrNull() ?: emptyList()
-                }
-            } else {
-                var app: SelectedApp? = null
-                if (selectedApps.any {
-                        app = it
-                        it.packageName == notification.packageName
-                    }) {
-                    Timber.tag(TAG).i("App found on List. Cancelling notification")
+            var app: SelectedApp? = null
+            if (selectedApps.any {
+                    app = it
+                    it.packageName == notification.packageName
+                }) {
+                Timber.tag(TAG).i("App found on List. Cancelling notification")
 
-                    when (app!!.hushType) {
-                        HushType.ALWAYS -> {
-                            cancelAndLog(notification, app!!)
-                        }
-
-                        HushType.DURATION -> {
-                            if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!! * 60000) {
-                                cancelAndLog(notification, app!!)
-                            } else {
-                                Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
-                            }
-                        }
-
-                        HushType.DAYS -> {
-                            Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
-                            val now = LocalTime.now()
-                            app?.let {
-                                if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(
-                                        now
-                                    ) && it.endTime!!.isAfter(now))
-                                ) {
-                                    cancelAndLog(notification, app!!)
-                                }
-                            }
-
-                        }
-
-                        else -> {}
+                when (app!!.hushType) {
+                    HushType.ALWAYS -> {
+                        cancelAndLog(notification, app!!)
                     }
 
-                } else {
-                    Timber.tag(TAG).d("App not found in list.")
+                    HushType.DURATION -> {
+                        if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!! * 60000) {
+                            cancelAndLog(notification, app!!)
+                        } else {
+                            Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
+                        }
+                    }
+
+                    HushType.DAYS -> {
+                        Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
+                        val now = LocalTime.now()
+                        app?.let {
+                            if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(
+                                    now
+                                ) && it.endTime!!.isAfter(now))
+                            ) {
+                                cancelAndLog(notification, app!!)
+                            }
+                        }
+
+                    }
+
+                    else -> {}
                 }
+
+            } else {
+                Timber.tag(TAG).d("App not found in list.")
             }
 
         }
@@ -177,7 +174,7 @@ class HushService(private val appLogRepository: AppLogRepository, private val ds
     private fun logNotification(statusBarNotification: StatusBarNotification, app: SelectedApp) {
         if (app.logNotification) {
             scope.launch {
-                selectAppCache.logNotification(
+                appLogRepository.insertLog(
                     AppLog(
                         appName = app.appName,
                         packageName = app.packageName,
