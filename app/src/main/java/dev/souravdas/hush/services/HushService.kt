@@ -14,12 +14,14 @@ import androidx.annotation.RequiresApi
 import dagger.hilt.android.AndroidEntryPoint
 import dev.sourav.base.datastore.DataStoreManager
 import dev.souravdas.hush.HushApp
+import dev.souravdas.hush.arch.AppLogRepository
 import dev.souravdas.hush.arch.SelectAppCache
 import dev.souravdas.hush.models.AppLog
 import dev.souravdas.hush.models.HushConfig
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.others.Constants
 import dev.souravdas.hush.others.HushType
+import dev.souravdas.hush.others.NotifyUtils
 import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -37,12 +39,19 @@ import javax.inject.Inject
  * For Hush
  */
 @AndroidEntryPoint
-class HushService : NotificationListenerService() {
+class HushService(private val appLogRepository: AppLogRepository, private val dsm: DataStoreManager) : NotificationListenerService() {
+    private var NOTIFY_TIME_IN_MINS = 10
+    private var NOTIFY_AMOUNT_MUTED = 5
 
     @Inject
     lateinit var utils: Utils
-    private var cancelMap: HashMap<String, Pair<Long, LocalTime> > = hashMapOf()
+
+    @Inject
+    lateinit var notifyUtils: NotifyUtils
+
+    private var cancelMap: HashMap<String, Pair<Long, LocalTime>> = hashMapOf()
     private var isMute = false
+
     companion object {
         const val TAG = "HushService"
     }
@@ -53,7 +62,6 @@ class HushService : NotificationListenerService() {
 
     @Inject
     lateinit var selectAppCache: SelectAppCache
-
     @Inject
     lateinit var dataStoreManager: DataStoreManager
     private var selectedApps: List<SelectedApp> = emptyList()
@@ -69,7 +77,7 @@ class HushService : NotificationListenerService() {
 
             isServiceRunning = dataStoreManager.getBooleanValue(Constants.DS_HUSH_STATUS)
 
-            selectAppCache.getConfig().collect{
+            selectAppCache.getConfig().collect {
                 hushConfig = it
             }
         }
@@ -102,6 +110,7 @@ class HushService : NotificationListenerService() {
                         HushType.ALWAYS -> {
                             cancelAndLog(notification, app!!)
                         }
+
                         HushType.DURATION -> {
                             if (System.currentTimeMillis() <= app!!.timeUpdated + app!!.durationInMinutes!! * 60000) {
                                 cancelAndLog(notification, app!!)
@@ -109,16 +118,21 @@ class HushService : NotificationListenerService() {
                                 Timber.tag(TAG).i("Time Expired. Notification will not be canceled")
                             }
                         }
+
                         HushType.DAYS -> {
                             Timber.tag(TAG).i("Schedule selected. NOT IMPLEMENTED YET")
                             val now = LocalTime.now()
                             app?.let {
-                                if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(now) && it.endTime!!.isAfter(now))){
+                                if (it.muteDays!!.contains(utils.getCurrentDayOfWeek()) && (it.startTime!!.isBefore(
+                                        now
+                                    ) && it.endTime!!.isAfter(now))
+                                ) {
                                     cancelAndLog(notification, app!!)
                                 }
                             }
 
                         }
+
                         else -> {}
                     }
 
@@ -135,27 +149,33 @@ class HushService : NotificationListenerService() {
             enableDndModeFor4Seconds()
         val tmp = statusBarNotification
         cancelNotification(statusBarNotification.key)
-        if (cancelMap.contains(tmp.packageName)){
+        if (cancelMap.contains(tmp.packageName) && hushConfig.isNotificationReminder) {
             val lastNotificationTime = cancelMap[tmp.packageName]!!.second
             var notificationCount = cancelMap[tmp.packageName]!!.first
             val diff = Duration.between(LocalTime.now(), lastNotificationTime)
-            if (diff.toMinutes() < 10 ){
-                if (notificationCount >= 5){
-                    TODO("POST NOTIFICATION")
-                }else{
+            if (diff.toMinutes() < NOTIFY_TIME_IN_MINS) {
+                if (notificationCount >= NOTIFY_AMOUNT_MUTED) {
+                    notifyUtils.pushNotification(
+                        "Notify Alert from ${tmp.packageName}",
+                        "Hush muted $NOTIFY_AMOUNT_MUTED notifications in $NOTIFY_TIME_IN_MINS minutes. Wanna check out whats going on?"
+                    )
+                    cancelMap[tmp.packageName] = Pair(1, LocalTime.now())
+                } else {
+                    Timber.tag(TAG).i("$notificationCount notifications muted WITHIN $NOTIFY_TIME_IN_MINS minutes")
                     cancelMap[tmp.packageName] = Pair(++notificationCount, LocalTime.now())
                 }
-            }else{
+            } else {
                 cancelMap[tmp.packageName] = Pair(1, LocalTime.now())
+                Timber.tag(TAG).i("notification muted in less than $NOTIFY_TIME_IN_MINS minutes")
             }
-        }else{
+        } else {
             cancelMap[tmp.packageName] = Pair(1, LocalTime.now())
         }
         logNotification(tmp, app)
     }
 
     private fun logNotification(statusBarNotification: StatusBarNotification, app: SelectedApp) {
-        if (app.logNotification){
+        if (app.logNotification) {
             scope.launch {
                 selectAppCache.logNotification(
                     AppLog(

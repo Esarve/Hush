@@ -63,7 +63,7 @@ fun SettingsPage(navigator: DestinationsNavigator) {
     val onNotifyChangeLambda = remember<(Boolean) -> Unit> {
         {
             viewModel.changeBooleanDS(Constants.DS_NOTIFY_MUTE, it)
-            isNotify = !isNotify
+            isNotify = it
         }
     }
 
