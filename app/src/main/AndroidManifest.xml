@@ -52,6 +52,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.ACTION_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.ACTION_MY_PACKAGE_REPLACED" />
                 <action android:name="android.intent.action.REBOOT" />
             </intent-filter>
         </receiver>
