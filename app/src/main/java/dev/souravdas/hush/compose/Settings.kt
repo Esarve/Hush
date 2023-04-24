@@ -164,7 +164,7 @@ fun SettingsPage(navigator: DestinationsNavigator) {
             }
 
             Text(
-                text = "Contacts",
+                text = "Contact Me",
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(8.dp)
             )

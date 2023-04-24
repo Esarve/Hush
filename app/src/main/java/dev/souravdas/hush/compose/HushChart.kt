@@ -164,6 +164,7 @@ fun HushChart(dataMap: () -> Map<LocalDate, Float> , onRefreshClick : () -> Unit
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(128.dp)
+                            .padding(bottom = 8.dp)
                     )
                 }
 
