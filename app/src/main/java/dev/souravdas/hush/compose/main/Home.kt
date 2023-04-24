@@ -573,14 +573,14 @@ fun ShowInitConfig(
         }
 
         if (showTimePickerStart) {
-            ShowTimePicker(Pair(
+            ShowTimePicker(time = Pair(
                 startEndTimePair.startTime.split(":")[0].toInt(),
                 startEndTimePair.startTime.split(":")[1].toInt()
-            ), "Pick a start time", {
+            ), title = "Pick a start time", onTimeSelected = {
                 Timber.d(it)
                 startEndTimePair.startTime = it
                 showTimePickerStart = false
-            }, {
+            }, onDialogDismiss = {
                 showTimePickerStart = false
             })
         }

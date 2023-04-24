@@ -6,7 +6,9 @@ import org.threeten.bp.LocalTime
 import org.threeten.bp.OffsetDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /**
  * Created by Sourav
@@ -49,9 +51,18 @@ class Utils {
     }
 
     fun toLocalTime(stringTime: String): LocalTime {
+        val fixTime = fixTimeString(stringTime)
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-        return LocalTime.parse(stringTime, formatter)
+        return LocalTime.parse(fixTime, formatter)
     }
+
+    private fun fixTimeString(timeStr: String): String {
+        val (hours, minutes) = timeStr.split(":")
+        val fixedHours = if (hours.length == 1) "0$hours" else hours
+        val fixedMinutes = if (minutes.length == 1) "0$minutes" else minutes
+        return "$fixedHours:$fixedMinutes"
+    }
+
 
     fun getStringFromDaysList(daysList: List<String?>): String {
         val sb = StringBuilder()

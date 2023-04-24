@@ -105,7 +105,7 @@ fun ShowTimePicker(
                 }
                 TimePicker(state = state)
                 AddCancelButtonBar(onAddClick = {
-                    onTimeSelected.invoke(state.hour.toString() + ":" + state.minute)
+                    onTimeSelected.invoke(state.hour.toString() + ":" + state.minute.toString())
                 }, onCancelClick = {
                     onDialogDismiss.invoke()
                 })
