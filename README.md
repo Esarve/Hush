@@ -22,6 +22,6 @@
 
 ## Screenshots
 
-<img src="https://i.imgur.com/vqMJYUL.jpg" width=240/> <img src="https://i.imgur.com/WSdoLjJ.jpg" width=240/><img src="https://i.imgur.com/PuTTyXw.jpg" width=240/><img src="https://i.imgur.com/yZcW4zM.jpg" width=240/>
+<img src="https://i.imgur.com/vqMJYUL.jpg" width=260/> <img src="https://i.imgur.com/WSdoLjJ.jpg" width=260/><img src="https://i.imgur.com/PuTTyXw.jpg" width=260/><img src="https://i.imgur.com/yZcW4zM.jpg" width=260/>
 
 Icon credit: <a href="https://www.flaticon.com" title="water icons">Flaticon</a>
