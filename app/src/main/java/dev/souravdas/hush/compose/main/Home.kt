@@ -128,8 +128,10 @@ fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
             ) {
                 Text(
                     text = "Hush",
-                    style = MD3.typography.displayMedium,
-                    color = MD3.colorScheme.primary
+                    style = MD3.typography.displaySmall,
+                    fontSize = 42.sp,
+                    color = MD3.colorScheme.primary,
+                    modifier = Modifier.padding(horizontal = 8.dp)
                 )
 
                 Row() {
@@ -212,7 +214,7 @@ fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
                 )
                 .padding(horizontal = 16.dp)
         ) {
-            Box(modifier.padding(bottom = 8.dp)) {
+            Box(modifier.padding(vertical = 8.dp)) {
                 Text(
                     text = "Ongoing Hush!",
                     style = MD3.typography.titleMedium,
@@ -276,7 +278,7 @@ fun ShowBottomSheet(
         }
 }
 
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectedAppItem(
     selectedApp: SelectedApp,
@@ -295,14 +297,13 @@ fun SelectedAppItem(
     showInitConfig = !selectedApp.isComplete
 
     Card(
+        onClick = {
+            if (!showInitConfig) {
+            showOptions = !showOptions
+        }},
         modifier = modifier
             .fillMaxHeight()
-            .padding(bottom = 10.dp)
-            .clickable {
-                if (!showInitConfig) {
-                    showOptions = !showOptions
-                }
-            },
+            .padding(bottom = 10.dp),
         colors = CardDefaults.cardColors(MD3.colorScheme.secondaryContainer),
     ) {
         Column() {
@@ -318,7 +319,8 @@ fun SelectedAppItem(
                     ),
                     contentDescription = "appIcon",
                     modifier = Modifier
-                        .size(50.dp)
+                        .size(40.dp)
+                        .padding(start = 8.dp)
                         .clip(CircleShape)
                 )
                 Row(
@@ -326,10 +328,11 @@ fun SelectedAppItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 8.dp, end = 8.dp)
+                        .padding(start = 16.dp, end = 8.dp)
                 ) {
                     Text(
                         text = selectedApp.appName,
+                        style = MD3.typography.headlineMedium,
                         fontSize = 24.sp,
                         color = MD3.colorScheme.onPrimaryContainer
                     )
@@ -337,7 +340,7 @@ fun SelectedAppItem(
                     if (selectedApp.hushType != null) {
                         if (selectedApp.hushType == HushType.DURATION && System.currentTimeMillis() >= selectedApp.timeUpdated + selectedApp.durationInMinutes!! * 60000) {
                             CustomChip(
-                                title = "Expired", color = Color.Red, fontColor = Color.White
+                                title = "Expired", color = MD3.colorScheme.error, fontColor = MD3.colorScheme.onError
                             )
                         } else {
                             selectedApp.hushType?.let {
@@ -708,22 +711,32 @@ fun DurationSelector(getDuration: (Long) -> Unit = {}) {
 }
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomChip(
     title: String,
     color: Color = MD3.colorScheme.tertiary,
     fontColor: Color = MD3.colorScheme.onTertiary
 ) {
+//    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+//        SuggestionChip(
+//            onClick = {},
+//            label = { Text(text = title)},
+//            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = color, labelColor = fontColor),
+//            modifier = Modifier.height(28.dp)
+//        )
+//    }
     Box(
         modifier = Modifier
-            .padding(top = 4.dp, bottom = 4.dp)
+            .padding(vertical =  10.dp, horizontal = 6.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(color = color)
     ) {
         Text(
             text = title,
+            style =MD3.typography.labelMedium,
             modifier = Modifier.padding(
-                top = 4.dp, bottom = 4.dp, start = 6.dp, end = 6.dp
+                top = 4.dp, bottom = 4.dp, start = 8.dp, end = 8.dp
             ),
             color = fontColor,
             fontSize = 12.sp,
