@@ -10,10 +10,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.runtime.collectAsState
 import androidx.core.app.NotificationManagerCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.animations.rememberAnimatedNavHostEngine
 import com.ramcosta.composedestinations.navigation.dependency
 import dagger.hilt.android.AndroidEntryPoint
 import de.palm.composestateevents.EventEffect
@@ -37,15 +40,16 @@ class MainActivity : ComponentActivity() {
         } else {
         }
     }
+    @OptIn(ExperimentalMaterialNavigationApi::class, ExperimentalAnimationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             val vm: MainActivityVM = hiltViewModel()
             val uiState = vm.uiEventFlow.collectAsState()
             val hushStatus = vm.getHushStatusAsFlow(Constants.DS_HUSH_STATUS).collectAsState(initial = false)
-
             HushTheme {
                 DestinationsNavHost(
+                    engine = rememberAnimatedNavHostEngine(),
                     navGraph = NavGraphs.layerGraph,
                     dependenciesContainerBuilder = {
                         dependency(NavGraphs.layerGraph) {

@@ -12,7 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import com.google.accompanist.navigation.animation.rememberAnimatedNavController
+import com.google.accompanist.navigation.material.ExperimentalMaterialNavigationApi
 import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.animations.rememberAnimatedNavHostEngine
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import com.ramcosta.composedestinations.navigation.dependency
@@ -25,6 +27,7 @@ import dev.souravdas.hush.compose.destinations.PermissionScreenDestination
 import dev.souravdas.hush.compose.destinations.SettingsPageDestination
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.nav.Layer2graph
+import dev.souravdas.hush.nav.TransitionAnimation
 import kotlinx.coroutines.launch
 
 /**
@@ -34,9 +37,9 @@ import kotlinx.coroutines.launch
  */
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
-@OptIn( ExperimentalAnimationApi::class)
+@OptIn( ExperimentalAnimationApi::class, ExperimentalMaterialNavigationApi::class)
 @Layer2graph(true)
-@Destination()
+@Destination(style = TransitionAnimation::class)
 @Composable
 fun MainScreen(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
     viewModel.getSelectedApp()
@@ -96,6 +99,7 @@ fun MainScreen(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
         ) {
 
             DestinationsNavHost(
+                engine = rememberAnimatedNavHostEngine(),
                 navGraph = NavGraphs.root,
                 navController = navController,
                 dependenciesContainerBuilder = {

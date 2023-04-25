@@ -33,14 +33,15 @@ import dev.souravdas.hush.R
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.compose.destinations.AboutScreenDestination
 import dev.souravdas.hush.nav.Layer2graph
+import dev.souravdas.hush.nav.TransitionAnimation
 import dev.souravdas.hush.others.Constants
 
 
 @Layer2graph
-@Destination
+@Destination (style = TransitionAnimation::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsPage(navigator: DestinationsNavigator) {
+fun  SettingsPage(navigator: DestinationsNavigator) {
     val viewModel: MainActivityVM = hiltViewModel()
     var isDnd by remember { mutableStateOf(false) }
     var isRemovedExpired by remember { mutableStateOf(false) }

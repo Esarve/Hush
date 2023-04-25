@@ -42,6 +42,7 @@ import dev.souravdas.hush.compose.HushChart
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
 import dev.souravdas.hush.models.UIEvent
+import dev.souravdas.hush.nav.TransitionAnimation
 import dev.souravdas.hush.others.*
 import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
@@ -57,7 +58,7 @@ import androidx.compose.material3.MaterialTheme as MD3
  */
 
 @RootNavGraph(true)
-@Destination()
+@Destination(style = TransitionAnimation::class)
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {

@@ -35,6 +35,7 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootNavGraph
 import dev.souravdas.hush.arch.MainActivityVM
 import dev.souravdas.hush.models.AppLog
+import dev.souravdas.hush.nav.TransitionAnimation
 import dev.souravdas.hush.others.AppIconsMap
 import dev.souravdas.hush.others.Utils
 import org.threeten.bp.LocalDate
@@ -47,7 +48,7 @@ import org.threeten.bp.format.DateTimeFormatter
  */
 
 @RootNavGraph
-@Destination
+@Destination(style = TransitionAnimation::class)
 @Composable
 fun AppLogList() {
     val viewModel: MainActivityVM = hiltViewModel()

@@ -26,6 +26,7 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
 import dev.souravdas.hush.nav.Layer2graph
+import dev.souravdas.hush.nav.TransitionAnimation
 
 
 /**
@@ -35,7 +36,7 @@ import dev.souravdas.hush.nav.Layer2graph
  */
 
 @Layer2graph
-@Destination
+@Destination (style = TransitionAnimation::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AboutScreen(navigator: DestinationsNavigator) {
