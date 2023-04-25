@@ -63,7 +63,7 @@ fun InstalledAppList(
     val filteredItems = if (searchText.isBlank()) {
         items
     } else {
-        items.filter { it.packageName.contains(searchText, ignoreCase = true) }
+        items.filter { it.appName.contains(searchText, ignoreCase = true) }
     }
 
     val scope = rememberCoroutineScope()
