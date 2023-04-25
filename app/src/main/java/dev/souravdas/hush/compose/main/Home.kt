@@ -14,7 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Done
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.*
@@ -142,7 +143,8 @@ fun Home(viewModel: MainActivityVM, navigator: DestinationsNavigator) {
                         colors = IconButtonDefaults.filledTonalIconButtonColors(
                             containerColor = MD3.colorScheme.surfaceVariant,
                             contentColor = MD3.colorScheme.onSurfaceVariant,
-                        )) {
+                        )
+                    ) {
                         Icon(Icons.Rounded.Settings, contentDescription = "Settings")
                     }
 
@@ -294,13 +296,39 @@ fun SelectedAppItem(
         mutableStateOf(false)
     }
 
-    showInitConfig = !selectedApp.isComplete
+    var showTimePickerStart by remember {
+        mutableStateOf(false)
+    }
+
+    var showTimePickerEnd by remember {
+        mutableStateOf(false)
+    }
+
+    var logNotificationCb by remember {
+        mutableStateOf(true)
+    }
+    val startEndTimePair by remember {
+        mutableStateOf(StartEndTime("00:00", "23:59"))
+    }
+    var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
+
+    var selectedDuration: Long = 0
+    var husType: HushType by remember {
+        mutableStateOf(HushType.ALWAYS)
+    }
+
+    LaunchedEffect(selectedApp) {
+        showInitConfig = !selectedApp.isComplete
+    }
+
+
 
     Card(
         onClick = {
             if (!showInitConfig) {
-            showOptions = !showOptions
-        }},
+                showOptions = !showOptions
+            }
+        },
         modifier = modifier
             .fillMaxHeight()
             .padding(bottom = 10.dp),
@@ -337,26 +365,211 @@ fun SelectedAppItem(
                         color = MD3.colorScheme.onPrimaryContainer
                     )
 
-                    if (selectedApp.hushType != null) {
-                        if (selectedApp.hushType == HushType.DURATION && System.currentTimeMillis() >= selectedApp.timeUpdated + selectedApp.durationInMinutes!! * 60000) {
-                            CustomChip(
-                                title = "Expired", color = MD3.colorScheme.error, fontColor = MD3.colorScheme.onError
-                            )
-                        } else {
-                            selectedApp.hushType?.let {
+                    AnimatedVisibility(!showInitConfig) {
+                        Row {
+                            if (selectedApp.hushType == HushType.DURATION && System.currentTimeMillis() >= selectedApp.timeUpdated + selectedApp.durationInMinutes!! * 60000) {
                                 CustomChip(
-                                    title = it.label,
+                                    title = "Expired",
+                                    color = MD3.colorScheme.error,
+                                    fontColor = MD3.colorScheme.onError
                                 )
+                            } else {
+                                selectedApp.hushType?.let {
+                                    CustomChip(
+                                        title = it.label,
+                                    )
+                                }
                             }
                         }
                     }
+                    AnimatedVisibility(showInitConfig) {
+                        Row {
+                            FilledTonalIconButton(
+                                onClick = { onRemoveClick.invoke(selectedApp) },
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = MD3.colorScheme.errorContainer,
+                                    contentColor = MD3.colorScheme.error
+                                )
+                            ) {
+                                Icon(Icons.Rounded.Close, contentDescription = "Close")
+                            }
+                            FilledTonalIconButton(
+                                onClick = {
+                                    onConfigDone.invoke(
+                                        AppConfig(
+                                            selectedApp,
+                                            husType,
+                                            startEndTimePair,
+                                            selectedDuration,
+                                            selectedDays,
+                                            logNotificationCb
+                                        )
+                                    )
+                                },
+                                colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                    containerColor = ExtraColors.successContainer.getColor(
+                                        isSystemInDarkTheme()
+                                    ),
+                                    contentColor = ExtraColors.success.getColor(
+                                        isSystemInDarkTheme()
+                                    )
+                                )
+                            ) {
+                                Icon(Icons.Rounded.Done, contentDescription = "DONE")
+                            }
+                        }
+                    }
+
+
                 }
 
             }
             val buttonModifier = Modifier.padding(end = 4.dp)
 
             AnimatedVisibility(showInitConfig) {
-                ShowInitConfig(selectedApp, onConfigDone, onRemoveClick)
+                Column(
+                    modifier = Modifier
+                        .padding(start = 8.dp, end = 8.dp)
+                        .wrapContentWidth()
+                ) {
+                    ShowChipRow {
+                        husType = it
+                    };
+
+                    AnimatedVisibility(visible = husType == HushType.ALWAYS) {
+                        // default
+                    }
+
+                    AnimatedVisibility(visible = husType == HushType.DAYS) {
+                        Column(
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .wrapContentHeight(unbounded = true)
+                                .padding(top = 8.dp, bottom = 8.dp)
+                        ) {
+                            val buttonColor = IconButtonDefaults.outlinedIconToggleButtonColors(
+                                containerColor = MD3.colorScheme.primaryContainer,
+                                checkedContainerColor = MD3.colorScheme.tertiary,
+                            )
+                            val modifier = Modifier
+                                .height(36.dp)
+                                .width(36.dp)
+                            val daySelectorMap = mapOf<Int, String>(
+                                0 to "SAT",
+                                1 to "SUN",
+                                2 to "MON",
+                                3 to "TUE",
+                                4 to "WED",
+                                5 to "THU",
+                                6 to "FRI"
+                            )
+
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp, bottom = 8.dp)
+                            ) {
+
+                                daySelectorMap.forEach { item ->
+                                    DaySelector(
+                                        checked = !selectedDays[item.key].isNullOrEmpty(),
+                                        modifier = modifier,
+                                        onCheckedChange = {
+                                            selectedDays = selectedDays.toMutableList()
+                                                .apply {
+                                                    set(
+                                                        item.key,
+                                                        if (it) item.value else null
+                                                    )
+                                                }
+                                        },
+                                        title = item.value
+                                    )
+                                }
+
+                            }
+
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(start = 8.dp, end = 8.dp, top = 8.dp)
+                            )
+                            {
+                                TimeSelect(label = "Start Time",
+                                    time = startEndTimePair.startTime,
+                                    modifier
+                                        .weight(0.5f)
+                                        .clip(
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable {
+                                            showTimePickerStart = true
+                                        })
+                                TimeSelect(
+                                    label = "End Time",
+                                    time = startEndTimePair.endTime,
+                                    modifier
+                                        .weight(0.5f)
+                                        .clip(
+                                            RoundedCornerShape(16.dp)
+                                        )
+                                        .clickable {
+                                            showTimePickerEnd = true
+                                        })
+                            }
+                        }
+                    }
+
+                    AnimatedVisibility(visible = husType == HushType.DURATION) {
+                        DurationSelector {
+                            selectedDuration = it
+                        }
+                    }
+
+                    Row(modifier = Modifier.padding(8.dp)) {
+                        CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+                            Checkbox(checked = logNotificationCb, onCheckedChange = {
+                                logNotificationCb = !logNotificationCb
+
+                                if (it) Constants.showNIY()
+                            })
+                        }
+                        Text(
+                            text = "Log Notifications",
+                            color = Color(androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer.toArgb()),
+                            modifier = Modifier
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 8.dp)
+                        )
+                    }
+
+                    if (showTimePickerStart) {
+                        ShowTimePicker(time = Pair(
+                            startEndTimePair.startTime.split(":")[0].toInt(),
+                            startEndTimePair.startTime.split(":")[1].toInt()
+                        ), title = "Pick a start time", onTimeSelected = {
+                            Timber.d(it)
+                            startEndTimePair.startTime = it
+                            showTimePickerStart = false
+                        }, onDialogDismiss = {
+                            showTimePickerStart = false
+                        })
+                    }
+                    if (showTimePickerEnd) {
+                        ShowTimePicker(Pair(
+                            startEndTimePair.endTime.split(":")[0].toInt(),
+                            startEndTimePair.endTime.split(":")[1].toInt()
+                        ), "Pick an end time", {
+                            Timber.d(it)
+                            startEndTimePair.endTime = it
+                            showTimePickerEnd = false
+                        }, {
+                            showTimePickerEnd = false
+                        })
+                    }
+                }
             }
 
             AnimatedVisibility(showOptions) {
@@ -373,250 +586,53 @@ fun SelectedAppItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ShowInitConfig(
-    app: SelectedApp, onConfigDone: (AppConfig) -> Unit, onRemoveClick: (SelectedApp) -> Unit
-) {
-    Column(
-        modifier = Modifier
-            .padding(start = 8.dp, end = 8.dp)
-            .wrapContentWidth()
+fun TimeSelect(label: String, time: String, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start,
+        modifier = modifier
     ) {
-        var showTimePickerStart by remember {
-            mutableStateOf(false)
-        }
+        Icon(
+            painter = painterResource(id = R.drawable.ic_clock),
+            contentDescription = "clock",
+            Modifier.size(32.dp, 32.dp)
+        )
 
-        var showTimePickerEnd by remember {
-            mutableStateOf(false)
-        }
-
-        var logNotificationCb by remember {
-            mutableStateOf(true)
-        }
-        val startEndTimePair by remember {
-            mutableStateOf(StartEndTime("00:00", "23:59"))
-        }
-        var selectedDays by remember { mutableStateOf(List<String?>(7) { null }) }
-
-        var selectedDuration: Long = 0
-        var husType: HushType by remember {
-            mutableStateOf(HushType.ALWAYS)
-        }
-
-        ShowChipRow {
-            husType = it
-        };
-
-        AnimatedVisibility(visible = husType == HushType.ALWAYS) {
-            // default
-        }
-
-        AnimatedVisibility(visible = husType == HushType.DAYS) {
-            Column(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .wrapContentHeight(unbounded = true)
-                    .padding(top = 8.dp, bottom = 8.dp)
-            ) {
-                val buttonColor = IconButtonDefaults.outlinedIconToggleButtonColors(
-                    containerColor = MD3.colorScheme.primaryContainer,
-                    checkedContainerColor = MD3.colorScheme.tertiary,
-                )
-                val modifier = Modifier
-                    .height(36.dp)
-                    .width(36.dp)
-
-                Row(
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 8.dp)
-                ) {
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[0].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(0, if (it) "SAT" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[0].isNullOrEmpty(), "SAT")
-                    }
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[1].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(1, if (it) "SUN" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[1].isNullOrEmpty(), "SUN")
-                    }
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[2].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(2, if (it) "MON" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[2].isNullOrEmpty(), "MON")
-                    }
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[3].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(3, if (it) "TUE" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[3].isNullOrEmpty(), "TUE")
-                    }
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[4].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(4, if (it) "WED" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[4].isNullOrEmpty(), "WED")
-                    }
-                    OutlinedIconToggleButton(modifier = modifier,
-                        checked = !selectedDays[5].isNullOrEmpty(),
-                        colors = buttonColor,
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(5, if (it) "THU" else null) }
-                        }) {
-                        ShowDaysText(!selectedDays[5].isNullOrEmpty(), "THU")
-                    }
-                    OutlinedIconToggleButton(
-                        modifier = modifier,
-                        checked = !selectedDays[6].isNullOrEmpty(),
-                        onCheckedChange = {
-                            selectedDays = selectedDays.toMutableList()
-                                .apply { set(6, if (it) "FRI" else null) }
-                        },
-                        colors = buttonColor
-                    ) {
-                        ShowDaysText(!selectedDays[6].isNullOrEmpty(), "FRI")
-                    }
-                }
-
-                Column(Modifier.padding(start = 8.dp, end = 8.dp)) {
-                    Text(
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-                        text = "Start Time",
-                        color = MD3.colorScheme.onPrimaryContainer
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showTimePickerStart = true
-                            }) {
-                        Icon(
-                            Icons.Outlined.Edit,
-                            contentDescription = "Edit",
-                            tint = MD3.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = get12HrsFrom24Hrs(startEndTimePair.startTime),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MD3.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(start = 24.dp)
-                        )
-                    }
-                    Text(
-                        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
-                        text = "End Time",
-                        color = MD3.colorScheme.onPrimaryContainer
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                showTimePickerEnd = true
-                            }) {
-                        Icon(
-                            Icons.Outlined.Edit,
-                            contentDescription = "Edit",
-                            tint = MD3.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Text(
-                            text = get12HrsFrom24Hrs(startEndTimePair.endTime),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = MD3.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.padding(start = 24.dp)
-                        )
-                    }
-                }
-            }
-        }
-
-        AnimatedVisibility(visible = husType == HushType.DURATION) {
-            DurationSelector {
-                selectedDuration = it
-            }
-        }
-
-        Row(modifier = Modifier.padding(8.dp)) {
-            CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-                Checkbox(checked = logNotificationCb, onCheckedChange = {
-                    logNotificationCb = !logNotificationCb
-
-                    if (it) Constants.showNIY()
-                })
-            }
+        Column(horizontalAlignment = Alignment.Start) {
             Text(
-                text = "Log Notifications",
-                color = Color(androidx.compose.material3.MaterialTheme.colorScheme.onPrimaryContainer.toArgb()),
-                modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .padding(start = 8.dp)
+                modifier = Modifier.padding(start = 4.dp),
+                text = label,
+                style = MD3.typography.titleSmall,
+                color = MD3.colorScheme.onPrimaryContainer
+            )
+            Text(
+                text = get12HrsFrom24Hrs(time),
+                style = MD3.typography.titleMedium,
+                color = MD3.colorScheme.onPrimaryContainer,
+                modifier = Modifier.padding(start = 4.dp)
             )
         }
-
-        if (showTimePickerStart) {
-            ShowTimePicker(time = Pair(
-                startEndTimePair.startTime.split(":")[0].toInt(),
-                startEndTimePair.startTime.split(":")[1].toInt()
-            ), title = "Pick a start time", onTimeSelected = {
-                Timber.d(it)
-                startEndTimePair.startTime = it
-                showTimePickerStart = false
-            }, onDialogDismiss = {
-                showTimePickerStart = false
-            })
-        }
-        if (showTimePickerEnd) {
-            ShowTimePicker(Pair(
-                startEndTimePair.endTime.split(":")[0].toInt(),
-                startEndTimePair.endTime.split(":")[1].toInt()
-            ), "Pick an end time", {
-                Timber.d(it)
-                startEndTimePair.endTime = it
-                showTimePickerEnd = false
-            }, {
-                showTimePickerEnd = false
-            })
-        }
-
-        AddCancelButtonBar(onAddClick = {
-            onConfigDone.invoke(
-                AppConfig(
-                    app,
-                    husType,
-                    startEndTimePair,
-                    selectedDuration,
-                    selectedDays,
-                    logNotificationCb
-                )
-            )
-        }, onCancelClick = {
-            onRemoveClick.invoke(app)
-        })
     }
+}
 
+@Composable
+fun DaySelector(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    modifier: Modifier,
+    title: String
+) {
+    OutlinedIconToggleButton(
+        modifier = modifier,
+        checked = checked,
+        colors = IconButtonDefaults.outlinedIconToggleButtonColors(
+            containerColor = MD3.colorScheme.primaryContainer,
+            checkedContainerColor = MD3.colorScheme.tertiary,
+        ),
+        onCheckedChange = onCheckedChange
+    ) {
+        ShowDaysText(checked, title = title)
+    }
 }
 
 @Composable
@@ -728,13 +744,13 @@ fun CustomChip(
 //    }
     Box(
         modifier = Modifier
-            .padding(vertical =  10.dp, horizontal = 6.dp)
+            .padding(vertical = 10.dp, horizontal = 6.dp)
             .clip(RoundedCornerShape(16.dp))
             .background(color = color)
     ) {
         Text(
             text = title,
-            style =MD3.typography.labelMedium,
+            style = MD3.typography.labelMedium,
             modifier = Modifier.padding(
                 top = 4.dp, bottom = 4.dp, start = 8.dp, end = 8.dp
             ),
