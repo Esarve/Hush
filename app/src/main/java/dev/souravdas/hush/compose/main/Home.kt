@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -384,38 +385,30 @@ fun SelectedAppItem(
                     }
                     AnimatedVisibility(showInitConfig) {
                         Row {
-                            FilledTonalIconButton(
-                                onClick = { onRemoveClick.invoke(selectedApp) },
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = MD3.colorScheme.errorContainer,
-                                    contentColor = MD3.colorScheme.error
-                                )
+                            OutLinedButton(
+                                containerColor = MD3.colorScheme.errorContainer,
+                                contentColor = MD3.colorScheme.error,
+                                icon = Icons.Rounded.Close
                             ) {
-                                Icon(Icons.Rounded.Close, contentDescription = "Close")
+                                onRemoveClick.invoke(selectedApp)
                             }
-                            FilledTonalIconButton(
-                                onClick = {
-                                    onConfigDone.invoke(
-                                        AppConfig(
-                                            selectedApp,
-                                            husType,
-                                            startEndTimePair,
-                                            selectedDuration,
-                                            selectedDays,
-                                            logNotificationCb
-                                        )
-                                    )
-                                },
-                                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                                    containerColor = ExtraColors.successContainer.getColor(
-                                        isSystemInDarkTheme()
-                                    ),
-                                    contentColor = ExtraColors.success.getColor(
-                                        isSystemInDarkTheme()
+                            OutLinedButton(
+                                containerColor = ExtraColors.successContainer.getColor(
+                                    isSystemInDarkTheme()
+                                ), contentColor = ExtraColors.success.getColor(
+                                    isSystemInDarkTheme()
+                                ), icon = Icons.Rounded.Done
+                            ) {
+                                onConfigDone.invoke(
+                                    AppConfig(
+                                        selectedApp,
+                                        husType,
+                                        startEndTimePair,
+                                        selectedDuration,
+                                        selectedDays,
+                                        logNotificationCb
                                     )
                                 )
-                            ) {
-                                Icon(Icons.Rounded.Done, contentDescription = "DONE")
                             }
                         }
                     }
@@ -586,6 +579,28 @@ fun SelectedAppItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
+fun OutLinedButton(
+    containerColor: Color,
+    contentColor: Color,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
+        OutlinedIconButton(
+            onClick = onClick,
+            colors = IconButtonDefaults.outlinedIconButtonColors(
+                containerColor = containerColor,
+                contentColor = contentColor
+            ),
+            border = BorderStroke(1.dp, contentColor),
+            modifier = Modifier.padding(horizontal = 4.dp).size(38.dp, 38.dp)
+        ) {
+            Icon(icon, contentDescription = "Close")
+        }
+    }
+}
+
+@Composable
 fun TimeSelect(label: String, time: String, modifier: Modifier = Modifier) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -734,14 +749,6 @@ fun CustomChip(
     color: Color = MD3.colorScheme.tertiary,
     fontColor: Color = MD3.colorScheme.onTertiary
 ) {
-//    CompositionLocalProvider(LocalMinimumInteractiveComponentEnforcement provides false) {
-//        SuggestionChip(
-//            onClick = {},
-//            label = { Text(text = title)},
-//            colors = SuggestionChipDefaults.suggestionChipColors(containerColor = color, labelColor = fontColor),
-//            modifier = Modifier.height(28.dp)
-//        )
-//    }
     Box(
         modifier = Modifier
             .padding(vertical = 10.dp, horizontal = 6.dp)
