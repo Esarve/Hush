@@ -593,7 +593,9 @@ fun OutLinedButton(
                 contentColor = contentColor
             ),
             border = BorderStroke(1.dp, contentColor),
-            modifier = Modifier.padding(horizontal = 4.dp).size(38.dp, 38.dp)
+            modifier = Modifier
+                .padding(horizontal = 4.dp)
+                .size(38.dp, 38.dp)
         ) {
             Icon(icon, contentDescription = "Close")
         }
@@ -610,7 +612,8 @@ fun TimeSelect(label: String, time: String, modifier: Modifier = Modifier) {
         Icon(
             painter = painterResource(id = R.drawable.ic_clock),
             contentDescription = "clock",
-            Modifier.size(32.dp, 32.dp)
+            tint = MD3.colorScheme.onSecondaryContainer,
+            modifier = Modifier.size(32.dp, 32.dp)
         )
 
         Column(horizontalAlignment = Alignment.Start) {
@@ -618,12 +621,12 @@ fun TimeSelect(label: String, time: String, modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(start = 4.dp),
                 text = label,
                 style = MD3.typography.titleSmall,
-                color = MD3.colorScheme.onPrimaryContainer
+                color = MD3.colorScheme.onSecondaryContainer
             )
             Text(
                 text = get12HrsFrom24Hrs(time),
-                style = MD3.typography.titleMedium,
-                color = MD3.colorScheme.onPrimaryContainer,
+                style = MD3.typography.bodyLarge,
+                color = MD3.colorScheme.onSecondaryContainer,
                 modifier = Modifier.padding(start = 4.dp)
             )
         }
@@ -641,8 +644,12 @@ fun DaySelector(
         modifier = modifier,
         checked = checked,
         colors = IconButtonDefaults.outlinedIconToggleButtonColors(
-            containerColor = MD3.colorScheme.primaryContainer,
+            containerColor = MD3.colorScheme.secondaryContainer,
             checkedContainerColor = MD3.colorScheme.tertiary,
+        ),
+        border = BorderStroke(
+            1.dp,
+            if (checked) MD3.colorScheme.secondary else MD3.colorScheme.primary
         ),
         onCheckedChange = onCheckedChange
     ) {
@@ -779,7 +786,7 @@ fun ShowDaysText(selected: Boolean, title: String) {
         )
     } else {
         Text(
-            text = title, color = MD3.colorScheme.onPrimaryContainer, fontSize = 12.sp
+            text = title, color = MD3.colorScheme.onSecondaryContainer, fontSize = 12.sp
         )
     }
 }
