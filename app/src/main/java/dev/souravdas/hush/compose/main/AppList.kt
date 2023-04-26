@@ -3,23 +3,44 @@ package dev.souravdas.hush.compose.main
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.IconButton
+import androidx.compose.material.ListItem
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.google.accompanist.drawablepainter.rememberDrawablePainter
+import dev.souravdas.hush.BuildConfig
 import dev.souravdas.hush.R
 import dev.souravdas.hush.models.InstalledPackageInfo
 import dev.souravdas.hush.models.SelectedApp
@@ -30,40 +51,41 @@ import kotlinx.coroutines.launch
  * On 3/18/2023 12:24 PM
  * For Hush!
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun InstalledAppList(
     items: List<InstalledPackageInfo>,
     onItemClick: (SelectedApp) -> Unit = {},
+    onFocus:() -> Unit
 ) {
     var searchText by remember { mutableStateOf("") }
-    var active by remember { mutableStateOf(false) }
 
     val filteredItems = if (searchText.isBlank()) {
         items
     } else {
-        items.filter { it.packageName.contains(searchText, ignoreCase = true) }
+        items.filter { it.appName.contains(searchText, ignoreCase = true) }
     }
 
     val scope = rememberCoroutineScope()
-    Box(
+    Column(
         modifier = Modifier
-            .fillMaxHeight(fraction = 0.7f)
+            .fillMaxSize()
             .background(color = MaterialTheme.colorScheme.background)
     ) {
-        Column() {
-            Box(
-                modifier = Modifier
-                    .height(56.dp)
-                    .fillMaxWidth()
-                    .background(color = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = "Swipe up to select an app",
-                    modifier = Modifier.align(alignment = Alignment.Center),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+
+        if (BuildConfig.FLAVOR == "internal"){
+            Row() {
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(painterResource(id = R.drawable.ic_import), contentDescription = "import")
+                }
+
+                IconButton(onClick = { /*TODO*/ }) {
+                    Icon(painterResource(id = R.drawable.ic_save), contentDescription = "export")
+                }
             }
+        }
+
+        Column() {
             TextField(
                 value = searchText,
                 onValueChange = {
@@ -79,8 +101,13 @@ fun InstalledAppList(
                     disabledIndicatorColor = Color.Transparent
                 ),
                 modifier = Modifier
+                    .onFocusChanged {
+                        if(it.hasFocus){
+                            onFocus.invoke()
+                        }
+                    }
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(86.dp)
                     .padding(16.dp)
             )
             val lazyListState = rememberLazyListState()
@@ -103,7 +130,7 @@ fun InstalledAppList(
                                 )
                             }
                         },
-                        leadingContent = {
+                        icon = {
                             Image(
                                 painter = rememberDrawablePainter(
                                     drawable = item.icon ?: ContextCompat.getDrawable(
@@ -114,7 +141,7 @@ fun InstalledAppList(
                                 modifier = Modifier.size(40.dp)
                             )
                         },
-                        headlineText = {
+                        text = {
                             Text(
                                 text = item.appName,
                                 textAlign = TextAlign.Center,

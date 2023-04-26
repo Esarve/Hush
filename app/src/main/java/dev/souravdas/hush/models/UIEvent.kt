@@ -6,6 +6,8 @@ package dev.souravdas.hush.models
  * For Hush!
  */
 sealed class UIEvent{
-    object invokeNotificationPermissionCheck: UIEvent()
-    object invokeNotificationPermissionGet: UIEvent()
+    object InvokeNotificationPermissionGet: UIEvent()
+    object InvokeNotificationAccessPermissionGet: UIEvent()
+
+    object InvokeSettingsPageOpen:UIEvent()
 }

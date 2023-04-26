@@ -4,7 +4,6 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import dev.souravdas.hush.models.AppLog
-import dev.souravdas.hush.models.SelectedApp
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -18,9 +17,12 @@ interface AppLogDao {
     @Insert
     suspend fun insertLog(appLog: AppLog)
 
-    @Query("DELETE FROM app_log WHERE selected_app_id= :selectedAppID")
-    suspend fun deleteAllByForeignKey(selectedAppID: Int)
+    @Query("DELETE FROM app_log WHERE packageName= :packageName")
+    suspend fun deleteAllByPackageName(packageName: String)
 
-    @Query("SELECT * FROM app_log WHERE selected_app_id= :selectedAppID")
-    fun getAllByForeignKey(selectedAppID: Int): Flow<List<AppLog>>
+    @Query("SELECT * FROM app_log ORDER BY timeCreated DESC")
+    fun getAllLog(): Flow<List<AppLog>>
+
+    @Query("SELECT * FROM app_log WHERE DATE(timeCreated,'localtime') >= DATE(:startDate, 'localtime')")
+    fun getAppLogsFromLastWeek(startDate: String): Flow<List<AppLog>>
 }

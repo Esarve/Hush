@@ -1,10 +1,14 @@
 package dev.souravdas.hush.others
 
 import dev.souravdas.hush.models.SelectedApp
+import org.threeten.bp.Duration
 import org.threeten.bp.LocalTime
+import org.threeten.bp.OffsetDateTime
 import org.threeten.bp.format.DateTimeFormatter
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 /**
  * Created by Sourav
@@ -47,9 +51,18 @@ class Utils {
     }
 
     fun toLocalTime(stringTime: String): LocalTime {
+        val fixTime = fixTimeString(stringTime)
         val formatter: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-        return LocalTime.parse(stringTime, formatter)
+        return LocalTime.parse(fixTime, formatter)
     }
+
+    private fun fixTimeString(timeStr: String): String {
+        val (hours, minutes) = timeStr.split(":")
+        val fixedHours = if (hours.length == 1) "0$hours" else hours
+        val fixedMinutes = if (minutes.length == 1) "0$minutes" else minutes
+        return "$fixedHours:$fixedMinutes"
+    }
+
 
     fun getStringFromDaysList(daysList: List<String?>): String {
         val sb = StringBuilder()
@@ -65,5 +78,28 @@ class Utils {
         val date = Date(millis)
         val sdf = SimpleDateFormat("dd-MM-yy hh:mm a", Locale.UK)
         return sdf.format(date)
+    }
+
+    fun getTimeAgo(dateTime: OffsetDateTime): String {
+        val now = OffsetDateTime.now()
+
+        val duration = Duration.between(dateTime, now)
+        val seconds = duration.seconds
+
+        return when {
+            seconds < 60 -> "$seconds seconds ago"
+            seconds < 3600 -> {
+                val minutes = seconds / 60
+                "$minutes minutes ago"
+            }
+            seconds < 86400 -> {
+                val hours = seconds / 3600
+                "$hours hours ago"
+            }
+            else -> {
+                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                dateTime.format(formatter)
+            }
+        }
     }
 }
