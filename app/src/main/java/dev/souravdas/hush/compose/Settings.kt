@@ -185,7 +185,7 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
                         activity.startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://t.me/hushappsupport")
+                                Uri.parse("https://t.me/+CXszL2yBiiM4ODU9")
                             )
                         )
                     }
