@@ -1,7 +1,6 @@
 package dev.souravdas.hush.compose.main
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,7 +69,6 @@ fun InstalledAppList(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = MaterialTheme.colorScheme.background)
     ) {
 
         if (BuildConfig.FLAVOR == "internal"){
@@ -91,7 +89,7 @@ fun InstalledAppList(
                 onValueChange = {
                     searchText = it
                 },
-                placeholder = { Text(text = "Search")},
+                placeholder = { Text(text = "Search installed Applications")},
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
                 shape = RoundedCornerShape(32.dp),
                 colors = TextFieldDefaults.textFieldColors(
