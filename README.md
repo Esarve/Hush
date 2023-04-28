@@ -17,6 +17,7 @@
 - Automatic Day/Night theme
 
 ## Download
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/Esarve/Hush)
 
 <a href="https://play.google.com/store/apps/details?id=dev.souravdas.hush"> Google Play Store </a>
 
