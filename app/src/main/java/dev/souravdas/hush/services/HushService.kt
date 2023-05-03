@@ -29,6 +29,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.threeten.bp.Duration
 import org.threeten.bp.LocalTime
+import org.threeten.bp.OffsetDateTime
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -69,20 +70,11 @@ class HushService: NotificationListenerService() {
     override fun onCreate() {
         super.onCreate()
         scope.launch {
-//            selectAppCache.getSelectedApps().collect {
-//                Timber.tag(TAG).i("Received app onCreate list $it")
-//                selectedApps = it
-//            }
-
             selectAppRepository.getSelectedAppsWithFlow().collect{
                 selectedApps = it
             }
 
             isServiceRunning = dsm.getBooleanValue(Constants.DS_HUSH_STATUS)
-
-//            selectAppCache.getConfig().collect {
-//                hushConfig = it
-//            }
         }
     }
 
@@ -182,6 +174,11 @@ class HushService: NotificationListenerService() {
                         body = statusBarNotification.notification.extras.getString(Notification.EXTRA_TEXT),
                     )
                 )
+                val lastDataTime = appLogRepository.getEarliestDate()
+                val firstLogDiff = Duration.between( lastDataTime,OffsetDateTime.now(),)
+                if (firstLogDiff.toDays() >= 30){
+                    appLogRepository.deleteOldData(lastDataTime)
+                }
             }
         }
     }

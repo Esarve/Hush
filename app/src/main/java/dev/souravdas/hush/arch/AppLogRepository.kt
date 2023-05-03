@@ -1,6 +1,7 @@
 package dev.souravdas.hush.arch
 
 import dev.souravdas.hush.models.AppLog
+import dev.souravdas.hush.others.Utils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -13,7 +14,7 @@ import javax.inject.Inject
  * On 3/18/2023 12:39 PM
  * For Hush!
  */
-class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
+class AppLogRepository @Inject constructor(val appLogDao: AppLogDao, val utils: Utils) {
 
     suspend fun insertLog(appLog: AppLog) {
         withContext(Dispatchers.IO){
@@ -36,5 +37,10 @@ class AppLogRepository @Inject constructor(val appLogDao: AppLogDao) {
         val lastWeekDate = currentDate.minusDays(7)
 
         return appLogDao.getAppLogsFromLastWeek(startDate = lastWeekDate.format(formatter))
+    }
+
+    fun getEarliestDate(): OffsetDateTime = appLogDao.getEarliestDate().timeCreated
+    fun deleteOldData(fromDate:OffsetDateTime){
+        appLogDao.deleteOldDate(utils.getStringDateFromOffsetDateTime(fromDate))
     }
 }

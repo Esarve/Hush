@@ -25,4 +25,10 @@ interface AppLogDao {
 
     @Query("SELECT * FROM app_log WHERE DATE(timeCreated,'localtime') >= DATE(:startDate, 'localtime')")
     fun getAppLogsFromLastWeek(startDate: String): Flow<List<AppLog>>
+
+    @Query("SELECT * FROM app_log ORDER BY timeCreated ASC limit 1")
+    fun getEarliestDate(): AppLog
+
+    @Query("DELETE FROM app_log WHERE DATE(timeCreated, 'localtime') <= DATE(:fromDate,'localtime')")
+    fun deleteOldDate(fromDate: String)
 }

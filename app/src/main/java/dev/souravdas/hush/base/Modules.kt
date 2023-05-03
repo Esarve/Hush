@@ -48,8 +48,8 @@ object Modules {
     }
 
     @Provides
-    fun providesAppLogRepository(appLogDao: AppLogDao): AppLogRepository {
-        return AppLogRepository(appLogDao)
+    fun providesAppLogRepository(appLogDao: AppLogDao, utils: Utils): AppLogRepository {
+        return AppLogRepository(appLogDao,utils)
     }
 
     @Provides

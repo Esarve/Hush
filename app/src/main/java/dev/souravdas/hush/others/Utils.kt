@@ -102,4 +102,9 @@ class Utils {
             }
         }
     }
+
+    fun getStringDateFromOffsetDateTime(offsetDateTime: OffsetDateTime):String{
+        val formatter = DateTimeFormatter.ISO_OFFSET_DATE_TIME
+        return offsetDateTime.format(formatter)
+    }
 }
