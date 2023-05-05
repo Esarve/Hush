@@ -115,10 +115,5 @@ class MainActivity : ComponentActivity() {
         val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
         this.startActivity(intent)
     }
-
-    override fun onBackPressed() {
-        finishAffinity()
-    }
-
 }
 

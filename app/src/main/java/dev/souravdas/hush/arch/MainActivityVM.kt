@@ -67,6 +67,14 @@ class MainActivityVM @Inject constructor(
     }
 
     suspend fun getBoolean(key: String): Boolean = dataStoreManager.getBooleanValue(key)
+    suspend fun getIntValue(key: String, default: Int = 0): Int =
+        dataStoreManager.getIntValue(key, default)
+
+    fun setIntValue(key: String, value: Int) {
+        viewModelScope.launch {
+            dataStoreManager.writeIntData(key, value)
+        }
+    }
 
     companion object {
         const val APP_LIST = "APP_LIST"
@@ -168,8 +176,9 @@ class MainActivityVM @Inject constructor(
                 }
 
                 _appLogStats.value =
-                    Resource.Success(fullWeekMap.toList().sortedBy { (key, _) -> key }.reversed()
-                        .toMap()
+                    Resource.Success(
+                        fullWeekMap.toList().sortedBy { (key, _) -> key }.reversed()
+                            .toMap()
                     )
 
             }
@@ -355,7 +364,7 @@ class MainActivityVM @Inject constructor(
         uiState = uiState.copy(startHushService = consumed())
     }
 
-    fun onConsumeNotificationPermissionGet(){
+    fun onConsumeNotificationPermissionGet() {
         uiState = uiState.copy(processNotificationPermissionGet = consumed)
     }
 
@@ -369,7 +378,7 @@ class MainActivityVM @Inject constructor(
     }
 
     fun isNotificationPermissionGranted(): Boolean {
-        return  ContextCompat.checkSelfPermission(
+        return ContextCompat.checkSelfPermission(
             HushApp.context, Manifest.permission.POST_NOTIFICATIONS
         ) == PackageManager.PERMISSION_GRANTED
     }

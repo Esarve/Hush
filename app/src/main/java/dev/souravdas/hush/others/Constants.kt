@@ -14,6 +14,7 @@ object Constants {
     const val DS_DELETE_EXPIRE = "delete_expire"
     const val DS_NOTIFY_MUTE = "notify_mute"
     const val DS_NOTIFICATION_PERMISSION = "notific_perm"
+    const val DS_AUTO_DELETE_LOG = "auto_delete_log"
 
     fun showNIY (){
         Toast.makeText(

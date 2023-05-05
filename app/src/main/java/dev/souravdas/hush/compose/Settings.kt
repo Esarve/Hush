@@ -9,12 +9,14 @@ import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,22 +37,32 @@ import dev.souravdas.hush.compose.destinations.AboutScreenDestination
 import dev.souravdas.hush.nav.Layer2graph
 import dev.souravdas.hush.nav.TransitionAnimation
 import dev.souravdas.hush.others.Constants
+import timber.log.Timber
 
 
 @Layer2graph
-@Destination (style = TransitionAnimation::class)
+@Destination(style = TransitionAnimation::class)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun  SettingsPage(navigator: DestinationsNavigator) {
+fun SettingsPage(navigator: DestinationsNavigator) {
     val viewModel: MainActivityVM = hiltViewModel()
     var isDnd by remember { mutableStateOf(false) }
     var isRemovedExpired by remember { mutableStateOf(false) }
     var isNotify by remember { mutableStateOf(false) }
+    val autoDeleteInDay = remember { mutableStateOf(60) }
+    val autoDeleteDurationMap = mapOf<Any, String>(
+        3 to "3 Days",
+        7 to "7 Days",
+        14 to "14 Days",
+        30 to "30 Days",
+        60 to "60 Days"
+    )
 
     LaunchedEffect(Unit) {
         isDnd = viewModel.getBoolean(Constants.DS_DND)
         isRemovedExpired = viewModel.getBoolean(Constants.DS_DELETE_EXPIRE)
         isNotify = viewModel.getBoolean(Constants.DS_NOTIFY_MUTE)
+        autoDeleteInDay.value = viewModel.getIntValue(Constants.DS_AUTO_DELETE_LOG, 30)
     }
 
     val onDndCheckChangeLambda = remember<(Boolean) -> Unit> {
@@ -125,6 +137,23 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
                     checked = isNotify,
                     onCheckedChange = onNotifyChangeLambda
                 )
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(MaterialTheme.colorScheme.background)
+                )
+                DropDownRow(
+                    drawable = painterResource(id = R.drawable.ic_trash_auto),
+                    label = "Remove Logs After",
+                    subLabel = "Logs older than these will be removed automatically",
+                    itemlist = autoDeleteDurationMap,
+                    defValue = autoDeleteDurationMap.getValue(autoDeleteInDay.value)
+                ) { value ->
+                    Timber.d("Selected ${value as Int}")
+                    autoDeleteInDay.value = value
+                    viewModel.setIntValue(Constants.DS_AUTO_DELETE_LOG, value)
+                }
             }
 
 
@@ -178,10 +207,15 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
                     }
             ) {
                 val activity = (LocalContext.current as Activity)
-                Row(modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly) {
-                    ContactButton(painter = painterResource(id = R.drawable.ic_telegram), title = "Telegram"){
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp), horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    ContactButton(
+                        painter = painterResource(id = R.drawable.ic_telegram),
+                        title = "Telegram"
+                    ) {
                         activity.startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
@@ -189,7 +223,10 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
                             )
                         )
                     }
-                    ContactButton(painter = painterResource(id = R.drawable.ic_main), title = "mail"){
+                    ContactButton(
+                        painter = painterResource(id = R.drawable.ic_main),
+                        title = "mail"
+                    ) {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:")
                             putExtra(
@@ -202,7 +239,10 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
                             activity.startActivity(intent)
                         }
                     }
-                    ContactButton(painter = painterResource(id = R.drawable.ic_play), title = "Play Store"){
+                    ContactButton(
+                        painter = painterResource(id = R.drawable.ic_play),
+                        title = "Play Store"
+                    ) {
                         activity.startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
@@ -219,7 +259,7 @@ fun  SettingsPage(navigator: DestinationsNavigator) {
 }
 
 @Composable
-fun ContactButton(painter: Painter, title: String, onClick:() -> Unit = {}){
+fun ContactButton(painter: Painter, title: String, onClick: () -> Unit = {}) {
 //    Button(onClick = { /*TODO*/ }, shape = IconButtonDefaults.outlinedShape) {
 //        Row() {
 //            Icon(
@@ -236,7 +276,7 @@ fun ContactButton(painter: Painter, title: String, onClick:() -> Unit = {}){
 
     ElevatedAssistChip(
         onClick = onClick,
-        label = {Text(text = title, style = MaterialTheme.typography.labelMedium)},
+        label = { Text(text = title, style = MaterialTheme.typography.labelMedium) },
         leadingIcon = {
             Icon(
                 painter = painter,
@@ -287,5 +327,79 @@ fun ToggleRow(
             onCheckedChange = onCheckedChange,
             modifier = Modifier.padding(horizontal = 4.dp)
         )
+    }
+}
+
+@Composable
+fun DropDownRow(
+    drawable: Painter,
+    label: String,
+    subLabel: String,
+    itemlist: Map<Any, String>,
+    defValue: String?,
+    onSelected: (Any) -> Unit
+) {
+    var clicked by remember {
+        mutableStateOf(false)
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp, horizontal = 8.dp)
+            .clickable {
+                clicked = true
+            }
+
+    ) {
+        Icon(
+            drawable, contentDescription = "Icon", modifier = Modifier
+                .size(32.dp, 32.dp)
+                .padding(4.dp)
+        )
+        Column(modifier = Modifier.fillMaxWidth(0.65f)) {
+            Text(
+                text = label,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(
+                text = subLabel,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .size(120.dp, 30.dp)
+                .padding(end = 8.dp)
+                .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant, RoundedCornerShape(8.dp))
+                .padding(vertical = 4.dp, horizontal = 4.dp),
+            contentAlignment = Alignment.Center
+        )
+        {
+            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(text = defValue?:"")
+                Icon(Icons.Rounded.KeyboardArrowDown, contentDescription = "Down")
+            }
+
+            DropdownMenu(
+                expanded = clicked,
+                onDismissRequest = { clicked = false },
+            ) {
+                itemlist.forEach {
+                    DropdownMenuItem(
+                        text = { Text(it.value) },
+                        onClick = {
+                            onSelected.invoke(it.key)
+                            clicked = false
+                        },
+                    )
+                }
+            }
+        }
     }
 }

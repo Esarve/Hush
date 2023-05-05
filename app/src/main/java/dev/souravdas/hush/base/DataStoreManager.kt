@@ -2,7 +2,12 @@ package dev.sourav.base.datastore
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.doublePreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
@@ -21,13 +26,13 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
         }
     }
 
-    suspend fun getDoubleValue(storeKey: String): Double {
+    suspend fun getDoubleValue(storeKey: String, default: Double = 0.00): Double {
         val dataStoreKey = doublePreferencesKey(storeKey)
         val preferences: Preferences? = context.dataStore.data.firstOrNull()
         return if (preferences != null) {
             preferences[dataStoreKey].toString().toDouble()
         } else {
-            0.00
+            default
         }
     }
 
@@ -52,12 +57,12 @@ class DataStoreManager @Inject constructor(@ApplicationContext private val conte
         }
     }
 
-    suspend fun getIntValue(storeKey: String): Int {
+    suspend fun getIntValue(storeKey: String, default: Int = 0): Int {
         val dataStoreKey = intPreferencesKey(storeKey)
         val preferences: Preferences = context.dataStore.data.first()
         return if (preferences[dataStoreKey] != null) {
             preferences[dataStoreKey] as Int
-        } else 0
+        } else default
     }
 
     suspend fun writeStringData(storeKey: String, value: String) {
