@@ -49,6 +49,7 @@ android {
     flavorDimensions "releasetype"
     productFlavors {
         internal{
+            applicationId "dev.souravdas.hush.internal"
             dimension "releasetype"
             buildConfigField "String", "MY_STRING_VALUE", '"VALUE 1"'
         }

@@ -2,4 +2,13 @@
 <resources>
 
     <style name="Theme.Hush" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.SplashScreenApp" parent="Theme.Hush">
+        <item name="android:statusBarColor">@color/white</item>
+
+    </style>
+
+    <style name="SplashScreenTheme" parent="Theme.SplashScreenApp">
+        <item name="android:windowBackground">@drawable/splash</item>
+    </style>
 </resources>
