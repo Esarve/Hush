@@ -63,7 +63,8 @@ class HushService: NotificationListenerService() {
 
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + job)
-    private var isServiceRunning = false;
+    private var isServiceRunning = false
+    private var autoDeleteTimeInDays = 60
     private var selectedApps: List<SelectedApp> = emptyList()
     private var hushConfig: HushConfig = HushConfig()
 
@@ -73,7 +74,6 @@ class HushService: NotificationListenerService() {
             selectAppRepository.getSelectedAppsWithFlow().collect{
                 selectedApps = it
             }
-
             isServiceRunning = dsm.getBooleanValue(Constants.DS_HUSH_STATUS)
         }
     }
@@ -83,8 +83,10 @@ class HushService: NotificationListenerService() {
         scope.launch {
             isServiceRunning = dsm.getBooleanValue(Constants.DS_HUSH_STATUS)
             hushConfig.isNotificationReminder = dsm.getBooleanValue(Constants.DS_NOTIFY_MUTE)
+            autoDeleteTimeInDays = dsm.getIntValue(Constants.DS_AUTO_DELETE_LOG,30)
         }
         Timber.tag(TAG).i("Hush Service is running: $isServiceRunning")
+        Timber.tag(TAG).i("Logs older then $autoDeleteTimeInDays days will be deleted")
         if (isServiceRunning) {
             Timber.tag(TAG).d("onNotificationPosted fired")
             Timber.tag(TAG).d("Received notification from package: ${notification.packageName}")
@@ -174,11 +176,8 @@ class HushService: NotificationListenerService() {
                         body = statusBarNotification.notification.extras.getString(Notification.EXTRA_TEXT),
                     )
                 )
-                val lastDataTime = appLogRepository.getEarliestDate()
-                val firstLogDiff = Duration.between( lastDataTime,OffsetDateTime.now(),)
-                if (firstLogDiff.toDays() >= 30){
-                    appLogRepository.deleteOldData(lastDataTime)
-                }
+                val lastDataTime = OffsetDateTime.now().minusDays(autoDeleteTimeInDays.toLong())
+                appLogRepository.deleteOldData(lastDataTime)
             }
         }
     }
