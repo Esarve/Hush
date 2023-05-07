@@ -31,6 +31,7 @@ class SplashActivity : ComponentActivity() {
             val intent = Intent(this@SplashActivity, MainActivity::class.java)
             overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
             startActivity(intent)
+            finish()
         }
     }
 }
