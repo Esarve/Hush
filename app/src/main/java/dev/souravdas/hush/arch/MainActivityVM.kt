@@ -62,7 +62,6 @@ class MainActivityVM @Inject constructor(
 
     init {
         getSelectedApp()
-        getInstalledApps()
         getLogStats()
     }
 
@@ -217,7 +216,7 @@ class MainActivityVM @Inject constructor(
         val packageNames = mutableListOf<InstalledPackageInfo>()
 
         for (packageInfo in packages) {
-            if (packageInfo.enabled && pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName != HushApp.context.packageName) {
+            if (pm.getLaunchIntentForPackage(packageInfo.packageName) != null && packageInfo.packageName != HushApp.context.packageName) {
                 packageNames.add(
                     InstalledPackageInfo(
                         packageInfo.loadLabel(pm).toString(),
